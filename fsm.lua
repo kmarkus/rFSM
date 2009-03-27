@@ -69,7 +69,17 @@ function select_transition(state, event)
    end
    return transitions[1]
 end
-   
+
+
+-- these checks should be moved to initalization
+function run_prog(p)
+   if type(p) == "string" then eval(p)
+   elseif type(p) == "function" then p()
+   else
+      err("unknown program type: ", p)
+   end
+end
+
 -- additional parameter: maxsteps required
 -- returns number of steps performed
 function step(fsm)
@@ -88,7 +98,7 @@ function step(fsm)
    local trans = select_transition(cur_state, event)
    
    if not trans then
-      warn('no transition found for event', event, '- dropping it.')
+      warn('no transition for event', event, 'in state', cur_state.name, 'dropping.')
       return false
    end
 
@@ -101,19 +111,17 @@ function step(fsm)
 	 return count
       end
    end
-
       
    -- execute transition, RTCS starts here
-   if cur_state.exit then eval(cur_state.exit) end
-   if trans.effect then eval(trans.effect) end
-   if new_state.entry then eval(new_state.entry) end
+   if cur_state.exit then run_prog(cur_state.exit) end
+   if trans.effect then run_prog(trans.effect) end
+   if new_state.entry then run_prog(new_state.entry) end
    fsm.cur_state = new_state.name
    -- RTCS ends here
 
-   if new_state.doo then eval(new_state.doo) end
+   if new_state.doo then run_prog(new_state.doo) end
    
    return true
-   
 end
 
 -- get an event from the queue
@@ -142,7 +150,7 @@ fsm = {
    inital_state = "off", 
    states = { { 
 		 name = "on", 
-		 entry = "print('entry on')", 
+		 entry = function () print('entry from on function') end,
 		 doo = "print('inside on do')", 
 		 exit = "print('inside on exit')", 
 		 transitions = { { event="off-button", target="off" } } },
@@ -162,6 +170,11 @@ init(fsm)
 send(fsm, "invalid-event")
 send(fsm, "on-button")
 send(fsm, "off-button")
+send(fsm, "off-button")
+send(fsm, "off-button")
+step(fsm)
+step(fsm)
+step(fsm)
 step(fsm)
 step(fsm)
 step(fsm)
