@@ -71,7 +71,8 @@ function select_transition(state, event)
 end
 
 
--- these checks should be moved to initalization
+-- these checks should be moved to initalization 
+-- and strings transformed to functions
 function run_prog(p)
    if type(p) == "string" then 
       return eval(p)
@@ -132,14 +133,15 @@ end
 
 -- do maximum max_steps stupersteps
 function run(fsm, max_steps)
-   print("max_steps: ", max_steps)
+   -- print("max_steps: ", max_steps)
    if max_steps == 0 then
       return 0
    else
       if not step(fsm) then
 	 return 0
       else
-	 return 1 + run(fsm, max_steps - 1)
+	 -- not tail recursive! return 1+ run(fsm, max_steps - 1)
+	 return run(fsm, max_steps - 1)
       end
    end
 end
@@ -157,7 +159,7 @@ end
 
 -- initalize state machine
 function init(fsm)
-   fsm.queue = {}
+   if not fsm.queue then fsm.queue = {} end
    fsm.cur_state = fsm.inital_state
 end
 
@@ -170,7 +172,7 @@ dofile("../mylib/functional.lua")
 -- transition counter
 tc = 0 
 
-fsm = { 
+fsm1 = { 
    inital_state = "off", 
    states = { { 
 		 name = "on", 
@@ -187,16 +189,31 @@ fsm = {
 	   }
 }
 
+max_trans = 10000
+
+fsm = { 
+   inital_state = "pinging",
+   queue = { "pong" },
+   states = { { 
+		 name = "pinging", 
+		 entry = function () if tc < max_trans then send(fsm, "pong") end end,
+--		 doo = "print('pinging do')",
+		 transitions = { { event="pong", target="ponging", effect="tc=tc+1" } } },
+	      { 
+		 name = "ponging", 
+		 entry = "send(fsm, 'ping')",
+--		 doo = "print('poining do')",
+		 transitions = { { event="ping", target="pinging", effect="tc=tc+1" } } } 
+	   }
+}
+
 
 -- here we go
-print("-----------------------------------------------------------")
 init(fsm)
-send(fsm, "invalid-event")
-send(fsm, "on-button")
-send(fsm, "off-button")
-send(fsm, "on-button")
+-- send(fsm, "invalid-event")
+-- send(fsm, "on-button")
+-- send(fsm, "off-button")
+-- send(fsm, "on-button")
 
-print(table.tostring(fsm))
-run(fsm, 100)
-print(table.tostring(fsm))
+run(fsm, math.huge)
 print("total transitions done: ", tc)
