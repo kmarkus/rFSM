@@ -73,10 +73,13 @@ end
 
 -- these checks should be moved to initalization
 function run_prog(p)
-   if type(p) == "string" then eval(p)
-   elseif type(p) == "function" then p()
+   if type(p) == "string" then 
+      return eval(p)
+   elseif type(p) == "function" then
+      return p()
    else
       err("unknown program type: ", p)
+      return false
    end
 end
 
@@ -98,8 +101,8 @@ function step(fsm)
    local trans = select_transition(cur_state, event)
    
    if not trans then
-      warn('no transition for event', event, 'in state', cur_state.name, 'dropping.')
-      return false
+      warn('no transition for event', event, 'in state', cur_state.name, '- dropping.')
+      return true
    end
 
    dbg("selected transition: ", table.tostring(trans))
@@ -107,21 +110,38 @@ function step(fsm)
    dbg("new_state: ", table.tostring(new_state))
 
    if trans.guard then
-      if not eval(trans.guard) then
-	 return count
+      if not run_prog(trans.guard) then
+	 return true
       end
    end
       
-   -- execute transition, RTCS starts here
+   -- execute transition:
+   -- RTCS starts here
    if cur_state.exit then run_prog(cur_state.exit) end
    if trans.effect then run_prog(trans.effect) end
    if new_state.entry then run_prog(new_state.entry) end
    fsm.cur_state = new_state.name
    -- RTCS ends here
 
+   -- this could be moved into a coroutine implementing history states
+   -- and (voluntary) do preemption
    if new_state.doo then run_prog(new_state.doo) end
    
    return true
+end
+
+-- do maximum max_steps stupersteps
+function run(fsm, max_steps)
+   print("max_steps: ", max_steps)
+   if max_steps == 0 then
+      return 0
+   else
+      if not step(fsm) then
+	 return 0
+      else
+	 return 1 + run(fsm, max_steps - 1)
+      end
+   end
 end
 
 -- get an event from the queue
@@ -146,37 +166,37 @@ dofile("../mylib/misc.lua")
 dofile("../mylib/functional.lua")
 
 -- sample statemachine
+
+-- transition counter
+tc = 0 
+
 fsm = { 
    inital_state = "off", 
    states = { { 
 		 name = "on", 
-		 entry = function () print('entry from on function') end,
+		 entry = function () print('entry ON') end,
 		 doo = "print('inside on do')", 
 		 exit = "print('inside on exit')", 
-		 transitions = { { event="off-button", target="off" } } },
+		 transitions = { { event="off-button", target="off", effect="tc=tc+1" } } },
 	      { 
 		 name = "off", 
-		 entry = "print('entry off')", 
+		 entry = "print('entry OFF')", 
 		 doo = "print('inside off do')", 
 		 exit = "print('inside off exit')",
-		 transitions = { { event="on-button", target="on" } } } 
+		 transitions = { { event="on-button", target="on", effect="tc=tc+1" } } } 
 	   }
 }
 
 
 -- here we go
--- eval(fsm.states.name)
+print("-----------------------------------------------------------")
 init(fsm)
 send(fsm, "invalid-event")
 send(fsm, "on-button")
 send(fsm, "off-button")
-send(fsm, "off-button")
-send(fsm, "off-button")
-step(fsm)
-step(fsm)
-step(fsm)
-step(fsm)
-step(fsm)
-step(fsm)
+send(fsm, "on-button")
 
-
+print(table.tostring(fsm))
+run(fsm, 100)
+print(table.tostring(fsm))
+print("total transitions done: ", tc)
