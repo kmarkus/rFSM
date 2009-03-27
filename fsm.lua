@@ -14,14 +14,13 @@ function verify_fsm(fsm)
 end
 
 -- debugging helpers
-function dbg(...) return nil end
 
--- function dbg(...)
---    arg.n = nil
---    io.write("DEBUG: ")
---    map(function (e) io.write(e, " ") end, arg)
---    io.write("\n")
--- end
+function dbg(...)
+   arg.n = nil
+   io.write("DEBUG: ")
+   map(function (e) io.write(e, " ") end, arg)
+   io.write("\n")
+end
 
 function warn(...)
    arg.n = nil
@@ -125,7 +124,7 @@ function step(fsm)
    -- RTCS ends here
 
    -- this could be moved into a coroutine implementing history states
-   -- and (voluntary) do preemption ...later.
+   -- and (voluntary) preemption ...later.
    if new_state.doo then run_prog(new_state.doo) end
    
    return true
@@ -161,6 +160,11 @@ end
 function init(fsm)
    if not fsm.queue then fsm.queue = {} end
    fsm.cur_state = fsm.inital_state
+
+   -- this should be allowed to be a user overridable function
+   nullfunc = function () return true end
+   if not fsm.debug then dbg = nullfunc end
+   if fsm.warn == false then warn = nullfunc end
 end
 
 -- imports

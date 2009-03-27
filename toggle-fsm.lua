@@ -1,6 +1,8 @@
 -- sample fsm which simply toggles between on and off states
 
 fsm = { 
+   -- debug = true, default is off
+   -- bad idea: warn = false, default is on
    inital_state = "off", 
    states = { { 
 		 name = "on", 
