@@ -65,7 +65,7 @@ function select_transition(state, event)
 		end
 	     end, state.transitions)
    if #transitions > 1 then
-      warn("multiple valid transitions found, using first")
+      warn("multiple valid transitions found, using first (->", transitions[1].target, ")")
    end
    return transitions[1]
 end
@@ -125,22 +125,22 @@ function step(fsm)
    -- RTCS ends here
 
    -- this could be moved into a coroutine implementing history states
-   -- and (voluntary) do preemption
+   -- and (voluntary) do preemption ...later.
    if new_state.doo then run_prog(new_state.doo) end
    
    return true
 end
 
 -- do maximum max_steps stupersteps
+-- return max_steps - steps done
 function run(fsm, max_steps)
-   -- print("max_steps: ", max_steps)
    if max_steps == 0 then
       return 0
    else
       if not step(fsm) then
-	 return 0
+	 return max_steps
       else
-	 -- not tail recursive! return 1+ run(fsm, max_steps - 1)
+	 -- no tail call: return 1+ run(fsm, max_steps - 1)
 	 return run(fsm, max_steps - 1)
       end
    end
@@ -167,53 +167,10 @@ end
 dofile("../mylib/misc.lua")
 dofile("../mylib/functional.lua")
 
--- sample statemachine
+-- run argv[1]
+if #arg < 1 then
+   print("usage:", arg[0], "<fsm file>")
+   os.exit(1)
+end
 
--- transition counter
-tc = 0 
-
-fsm1 = { 
-   inital_state = "off", 
-   states = { { 
-		 name = "on", 
-		 entry = function () print('entry ON') end,
-		 doo = "print('inside on do')", 
-		 exit = "print('inside on exit')", 
-		 transitions = { { event="off-button", target="off", effect="tc=tc+1" } } },
-	      { 
-		 name = "off", 
-		 entry = "print('entry OFF')", 
-		 doo = "print('inside off do')", 
-		 exit = "print('inside off exit')",
-		 transitions = { { event="on-button", target="on", effect="tc=tc+1" } } } 
-	   }
-}
-
-max_trans = 10000
-
-fsm = { 
-   inital_state = "pinging",
-   queue = { "pong" },
-   states = { { 
-		 name = "pinging", 
-		 entry = function () if tc < max_trans then send(fsm, "pong") end end,
---		 doo = "print('pinging do')",
-		 transitions = { { event="pong", target="ponging", effect="tc=tc+1" } } },
-	      { 
-		 name = "ponging", 
-		 entry = "send(fsm, 'ping')",
---		 doo = "print('poining do')",
-		 transitions = { { event="ping", target="pinging", effect="tc=tc+1" } } } 
-	   }
-}
-
-
--- here we go
-init(fsm)
--- send(fsm, "invalid-event")
--- send(fsm, "on-button")
--- send(fsm, "off-button")
--- send(fsm, "on-button")
-
-run(fsm, math.huge)
-print("total transitions done: ", tc)
+dofile(arg[1])
