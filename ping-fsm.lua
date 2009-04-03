@@ -2,7 +2,7 @@
 -- a "self feeding" fsm which generates events itself
 --
 
-max_trans = 10000
+max_trans = 100000
 tcnt = 0
 
 fsm = { 
@@ -10,14 +10,19 @@ fsm = {
    queue = { "pong" },
    states = { { 
 		 name = "pinging", 
-		 entry = function () if tcnt < max_trans then send(fsm, "pong") end end,
---		 doo = "print('pinging do')",
-		 transitions = { { event="pong", target="ponging", effect="tcnt=tcnt+1" } } },
+		 entry = function () 
+			    if tcnt < max_trans then
+			       send(fsm, "pong") 
+			 end end,
+		 transitions = { { event="pong", 
+				   target="ponging", 
+				   effect="tcnt=tcnt+1" } } },
 	      { 
 		 name = "ponging", 
 		 entry = "send(fsm, 'ping')",
---		 doo = "print('poining do')",
-		 transitions = { { event="ping", target="pinging", effect="tcnt=tcnt+1" } } } 
+		 transitions = { { event="ping",
+				   target="pinging", 
+				   effect="tcnt=tcnt+1" } } } 
 	   }
 }
 
