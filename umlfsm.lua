@@ -39,8 +39,46 @@ local function filter(f, tab)
    return newtab
 end
 
+local function foldr(func, val, tab)
+   for i,v in pairs(tab) do
+      val = func(val, v)
+   end
+   return val
+end
+
+local function AND(a, b)
+   return a and b
+end
+
 local function eval(str)
    return assert(loadstring(str))()
+end
+
+-- precompile strings for speed
+function precompile_fsm(fsm)
+   function precompile_state(state)
+      function pc_str(str)
+	 if str and type(str) ~= "function" then
+	    local f = loadstring(str)
+	    if f then
+	       str = f
+	       return true
+	    else
+	       fsm.err("FSM Error: failed to precompile program string: '" .. str .. "'")
+	       return false end end end
+      
+      -- precompile all transition effects
+      if not foldr(AND, true, map(function (trans) 
+				     pc_str(trans.effect)
+				  end, state.transitions)) then
+	 return false
+      end
+      
+      return pc_str(state.entry) and pc_str(state.doo) and pc_str(state.exit)
+   end
+
+   return foldr(AND, true, map(precompile_state, fsm.states))
+
 end
 
 -- do some rough integrity checking
@@ -84,13 +122,13 @@ function verify_fsm(fsm)
       end
    end
    
-   --  unknown table attributes -> e.g. detect typos
+   --  unknown table attributes -> e.g. detect typos tbd
 
    -- all ok
    return true
 end
-   
-   -- get current state optimize later with lookup table
+
+-- get current state optimize later with lookup table
 function get_cur_state(fsm)
    return get_state_by_name(fsm, fsm.cur_state)
 end
@@ -216,16 +254,16 @@ function init(fsm)
    -- setup logging
    local nullprint = function () return true end
 
-   if not fsm.err then fsm.err = print end
+   fsm.err = fsm.err or print
 
    if fsm.no_warn then
       fsm.warn = nullprint
    else
-      if not fsm.warn then fsm.warn = print end
+      fsm.warn = fsm.warn or print
    end
    
    if fsm.debug then 
-      if not fsm.dbg then fsm.dbg = print end
+      fsm.dbg = fsm.dbg or print
    else
       fsm.dbg = nullprint
    end
@@ -233,6 +271,10 @@ function init(fsm)
    -- check integrity
    if not verify_fsm(fsm) then
       return false
+   end
+
+   if not precompile_fsm(fsm) then
+         return false
    end
 
    if not fsm.queue then fsm.queue = {} end
