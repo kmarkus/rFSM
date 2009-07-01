@@ -1,43 +1,64 @@
 --
--- simple lua UML 2.0 state machine
+--  Lua based UML 2.0 finite state machine engine
 -- 
 
+-- create a dictionary of states
+local function get_state_dict(fsm)
+   local dict = {}
+   for i,s in ipairs(fsm.states) do
+      if s.name then dict[s.name] = s end
+   end
+   return dict
+end
+
+-- do some rough integrity checking
 function verify_fsm(fsm)
-   -- checks:
-   --  no duplicate states
-   --  no transitions to invalid states
-   --  unknown table attributes -> e.g. detect typos
+
    --  each fsm has initial_state
-   --  each state has a name
-   --  each transition has target
+   if not fsm.initial_state then
+      fsm.err("FSM Error: no initial_state defined.")
+      return false
+   end
+
+   local nodupl = {}
+   local state_dict = get_state_dict(fsm)
+   
+   for i,state in ipairs(fsm.states) do
+
+      -- check for nameless states
+      if not state.name or state.name == "" then
+	 fsm.err("FSM Error: state #" .. i .. " without name")
+	 return false
+      end
+
+      -- check for identically named states
+      if nodupl[state.name] then
+	 fsm.err("FSM Error: states " .. nodupl[state.name] .. " and " .. i ..  " with same name '"..  state.name .. "'")
+      else
+	 nodupl[state.name] = i
+      end
+
+      -- check for states without outgoing transitions
+      if not state.transitions then
+	 fsm.warn("FSM Warning: no outgoing transitions from state '" .. state.name .. "'")
+      else
+	 -- check for invalid transition targets
+	 for i,trans in ipairs(state.transitions) do
+	    if not state_dict[trans.target] then
+	       fsm.err("FSM Error: in state '" .. state.name .. "' unknown transition target state '" .. trans.target .. "'")
+	       return false
+	    end
+	 end
+      end
+   end
+   
+   --  unknown table attributes -> e.g. detect typos
+
+   -- all ok
    return true
 end
-
--- debugging helpers
-
-function dbg(...)
-   arg.n = nil
-   io.write("DEBUG: ")
-   map(function (e) io.write(e, " ") end, arg)
-   io.write("\n")
-end
-
-function warn(...)
-   arg.n = nil
-   io.write("WARN: ")
-   map(function (e) io.write(e, " ") end, arg)
-   io.write("\n")
-end
-
-function err(...)
-   arg.n = nil
-   io.write("ERROR: ")
-   map(function (e) io.write(e, " ") end, arg)
-   io.write("\n")
-end
-
-
--- get current state
+   
+   -- get current state optimize later with lookup table
 function get_cur_state(fsm)
    return get_state_by_name(fsm, fsm.cur_state)
 end
@@ -64,7 +85,7 @@ function select_transition(state, event)
 		end
 	     end, state.transitions)
    if #transitions > 1 then
-      warn("multiple valid transitions found, using first (->", transitions[1].target, ")")
+      fsm.warn("FSM Warning: multiple valid transitions found, using first (->", transitions[1].target, ")")
    end
    return transitions[1]
 end
@@ -78,7 +99,7 @@ function run_prog(p)
    elseif type(p) == "function" then
       return p()
    else
-      err("unknown program type: ", p)
+      fsm.err("FSM Error: unknown program type: ", p)
       return false
    end
 end
@@ -89,39 +110,40 @@ function step(fsm)
    local event = pick_event(fsm)
    
    if event == nil then
-      dbg("event queue empty")
+      fsm.dbg("FSM Debug: event queue empty")
       return false
    else 
-      dbg("got event: ", event)
+      fsm.dbg("FSM Debug: got event: ", event)
    end
    
    local cur_state = get_cur_state(fsm)
-   dbg("cur_state: ", table.tostring(cur_state))
+   fsm.dbg("FSM Debug: cur_state: ", table.tostring(cur_state))
 
    local trans = select_transition(cur_state, event)
    
    if not trans then
-      warn('no transition for event', event, 'in state', cur_state.name, '- dropping.')
+      fsm.warn("FSM Warning: no transition for event '" .. event .. "' in state '" .. cur_state.name .. "' - dropping.")
       return true
    end
 
-   dbg("selected transition: ", table.tostring(trans))
+   fsm.dbg("FSM Debug: selected transition: ", table.tostring(trans))
    local new_state = get_state_by_name(fsm, trans.target)
-   dbg("new_state: ", table.tostring(new_state))
+   fsm.dbg("FSM Debug: new_state: ", table.tostring(new_state))
 
    if trans.guard then
+      -- guard inhibits transition
       if not run_prog(trans.guard) then
 	 return true
       end
    end
       
    -- execute transition:
-   -- RTCS starts here
+   -- Run-to-completion step starts here
    if cur_state.exit then run_prog(cur_state.exit) end
    if trans.effect then run_prog(trans.effect) end
    if new_state.entry then run_prog(new_state.entry) end
    fsm.cur_state = new_state.name
-   -- RTCS ends here
+   -- Run-to-completion step ends here
 
    -- this could be moved into a coroutine implementing history states
    -- and (voluntary) preemption ...later.
@@ -158,13 +180,33 @@ end
 
 -- initalize state machine
 function init(fsm)
-   if not fsm.queue then fsm.queue = {} end
-   fsm.cur_state = fsm.inital_state
 
-   -- this should be allowed to be a user overridable function
-   nullfunc = function () return true end
-   if not fsm.debug then dbg = nullfunc end
-   if fsm.warn == false then warn = nullfunc end
+   -- setup logging
+   local nullprint = function () return true end
+
+   if not fsm.err then fsm.err = print end
+
+   if fsm.no_warnings then
+      fsm.warn = nullprint
+   else
+      if not fsm.warn then fsm.warn = print end
+   end
+   
+   if fsm.debug then 
+      if not fsm.dbg then fsm.dbg = print end
+   else
+      fsm.dbg = nullprint
+   end
+
+   -- check integrity
+   if not verify_fsm(fsm) then
+      return false
+   end
+
+   if not fsm.queue then fsm.queue = {} end
+   fsm.cur_state = fsm.initial_state
+
+   return true
 end
 
 -- imports

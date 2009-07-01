@@ -3,7 +3,7 @@
 fsm = { 
    -- debug = true, default is off
    -- bad idea: warn = false, default is on
-   inital_state = "off", 
+   initial_state = "off", 
    states = { { 
 		 name = "on", 
 		 entry = function () print('entry ON') end,
@@ -15,7 +15,7 @@ fsm = {
 		 entry = "print('entry OFF')", 
 		 doo = "print('inside off do')", 
 		 exit = "print('inside off exit')",
-		 transitions = { { event="on-button", target="on", effect="print('in transition to on')" } } } 
+		 transitions = { { event="on-button", target="on", effect="print('in transition to on')" } } }
 	   }
 }
 

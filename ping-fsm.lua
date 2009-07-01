@@ -6,7 +6,7 @@ max_trans = 100000
 tcnt = 0
 
 fsm = { 
-   inital_state = "pinging",
+   initial_state = "pinging",
    queue = { "pong" },
    states = { { 
 		 name = "pinging", 
