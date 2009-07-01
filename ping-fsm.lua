@@ -7,6 +7,7 @@ tcnt = 0
 
 fsm = { 
    initial_state = "pinging",
+   queue = { "pong" },
    states = { { 
 		 name = "pinging", 
 		 entry = function () 
