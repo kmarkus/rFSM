@@ -2,6 +2,15 @@
 --  Lua based UML 2.0 finite state machine engine
 -- 
 
+local pairs, ipairs, print, table, type, loadstring, assert
+   = pairs, ipairs, print, table, type, loadstring, assert
+
+module("umlfsm")
+
+--
+-- miscellaneous (local) helpers
+--
+
 -- create a dictionary of states
 local function get_state_dict(fsm)
    local dict = {}
@@ -9,6 +18,29 @@ local function get_state_dict(fsm)
       if s.name then dict[s.name] = s end
    end
    return dict
+end
+
+local function map(f, tab)
+   local newtab = {}
+   for i,v in pairs(tab) do
+      res = f(v)
+      table.insert(newtab, res)
+   end
+   return newtab
+end
+
+local function filter(f, tab)
+   local newtab= {}
+   for i,v in pairs(tab) do
+      if f(v) then
+	 table.insert(newtab, v)
+      end
+   end
+   return newtab
+end
+
+local function eval(str)
+   return assert(loadstring(str))()
 end
 
 -- do some rough integrity checking
@@ -117,7 +149,7 @@ function step(fsm)
    end
    
    local cur_state = get_cur_state(fsm)
-   fsm.dbg("FSM Debug: cur_state: ", table.tostring(cur_state))
+   fsm.dbg("FSM Debug: cur_state: '" .. cur_state.name .. "'")
 
    local trans = select_transition(cur_state, event)
    
@@ -126,9 +158,9 @@ function step(fsm)
       return true
    end
 
-   fsm.dbg("FSM Debug: selected transition: ", table.tostring(trans))
+   fsm.dbg("FSM Debug: selected transition with target '" ..  trans.target .. "'")
    local new_state = get_state_by_name(fsm, trans.target)
-   fsm.dbg("FSM Debug: new_state: ", table.tostring(new_state))
+   fsm.dbg("FSM Debug: new_state: '" .. new_state.name .. "'")
 
    if trans.guard then
       -- guard inhibits transition
@@ -186,7 +218,7 @@ function init(fsm)
 
    if not fsm.err then fsm.err = print end
 
-   if fsm.no_warnings then
+   if fsm.no_warn then
       fsm.warn = nullprint
    else
       if not fsm.warn then fsm.warn = print end
@@ -208,15 +240,3 @@ function init(fsm)
 
    return true
 end
-
--- imports
-dofile("../mylib/misc.lua")
-dofile("../mylib/functional.lua")
-
--- run argv[1]
-if #arg < 1 then
-   print("usage:", arg[0], "<fsm file>")
-   os.exit(1)
-end
-
-dofile(arg[1])

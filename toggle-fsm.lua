@@ -2,8 +2,10 @@
 
 fsm = { 
    -- debug = true, default is off
-   -- bad idea: warn = false, default is on
+   -- no_warn defaults to false
+   -- no_warn = true,
    initial_state = "off", 
+   queue = { "on-button" },
    states = { { 
 		 name = "on", 
 		 entry = function () print('entry ON') end,
@@ -20,7 +22,10 @@ fsm = {
 }
 
 -- here we go
-init(fsm)
+require("umlfsm")
+send, step = umlfsm.send, umlfsm.step
+
+umlfsm.init(fsm)
 send(fsm, "on-button")
 send(fsm, "off-button")
 send(fsm, "on-button")

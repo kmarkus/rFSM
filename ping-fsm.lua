@@ -7,28 +7,28 @@ tcnt = 0
 
 fsm = { 
    initial_state = "pinging",
-   queue = { "pong" },
    states = { { 
 		 name = "pinging", 
 		 entry = function () 
 			    if tcnt < max_trans then
-			       send(fsm, "pong") 
+			       umlfsm.send(fsm, "pong") 
 			 end end,
 		 transitions = { { event="pong", 
 				   target="ponging", 
 				   effect="tcnt=tcnt+1" } } },
 	      { 
 		 name = "ponging", 
-		 entry = "send(fsm, 'ping')",
+		 entry = "umlfsm.send(fsm, 'ping')",
 		 transitions = { { event="ping",
 				   target="pinging", 
 				   effect="tcnt=tcnt+1" } } } 
 	   }
 }
 
--- here we go
-init(fsm)
+require("umlfsm")
 
--- math.huge is an infinite number
-run(fsm, math.huge)
+-- here we go
+umlfsm.init(fsm)
+umlfsm.run(fsm, math.huge)
+
 print("total transitions: ", tcnt)
