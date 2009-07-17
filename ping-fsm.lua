@@ -30,6 +30,6 @@ require("umlfsm")
 
 -- here we go
 umlfsm.init(fsm)
-umlfsm.run(fsm, math.huge)
+umlfsm.step(fsm)
 
 print("total transitions: ", tcnt)
