@@ -1,9 +1,9 @@
 --
---  Lua based UML 2.0 finite state machine engine
+--  Lua based UML 2.1 finite state machine engine
 -- 
 
-local pairs, ipairs, print, table, type, loadstring, assert
-   = pairs, ipairs, print, table, type, loadstring, assert
+local pairs, ipairs, print, table, type, loadstring, assert, coroutine
+   = pairs, ipairs, print, table, type, loadstring, assert, coroutine
 
 module("umlfsm")
 
@@ -81,7 +81,9 @@ function precompile_fsm(fsm)
 
 end
 
+--
 -- do some rough integrity checking
+--
 function verify_fsm(fsm)
 
    --  each fsm has initial_state
@@ -128,42 +130,9 @@ function verify_fsm(fsm)
    return true
 end
 
--- get current state optimize later with lookup table
-function get_cur_state(fsm)
-   return get_state_by_name(fsm, fsm.cur_state)
-end
-
--- return a state specified by string
-function get_state_by_name(fsm, name)
-   local state = 
-      filter(function (s)
-		if s.name == name then
-		   return true
-		else return false
-		end
-	     end, fsm.states)
-   return state[1]
-end
-
--- transitions selection algorithm
-function select_transition(state, event)
-   transitions =
-      filter(function (t)
-		if t.event == event then
-		   return true
-		else return false
-		end
-	     end, state.transitions)
-   if #transitions > 1 then
-      fsm.warn("FSM Warning: multiple valid transitions found, using first (->", transitions[1].target, ")")
-   end
-   return transitions[1]
-end
-
-
 -- these checks should be moved to initalization 
 -- and strings transformed to functions
-function run_prog(p)
+local function run_prog(fsm, p)
    if type(p) == "string" then 
       return eval(p)
    elseif type(p) == "function" then
@@ -174,73 +143,106 @@ function run_prog(p)
    end
 end
 
--- additional parameter: maxsteps required
--- returns number of steps performed
-function step(fsm)
-   local event = pick_event(fsm)
-   
-   if event == nil then
-      fsm.dbg("FSM Debug: event queue empty")
-      return false
-   else 
-      fsm.dbg("FSM Debug: got event: ", event)
+-- return a state specified by string
+local function get_state_by_name(fsm, name)
+   local state = 
+      filter(function (s)
+		if s.name == name then
+		   return true
+		else return false
+		end
+	     end, fsm.states)
+   return state[1]
+end
+
+-- get current state optimize later with lookup table
+local function get_cur_state(fsm)
+   return get_state_by_name(fsm, fsm.cur_state)
+end
+
+-- get an event from the queue
+local function pick_event(fsm)
+   -- tbd: take deferred events into account
+   return table.remove(fsm.queue, 1)
+end
+
+-- get an event from the queue
+local function has_events(fsm)
+   return #fsm.queue
+end
+
+-- transitions selection algorithm
+-- tbd: check guard conditions
+local function select_transition(fsm, state, event)
+   transitions =
+      filter(function (t)
+		if t.event == event then
+		   if t.guard then 
+		      return run_prog(fsm, t.guard)
+		   else 
+		      return true
+		   end
+		else
+		   return false
+		end
+	     end, state.transitions)
+   if #transitions > 1 then
+      fsm.warn("FSM Warning: multiple valid transitions found, using first (->", transitions[1].target, ")")
    end
+   return transitions[1]
+end
+
+
+-- perform the atomic transition to a new state
+-- returns: true if transitioned (at least once), false otherwise
+local function run_to_completion(fsm, event)
+   
+   if not event then return false end
    
    local cur_state = get_cur_state(fsm)
    fsm.dbg("FSM Debug: cur_state: '" .. cur_state.name .. "'")
 
-   local trans = select_transition(cur_state, event)
+   local trans = select_transition(fsm, cur_state, event)
    
    if not trans then
       fsm.warn("FSM Warning: no transition for event '" .. event .. "' in state '" .. cur_state.name .. "' - dropping.")
-      return true
+      return false
    end
 
    fsm.dbg("FSM Debug: selected transition with target '" ..  trans.target .. "'")
    local new_state = get_state_by_name(fsm, trans.target)
    fsm.dbg("FSM Debug: new_state: '" .. new_state.name .. "'")
 
-   if trans.guard then
-      -- guard inhibits transition
-      if not run_prog(trans.guard) then
-	 return true
-      end
-   end
-      
    -- execute transition:
    -- Run-to-completion step starts here
-   if cur_state.exit then run_prog(cur_state.exit) end
-   if trans.effect then run_prog(trans.effect) end
-   if new_state.entry then run_prog(new_state.entry) end
+   if cur_state.exit then run_prog(fsm, cur_state.exit) end
+   if trans.effect then run_prog(fsm, trans.effect) end
+   if new_state.entry then run_prog(fsm, new_state.entry) end
    fsm.cur_state = new_state.name
    -- Run-to-completion step ends here
-
-   -- this could be moved into a coroutine implementing history states
-   -- and (voluntary) preemption ...later.
-   if new_state.doo then run_prog(new_state.doo) end
-   
    return true
 end
 
--- do maximum max_steps stupersteps
--- return max_steps - steps done
-function run(fsm, max_steps)
-   if max_steps == 0 then
-      return 0
-   else
-      if not step(fsm) then
-	 return max_steps
-      else
-	 -- no tail call: return 1+ run(fsm, max_steps - 1)
-	 return run(fsm, max_steps - 1)
+-- advance the state machine
+function step(fsm)
+
+   if not run_to_completion(fsm, pick_event(fsm)) then
+      return false
+   end
+   
+   local new_state = get_cur_state(fsm)
+   print("FSM Debug: now in state: " .. new_state.name)
+   -- proper doo with voluntary preemption
+   if new_state.doo then
+      local co = coroutine.create(new_state.doo)
+      while has_events(fsm) == 0 do
+	 coroutine.resume(co)
+	 if coroutine.status(co) == "dead" then
+	    break
+	 end
       end
    end
-end
-
--- get an event from the queue
-function pick_event(fsm)
-   -- tbd: take deferred events into account
-   return table.remove(fsm.queue, 1)
+   return step(fsm)
 end
 
 -- store an event in the queue
