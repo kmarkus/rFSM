@@ -11,6 +11,16 @@ module("umlfsm")
 -- miscellaneous (local) helpers
 --
 
+-- recursively print table
+function print_tab(tab, indstr, indnum)
+   table.foreach(tab, function (i, v)
+			 print(string.rep(indstr, indnum) .. i,v)
+			 if type(v) == 'table' then
+			    print_tab(v, indstr, indnum + 1)
+			 end
+		      end)
+end
+
 -- create a dictionary of states
 local function get_state_dict(fsm)
    local dict = {}
@@ -103,6 +113,11 @@ function verify_fsm(fsm)
 	 return false
       end
 
+      -- check for composite without initial
+      if state.states and not state.initial then
+	 fsm.err("FSM Error: composite state " .. state.name .. " lacks initial state")
+      end
+
       -- check for identically named states
       if nodupl[state.name] then
 	 fsm.err("FSM Error: states " .. nodupl[state.name] .. " and " .. i ..  " with same name '"..  state.name .. "'")
@@ -128,6 +143,25 @@ function verify_fsm(fsm)
 
    -- all ok
    return true
+end
+
+-- find least common ancestor
+local function find_LCA(fsm, s1, s2)
+end
+
+-- resolve all string transition targets
+local function resolve_links(fsm)
+end
+
+-- add 'parent' links to FSM tree
+local function add_parent_links(child, parent)
+   child.parent = parent
+   if child.states then
+      table.foreach(function (state)
+		       add_parent_links(state, child)
+		    end,
+		    child.states)
+   end
 end
 
 -- these checks should be moved to initalization 
@@ -223,25 +257,52 @@ local function run_to_completion(fsm, event)
    return true
 end
 
--- advance the state machine
-function step(fsm)
+function enter(root, state)
+   root.dbg("FSM Debug: entering " .. state.name)
+   run_prog(root, state.entry)
+   state.active = true
 
-   if not run_to_completion(fsm, pick_event(fsm)) then
-      return false
+   -- if composite, continue
+   if not state.states then
+      table.insert(root.al, state)
+      return
+   else
+      
    end
-   
-   local new_state = get_cur_state(fsm)
-   print("FSM Debug: now in state: " .. new_state.name)
-   -- proper doo with voluntary preemption
-   if new_state.doo then
-      local co = coroutine.create(new_state.doo)
-      while has_events(fsm) == 0 do
-	 coroutine.resume(co)
-	 if coroutine.status(co) == "dead" then
-	    break
-	 end
+end
+
+function exit(root, state)
+   root.dbg("FSM Debug: exiting " .. state.name)
+   run_prog(root, state.exit)
+   state.active = false
+end
+
+--
+-- advance the state machine
+--
+function step(root)
+
+   -- if no states are active we must enter the fsm
+   if #root.actstack == 0 then 
+      enter(root)
+   else
+      if not run_to_completion(root, pick_event(fsm)) then
+	 return false
       end
    end
+   
+   --    local new_state = get_cur_state(fsm)
+   --    print("FSM Debug: now in state: " .. new_state.name)
+   --    -- proper doo with voluntary preemption
+   --    if new_state.doo then
+   --       local co = coroutine.create(new_state.doo)
+   --       while has_events(fsm) == 0 do
+   -- 	 coroutine.resume(co)
+   -- 	 if coroutine.status(co) == "dead" then
+   -- 	    break
+   -- 	 end
+   --       end
+   --    end
    return step(fsm)
 end
 
@@ -279,8 +340,11 @@ function init(fsm)
          return false
    end
 
+   -- event queue is empty
    if not fsm.queue then fsm.queue = {} end
-   fsm.cur_state = fsm.initial_state
+
+   -- active stack is empty
+   fsm.actstack = {}
 
    return true
 end
