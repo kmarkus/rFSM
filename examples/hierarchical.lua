@@ -40,7 +40,7 @@ composite = {
    
    -- a table of simple states
    states = { {
-		 name = 'off',
+		 id = 'off',
 		 entry = function () print("off: entry") end,
 		 doo = function () print("off: doo") end,
 		 exit = function () print("off: exit") end,
@@ -48,7 +48,7 @@ composite = {
 				 { event='e_on', target='on' } }
 	      },
 	      {
-		 name = 'on',
+		 id = 'on',
 		 entry = function () turn_motor_on() end,
 		 doo = function () print("on: doo") end,
 		 exit = function () print("on: exit") end,
@@ -60,32 +60,34 @@ composite = {
 -- parallel state
 --   - 'parallel': table of composite or parallel states
 orthogonal_region = {
-   parallel={ composite, composite }
+   id = 'homing',
+   parallel={ composite, composite },
+   transitions = { }
 }
 
 root = {
    id = 'rtt_toplevel',
    initial = 's_init',
    states = { {
-		 name = 's_init', 
+		 id = 's_init', 
 		 entry = 'print("initalizing")',
 		 exit = 'print("exiting s_init state")',
 		 transitions = { { event='e_start', target='s_running' } } }, 
 	      {
-		 name = 's_stopped',
+		 id = 's_stopped',
 		 entry = 'print("entering s_stopped state")',
 		 transitions = { { event='e_reset', target="s_init", effect='print("reseting")' },
 				 { event='e_start', target="s_running", effect='print("restarting")' } } },
 	      {
-		 name = 's_running',
+		 id = 's_running',
 		 initial = 's_working',
 		 states = { { 
-			       name = 's_working',
+			       id = 's_working',
 			       entry = 'print("entering state s_working ")',
 			       doo = 'print("processing in state s_working")',
 			       transitions = { { event = 'e_obj_close', target = 's_obj_near' } } }, 
 			    { 
-			       name = 's_obj_close',
+			       id = 's_obj_close',
 			       entry = 'print("entering s_obj_close state")',
 			       doo = 'print("processing in s_obj_close_state")',
 			       transitions = { { event = 'e_range_free', target = 's_working' } } }
@@ -96,7 +98,7 @@ root = {
 }
 
 -- andFSM = {
---    name = 'orthogonal_test',
+--    id = 'orthogonal_test',
 --    parallel = { {
 -- 		   doo = function ()
 -- 			    do_step()
