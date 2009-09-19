@@ -30,6 +30,25 @@ local function get_state_dict(fsm)
    return dict
 end
 
+-- util functions
+local function deepcopy(object)
+   local lookup_table = {}
+   local function _copy(object)
+      if type(object) ~= "table" then
+            return object
+      elseif lookup_table[object] then
+	 return lookup_table[object]
+      end
+      local new_table = {}
+      lookup_table[object] = new_table
+      for index, value in pairs(object) do
+	 new_table[_copy(index)] = _copy(value)
+      end
+      return setmetatable(new_table, getmetatable(object))
+   end
+   return _copy(object)
+end
+
 local function map(f, tab)
    local newtab = {}
    for i,v in pairs(tab) do
@@ -62,6 +81,15 @@ end
 
 local function eval(str)
    return assert(loadstring(str))()
+end
+
+-- makestate create a state from a template
+function make_state(templ, vartab)
+   ns = deepcopy(templ)
+   for k,v in pairs(vartab) do
+      ns[k] = v
+   end
+   return ns
 end
 
 -- precompile strings for speed

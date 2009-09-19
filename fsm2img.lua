@@ -2,37 +2,23 @@
 
 require("gv")
 
+local pairs, ipairs, print, table, type, assert, gv, io
+   = pairs, ipairs, print, table, type, assert, gv, io
+
+module("fsm2img")
+
 param = {}
 param.fontsize = 12.0
 param.trfontsize = 7.0
 param.ndfontsize = 8.0
-param.layout="dot"
-param.format="png"
 param.cs_border_color = "black"
 param.cs_fillcolor = "grey"
-param.viewer = "qiv"
+param.layout="dot"
 
 dbg = print
 
--- util functions
-function deepcopy(object)
-   local lookup_table = {}
-   local function _copy(object)
-      if type(object) ~= "table" then
-            return object
-      elseif lookup_table[object] then
-	 return lookup_table[object]
-      end
-      local new_table = {}
-      lookup_table[object] = new_table
-      for index, value in pairs(object) do
-	 new_table[_copy(index)] = _copy(value)
-      end
-      return setmetatable(new_table, getmetatable(object))
-   end
-   return _copy(object)
-end
 
+-- utils
 local function map(f, tab)
    local newtab = {}
    if not tab then return newtab end
@@ -86,7 +72,7 @@ local function get_shandle(gh, name)
 end
 
 -- create a new graph
-function new_gra(name)
+local function new_gra(name)
    local gh = gv.digraph(name)
    set_props(gh)
    gv.setv(gh, "compound", "true")
@@ -102,7 +88,7 @@ function new_gra(name)
 end
 
 -- create initial state in given parent state
-function new_inista(gh, pstr)
+local function new_inista(gh, pstr)
 
    local ph, type = get_shandle(gh, pstr)
    assert(ph)
@@ -125,7 +111,7 @@ function new_inista(gh, pstr)
 end
 
 -- create final state in given parent
-function new_finsta(gh, pstr)
+local function new_finsta(gh, pstr)
 
    local ph,type = get_shandle(gh, pstr)
    assert(ph)
@@ -149,7 +135,7 @@ function new_finsta(gh, pstr)
 end
 
 -- create a new simple state
-function new_sista(gh, pstr, name, label)
+local function new_sista(gh, pstr, name, label)
 
    local ph,type = get_shandle(gh, pstr)
    assert(ph)
@@ -174,7 +160,7 @@ function new_sista(gh, pstr, name, label)
 end
 
 -- create an new composite state
-function new_csta(gh, parent, name, label)
+local function new_csta(gh, parent, name, label)
 
    local ph = get_shandle(gh, parent)
    assert(ph)
@@ -215,7 +201,7 @@ function new_csta(gh, parent, name, label)
 end
 
 -- new transition
-function new_tr(gh, srcstr, tgtstr, label)
+local function new_tr(gh, srcstr, tgtstr, label)
    
    local sh, shtype = get_shandle(gh, srcstr)
    assert(sh)
@@ -254,7 +240,7 @@ end
 -- convert given fsm to a populated graphviz object
 -- 
 
-function proc_state(gh, parent, state)
+local function proc_state(gh, parent, state)
 
    -- need a final state?
    for i,k in ipairs(state.transitions) do
@@ -278,107 +264,39 @@ function proc_state(gh, parent, state)
    end
 end
 
-function proc_trans(gh, parent, state)
+local function proc_trans(gh, parent, state)
+   print("processing state: ", parent, state.id)
+   if state.initial then
+      new_tr(gh, state.id .. '_initial', state.initial)
+   end
    map(function (t) 
 	  if t.target == 'final' then
-	     new_tr(gh, state.id, parent .. "_" .. t.target, t.event)
+	     new_tr(gh, state.id, parent .. '_final', t.event)
 	  else
 	     new_tr(gh, state.id, t.target, t.event)
 	  end
        end, state.transitions)
-   map(function (t) proc_trans(gh, state.id, state.states) end, state.states)
+   -- map(function (t) proc_trans(gh, state.id, state.states) end, state.states)
+   map(function (s) proc_trans(gh, state.id, s) end, state.states)
 end
 
-function fsm2gh(root)
+local function fsm2gh(root)
    gh = new_gra(root.id)
+   if root.initial then
+      new_inista(gh, root.id)
+   end
    map(function (s) proc_state(gh, root.id, s) end, root.states)
+
+   if root.initial then
+      new_tr(gh, root.id .. '_initial', root.initial)
+   end
+
    map(function (s) proc_trans(gh, root.id, s) end, root.states)
    return gh
 end
 
-function fsm2pic(root, format, outfile)
+function fsm2img(root, format, outfile)
    local gh =fsm2gh(root)
    gv.layout(gh, param.layout)
    gv.render(gh, format, outfile)
 end
-
--- testing
-dofile("examples/hierarchical.lua")
-fsm2pic(composite, "png", "output.png")
-os.execute(param.viewer .. " output.png")
-
---[[ testing
-
-gh=new_gra("FSM-1")
-
-new_inista(gh, "fsm1", "initial")
-new_finsta(gh, "fsm1", "final")
-
-new_csta(gh, "fsm1", "operational", "entry / stopMotors()\nexit startMotors()")
-new_inista(gh, "operational", "initial")
-new_sista(gh, "operational", "stopped", "entry / stopMotors()")
-new_sista(gh, "operational", "working", "entry / startMotors()")
-
-new_csta(gh, "fsm1", "error", "entry / en_breaks()")
-new_inista(gh, "error", "initial")
-new_finsta(gh, "error", "final")
-new_sista(gh, "error", "hw_err", "entry / handleHWErr()")
-new_sista(gh, "error", "sw_err", "entry / handleFault()")
-
-new_csta(gh, "error", "miscerr", "entry / en_breaks()")
-new_inista(gh, "miscerr", "initial")
-new_finsta(gh, "miscerr", "final")
-new_sista(gh, "miscerr", "handle", "entry / handleHWErr()")
-
-new_csta(gh, "operational", "homing", "(parallel state)")
-new_csta(gh, "homing", "homingAx1", "")
-new_csta(gh, "homing", "homingAx2", "")
-new_csta(gh, "homing", "homingAx3", "")
-
-new_inista(gh, "homingAx1", "initial")
-new_sista(gh, "homingAx1", "dohomingAx1")
-new_finsta(gh, "homingAx1", "final")
-new_tr(gh, "homingAx1_initial", "dohomingAx1")
-new_tr(gh, "dohomingAx1", "homingAx1_final")
-
-new_inista(gh, "homingAx2", "initial")
-new_sista(gh, "homingAx2", "dohomingAx2")
-new_finsta(gh, "homingAx2", "final")
-new_tr(gh, "homingAx2_initial", "dohomingAx2")
-new_tr(gh, "dohomingAx2", "homingAx2_final")
-
-new_inista(gh, "homingAx3", "initial")
-new_sista(gh, "homingAx3", "dohomingAx3")
-new_finsta(gh, "homingAx3", "final")
-new_tr(gh, "homingAx3_initial", "dohomingAx3")
-new_tr(gh, "dohomingAx3", "homingAx3_final")
-
--- toplevel
-new_tr(gh, "fsm1_initial", "operational")
-new_tr(gh, "operational", "error", "e_error")
-new_tr(gh, "error", "operational", "e_recovered")
-new_tr(gh, "operational", "fsm1_final", "e_shutdown")
-new_tr(gh, "error", "fsm1_final", "e_shutdown")
-
--- operational
-new_tr(gh, "operational_" .. "initial", "stopped")
-new_tr(gh, "stopped", "working", "e_start")
-new_tr(gh, "working", "stopped", "e_stop")
-
--- error
-new_tr(gh, "error_initial", "hw_err", "[ cur_event('hw_error') ]")
-new_tr(gh, "error_initial", "sw_err", "[ cur_event('sw_error') ]")
-new_tr(gh, "error_initial", "miscerr", "[ cur_event('misc_error') ]")
-new_tr(gh, "hw_err", "error_final", "[ compl('hw_err') ]")
-new_tr(gh, "sw_err", "error_final", "[ compl('sw_err') ]")
-new_tr(gh, "miscerr", "error_final", "[ compl('miscerr') ]")
-
--- miscerr
-new_tr(gh, "miscerr_initial", "handle", "")
-new_tr(gh, "handle", "miscerr_final", "")
-
-
-print("layouting: ", gv.layout(gh, param.layout))
-print("rendering: ", gv.render(gh, param.format, "output." .. param.format))
---]]
-

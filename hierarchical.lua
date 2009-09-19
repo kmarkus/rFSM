@@ -1,6 +1,8 @@
 --
--- simple hierarchical fsm
+-- FSM examples
 --
+
+require("fsm2img")
 
 -- example fsm
 
@@ -54,7 +56,7 @@ orthogonal_region = {
 --   - the target 'final' will exit the composite state
 --   - the target 'terminate' will do exactly that to the fsm
 
-composite = {
+parallel = {
    id = 'motor_control',
    entry = nil,
    exit = nil,
@@ -105,7 +107,7 @@ root = {
 			       id = 's_working',
 			       entry = 'print("entering state s_working ")',
 			       doo = 'print("processing in state s_working")',
-			       transitions = { { event = 'e_obj_close', target = 's_obj_near' } } }, 
+			       transitions = { { event = 'e_obj_close', target = 's_obj_close' } } }, 
 			    { 
 			       id = 's_obj_close',
 			       entry = 'print("entering s_obj_close state")',
@@ -117,25 +119,5 @@ root = {
  	   }
 }
 
--- andFSM = {
---    id = 'orthogonal_test',
---    parallel = { {
--- 		   doo = function ()
--- 			    do_step()
--- 			    coroutine.yield()
--- 			 end
--- 		}, {
-		   
--- 	  } } }
-
-
--- here we go
--- require('umlfsm')
-
--- umlfsm.init(root)
-
--- umlfsm.send(root, 'e_start')
--- umlfsm.send(root, 'e_obj_close')
--- umlfsm.send(root, 'e_range_free')
-
--- umlfsm.step(root)
+fsm2img.fsm2img(parallel, "png", "output.png")
+os.execute("qiv" .. " output.png")
