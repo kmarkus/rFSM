@@ -3,6 +3,9 @@
 --
 
 require("fsm2img")
+require("umlfsm")
+
+make_state=umlfsm.make_state
 
 -- example fsm
 
@@ -20,33 +23,41 @@ simple = {
    doo = function () print("simple_state: doo") end,
    exit = function () print("simple_state: exit") end,
    transitions = { { event='e_quit', target='final', guard=function () return 2>1 end },
-		   { event='e_foo', target='internal' } },
-   deferred = { 'e_bla', 'e_blurb' }
+		   { event='e_foo', target='internal' } }
 }
 
--- parallel state
+
 -- parallel state
 --   - 'parallel': table of composite or parallel states
 
-homeAxA = {
-   id = 'homeAxisA',
-   initial = 'homeStateA',
-   states = { homeState },
-   transitions = { }
+s_homing_tmpl = {
+   id='test',
+   doo = "homeAxis()",
+   transitions = { { event='e_completion', target='final' } }
 }
 
-homeAxB = {
-   id = 'homeAxisB',
-   initial = 'homeStateB',
-   states = { homeState },
-   transitions = { }
+cs_homing_1 = {
+   id = 'cs_home_ax1',
+   initial = 'home_axis1',
+   states = { make_state(s_homing_tmpl, { id='home_axis1', param={ axis=1 } }) }
 }
 
+cs_homing_2 = {
+   id = 'cs_home_ax2',
+   initial = 'home_axis2',
+   states = { make_state(s_homing_tmpl, { id='home_axis2', param={ axis=2 } }) }
+}
+
+cs_homing_3 = {
+   id = 'cs_home_ax3',
+   initial = 'home_axis3',
+   states = { make_state(s_homing_tmpl, { id='home_axis3', param={ axis=3 } }) }
+}
       
 orthogonal_region = {
    id = 'homing',
-   parallel={ homeAxA, homeAxB },
-   transitions = { }
+   parallel={ cs_homing_1, cs_homing_2, cs_homing_3 },
+   transitions = { { event=" e_complete ", target='off' } }
 }
 
 -- composite state
@@ -62,8 +73,6 @@ parallel = {
    exit = nil,
    
    initial = 'off',
-   transitions = { { event='entryOff', target='off' },
-		   { event='entryOn', target='on' } },
    
    -- a table of simple states
    states = { {
@@ -71,16 +80,17 @@ parallel = {
 		 entry = function () print("off: entry") end,
 		 doo = function () print("off: doo") end,
 		 exit = function () print("off: exit") end,
-		 transitions = { { event='e_quit', target='final' },
-				 { event='e_on', target='on' } }
+		 transitions = { { event=' e_quit ', target='homing' },
+				 { event=' e_on ', target='on' } }
 	      },
 	      {
 		 id = 'on',
 		 entry = function () turn_motor_on() end,
 		 doo = function () print("on: doo") end,
 		 exit = function () print("on: exit") end,
-		 transitions = { { event='e_off', target='off' },
-				 { event='e_home', target='homing' } }
+		 transitions = { { event=' e_off ', target='off' },
+				 { event=' e_home ', target='homing' } }
+
 	      },
 	      orthogonal_region,
 	   }
@@ -119,5 +129,5 @@ root = {
  	   }
 }
 
-fsm2img.fsm2img(parallel, "png", "output.png")
+fsm2img.fsm2img(root, "png", "output.png")
 os.execute("qiv" .. " output.png")

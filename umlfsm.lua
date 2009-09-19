@@ -2,8 +2,8 @@
 --  Lua based UML 2.1 finite state machine engine
 -- 
 
-local pairs, ipairs, print, table, type, loadstring, assert, coroutine
-   = pairs, ipairs, print, table, type, loadstring, assert, coroutine
+local pairs, ipairs, print, table, type, loadstring, assert, coroutine, setmetatable, getmetatable
+   = pairs, ipairs, print, table, type, loadstring, assert, coroutine, setmetatable, getmetatable
 
 module("umlfsm")
 
@@ -85,7 +85,7 @@ end
 
 -- makestate create a state from a template
 function make_state(templ, vartab)
-   ns = deepcopy(templ)
+   local ns = deepcopy(templ)
    for k,v in pairs(vartab) do
       ns[k] = v
    end

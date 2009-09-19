@@ -231,7 +231,7 @@ local function new_tr(gh, srcstr, tgtstr, label)
       gv.setv(eh, "lhead", "cluster_" .. tgtstr)
    end
 
-   if label then gv.setv(eh, "label", label) end
+   if label then gv.setv(eh, "label", " " .. label .. " ") end
    dbg("creating transition from '" .. srcstr .. "' to '" .. tgtstr .. "'")
 end
 
@@ -243,10 +243,12 @@ end
 local function proc_state(gh, parent, state)
 
    -- need a final state?
-   for i,k in ipairs(state.transitions) do
-      if k.target == 'final' then
-	 new_finsta(gh, parent, 'final')
-	 break
+   if state.transitions then
+      for i,k in ipairs(state.transitions) do
+	 if k.target == 'final' then
+	    new_finsta(gh, parent, 'final')
+	    break
+	 end
       end
    end
 
@@ -265,7 +267,6 @@ local function proc_state(gh, parent, state)
 end
 
 local function proc_trans(gh, parent, state)
-   print("processing state: ", parent, state.id)
    if state.initial then
       new_tr(gh, state.id .. '_initial', state.initial)
    end
@@ -278,6 +279,7 @@ local function proc_trans(gh, parent, state)
        end, state.transitions)
    -- map(function (t) proc_trans(gh, state.id, state.states) end, state.states)
    map(function (s) proc_trans(gh, state.id, s) end, state.states)
+   map(function (s) proc_trans(gh, state.id, s) end, state.parallel)
 end
 
 local function fsm2gh(root)
