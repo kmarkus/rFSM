@@ -22,6 +22,31 @@ simple = {
    deferred = { 'e_bla', 'e_blurb' }
 }
 
+-- parallel state
+-- parallel state
+--   - 'parallel': table of composite or parallel states
+
+homeAxA = {
+   id = 'homeAxisA',
+   initial = 'homeStateA',
+   states = { homeState },
+   transitions = { }
+}
+
+homeAxB = {
+   id = 'homeAxisB',
+   initial = 'homeStateB',
+   states = { homeState },
+   transitions = { }
+}
+
+      
+orthogonal_region = {
+   id = 'homing',
+   parallel={ homeAxA, homeAxB },
+   transitions = { }
+}
+
 -- composite state
 --   - must have 'initial': string of initial state in 'states'
 --   - states is a table of simple, composite or parallel states
@@ -52,18 +77,13 @@ composite = {
 		 entry = function () turn_motor_on() end,
 		 doo = function () print("on: doo") end,
 		 exit = function () print("on: exit") end,
-		 transitions = { { event='e_off', target='off' } } 
-	      }
+		 transitions = { { event='e_off', target='off' },
+				 { event='e_home', target='homing' } }
+	      },
+	      orthogonal_region,
 	   }
 }
 
--- parallel state
---   - 'parallel': table of composite or parallel states
-orthogonal_region = {
-   id = 'homing',
-   parallel={ composite, composite },
-   transitions = { }
-}
 
 root = {
    id = 'rtt_toplevel',

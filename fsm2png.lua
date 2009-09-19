@@ -1,6 +1,5 @@
 #!/usr/bin/lua
 
-require('gv')
 require("gv")
 
 param = {}
@@ -11,27 +10,65 @@ param.layout="dot"
 param.format="png"
 param.cs_border_color = "black"
 param.cs_fillcolor = "grey"
+param.viewer = "qiv"
 
 dbg = print
 
+-- util functions
+function deepcopy(object)
+   local lookup_table = {}
+   local function _copy(object)
+      if type(object) ~= "table" then
+            return object
+      elseif lookup_table[object] then
+	 return lookup_table[object]
+      end
+      local new_table = {}
+      lookup_table[object] = new_table
+      for index, value in pairs(object) do
+	 new_table[_copy(index)] = _copy(value)
+      end
+      return setmetatable(new_table, getmetatable(object))
+   end
+   return _copy(object)
+end
+
+local function map(f, tab)
+   local newtab = {}
+   if not tab then return newtab end
+   for i,v in pairs(tab) do
+      res = f(v)
+      table.insert(newtab, res)
+   end
+   return newtab
+end
+
+
+--
+-- graphviz convenience wrappers for creating statechart like entities
+--
+
 -- setup common properties
-local function set_props(sh)
-   gv.setv(sh, "fixedsize", "false")
-   gv.setv(sh, "fontsize", param.fontsize)
+local function set_props(h)
+   gv.setv(h, "fixedsize", "false")
+   gv.setv(h, "fontsize", param.fontsize)
 end
 
-local function set_trprops(sh)
-   gv.setv(sh, "fixedsize", "false")
-   gv.setv(sh, "fontsize", param.trfontsize)
+local function set_trprops(h)
+   gv.setv(h, "fixedsize", "false")
+   gv.setv(h, "fontsize", param.trfontsize)
+   gv.setv(h, "arrowhead", "vee")
+   gv.setv(h, "arrowsize", "0.5")
 end
 
-local function set_ndprops(sh)
-   gv.setv(sh, "fixedsize", "false")
-   gv.setv(sh, "fontsize", param.ndfontsize)
+local function set_ndprops(h)
+   gv.setv(h, "fixedsize", "false")
+   gv.setv(h, "fontsize", param.ndfontsize)
 end
 
 
 -- return handles for different types of states
+-- state names must be unique!
 local function get_shandle(gh, name)
 
    if name == gv.nameof(gh) then 
@@ -64,11 +101,12 @@ function new_gra(name)
    return gh
 end
 
--- create initial state
+-- create initial state in given parent state
 function new_inista(gh, pstr)
 
-   local ph = get_shandle(gh, pstr)
+   local ph, type = get_shandle(gh, pstr)
    assert(ph)
+   assert(type ~= "simple")
    name = pstr .. "_initial"
 
    if gv.findnode(ph, name) then
@@ -86,11 +124,12 @@ function new_inista(gh, pstr)
    return nh
 end
 
--- create final state
+-- create final state in given parent
 function new_finsta(gh, pstr)
 
-   local ph = get_shandle(gh, pstr)
+   local ph,type = get_shandle(gh, pstr)
    assert(ph)
+   assert(type ~= "simple")
    name = pstr .. "_final"
 
    if gv.findnode(ph, name) then
@@ -112,8 +151,9 @@ end
 -- create a new simple state
 function new_sista(gh, pstr, name, label)
 
-   local ph = get_shandle(gh, pstr)
+   local ph,type = get_shandle(gh, pstr)
    assert(ph)
+   assert(type ~= "simple")
 
    -- tbd: use gh here?
    if gv.findnode(ph, name) then
@@ -160,12 +200,14 @@ function new_csta(gh, parent, name, label)
    -- add invisible dummy node as transition endpoint at boundary of
    -- this composite state
    local dnh = gv.node(ch, name .. "_dummy")
-   gv.setv(dnh, "shape", "dot")
+   gv.setv(dnh, "shape", "point")
    gv.setv(dnh, "fixedsize", "true")
-   gv.setv(dnh, "height", "0.0001")
+   gv.setv(dnh, "height", "0.000001")
    gv.setv(dnh, "style", "invisible") -- bug in gv, doesn't work
-   
-   if label then gv.setv(ch, "label", name .. "\n" .. label) end
+
+
+   if label then gv.setv(ch, "label", name .. "\n" .. label)
+   else gv.setv(ch, "label", name) end
 
    dbg("creating new composite state '" .. name .. "' in '" .. parent .. "'")
 
@@ -204,9 +246,69 @@ function new_tr(gh, srcstr, tgtstr, label)
    end
 
    if label then gv.setv(eh, "label", label) end
+   dbg("creating transition from '" .. srcstr .. "' to '" .. tgtstr .. "'")
 end
 
--- code
+
+--
+-- convert given fsm to a populated graphviz object
+-- 
+
+function proc_state(gh, parent, state)
+
+   -- need a final state?
+   for i,k in ipairs(state.transitions) do
+      if k.target == 'final' then
+	 new_finsta(gh, parent, 'final')
+	 break
+      end
+   end
+
+   if state.states then
+      local ch = new_csta(gh, parent, state.id)
+      if state.initial then
+	 new_inista(ch, state.id)
+      end
+      map(function (s) proc_state(gh, state.id, s) end, state.states)
+   elseif state.parallel then
+      local parh = new_csta(gh, parent, state.id, "(parallel state)")
+      map(function (s) proc_state(gh, state.id, s) end, state.parallel)
+   else
+      local sh = new_sista(gh, parent, state.id)
+   end
+end
+
+function proc_trans(gh, parent, state)
+   map(function (t) 
+	  if t.target == 'final' then
+	     new_tr(gh, state.id, parent .. "_" .. t.target, t.event)
+	  else
+	     new_tr(gh, state.id, t.target, t.event)
+	  end
+       end, state.transitions)
+   map(function (t) proc_trans(gh, state.id, state.states) end, state.states)
+end
+
+function fsm2gh(root)
+   gh = new_gra(root.id)
+   map(function (s) proc_state(gh, root.id, s) end, root.states)
+   map(function (s) proc_trans(gh, root.id, s) end, root.states)
+   return gh
+end
+
+function fsm2pic(root, format, outfile)
+   local gh =fsm2gh(root)
+   gv.layout(gh, param.layout)
+   gv.render(gh, format, outfile)
+end
+
+-- testing
+dofile("examples/hierarchical.lua")
+fsm2pic(composite, "png", "output.png")
+os.execute(param.viewer .. " output.png")
+
+--[[ testing
+
 gh=new_gra("FSM-1")
 
 new_inista(gh, "fsm1", "initial")
@@ -278,3 +380,5 @@ new_tr(gh, "handle", "miscerr_final", "")
 
 print("layouting: ", gv.layout(gh, param.layout))
 print("rendering: ", gv.render(gh, param.format, "output." .. param.format))
+--]]
+
