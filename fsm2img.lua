@@ -300,5 +300,7 @@ end
 function fsm2img(root, format, outfile)
    local gh =fsm2gh(root)
    gv.layout(gh, param.layout)
+   dbg("running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
+   dbg("rendering to " .. format .. ", written result to " .. outfile)
 end
