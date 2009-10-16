@@ -12,7 +12,7 @@ param.fontsize = 12.0
 param.trfontsize = 7.0
 param.ndfontsize = 8.0
 param.cs_border_color = "black"
-param.cs_fillcolor = "grey"
+param.cs_fillcolor = "white"
 param.layout="dot"
 
 dbg = print

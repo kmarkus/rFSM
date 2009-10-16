@@ -129,5 +129,7 @@ root = {
  	   }
 }
 
-fsm2img.fsm2img(root, "png", "output.png")
-os.execute("qiv" .. " output.png")
+fsm2img.fsm2img(root, "png", "root.png")
+fsm2img.fsm2img(parallel, "png", "parallel.png")
+fsm2img.fsm2img(simple, "png", "simple.png")
+os.execute("qiv" .. " *.png")
