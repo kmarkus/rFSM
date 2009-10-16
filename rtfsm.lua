@@ -1,0 +1,164 @@
+--
+--  Lua based robotics finite state machine engine
+-- 
+
+require ('utils')
+
+param = {}
+param.err = print
+param.warn = print
+param.dbg = print
+
+-- save references
+
+local param, pairs, ipairs, print, table, type, loadstring, assert,
+coroutine, setmetatable, getmetatable, utils = param, pairs, ipairs,
+print, table, type, loadstring, assert, coroutine, setmetatable,
+getmetatable, utils
+
+module("rtfsm")
+
+local map = utils.map
+local foldr = utils.foldr
+local AND = utils.AND
+
+-- makestate creates a state from a template
+-- variables in vartab will override those in templ
+function make_state(templ, vartab)
+   local ns = utils.deepcopy(templ)
+   for k,v in pairs(vartab) do
+      ns[k] = v
+   end
+   return ns
+end
+
+--
+-- local helpers
+--
+
+-- apply func to all states incl. fsm itself
+local function map_state(func, fsm)
+   return utils.append( { func(fsm) },
+			map(function (state) map_state(func, state) end, fsm.states)),
+			map(function (state) map_state(func, state) end, fsm.parallel) )
+end
+
+-- apply func to all transitions
+local function foreach_trans(fsm, func)
+end
+
+-- perform checks
+-- depends on parent links for more useful output
+function verify(fsm)
+   local res = true
+
+   local function check_id(s)
+      if not s.id then
+	 if s.parent and s.parent.id then
+	    param.err("error: child state of " .. s.parent.id .. " without id\n")
+	 else
+	    param.err("error: state without id found\n") 
+	 end
+	 return false
+      else
+	 return true
+      end
+   end
+
+   table.foreach(map_state(check_id, fsm), print)
+   -- res = res and foldr(AND, true, map_state(check_id, fsm))
+   
+   return res
+end
+
+-- construct parent links
+-- this modifies fsm
+local function add_parent_links(fsm)
+   map_state(function (fsm)
+		map(function (state)
+		       state.parent = fsm
+		    end, fsm.states)
+	     end, fsm)
+
+   map_state(function (fsm)
+		map(function (state)
+		       state.parent = fsm
+		    end, fsm.parallel)
+	     end, fsm)
+end
+
+-- add fully qualified names (fqn) to states
+-- depends on parent links beeing available
+-- cst stands for composite state
+local function add_fqn(fsm)
+   map_states(function (cst)
+		 if cst.parent then
+		    cst.fqn = cst.parent.id .. "." .. cst.id
+		 end
+	      end, fsm)
+end
+
+	   
+-- resolve transition targets
+-- depends on fully qualified names
+local function resolve_trans(fsm)
+   
+end
+
+-- construct a name->{state,depth} lookup table (lut).
+local function build_namecache(fsm, tab, parid, depth)
+   if not tab then -- toplevel
+      lut = {}
+      -- two ways to address root
+      lut['root'] = { state=fsm, depth=0 }
+      lut[fsm.id] = { state=fsm, depth=0 }
+      map(function (state) 
+	     build_namecache(state, lut, parid, 1)
+	  end,
+	  fsm.states)
+   else -- deeper levels
+      -- 
+   end   
+
+end
+
+
+local function reset(fsm)
+end
+
+-- initialize fsm
+-- create parent links
+-- create table for lookups
+function init(_fsm)
+   local fsm = utils.deepcopy(_fsm)
+   add_parent_links(fsm)
+
+   if not verify(fsm) then
+      param.err("failed to initalized fsm");
+      return false
+   end
+
+   fsm.__initalized = true
+
+   return fsm
+end
+
+--
+-- operational functions
+-- 
+
+-- find least common ancestor
+local function findLCA(fsm, sx, sy)
+   
+end
+
+-- determine transition to take given a table of events
+local function find_trans(fsm, events)
+end
+
+local function exec_trans(fsm, lca, src, target)
+end
+
+function step(fsm)
+   exec_trans(find_trans(fsm, fsm.queue))
+end

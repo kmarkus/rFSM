@@ -3,9 +3,9 @@
 --
 
 require("fsm2img")
-require("umlfsm")
+require("rtfsm")
 
-make_state=umlfsm.make_state
+make_state=rtfsm.make_state
 
 -- example fsm
 
@@ -49,7 +49,7 @@ cs_homing_2 = {
 }
 
 cs_homing_3 = {
-   id = 'cs_home_ax3',
+   --id = 'cs_home_ax3',
    initial = 'home_axis3',
    states = { make_state(s_homing_tmpl, { id='home_axis3', param={ axis=3 } }) }
 }
@@ -73,7 +73,7 @@ parallel = {
    exit = nil,
    
    initial = 'off',
-   
+      
    -- a table of simple states
    states = { {
 		 id = 'off',
@@ -129,7 +129,18 @@ root = {
  	   }
 }
 
-fsm2img.fsm2img(root, "png", "root.png")
-fsm2img.fsm2img(parallel, "png", "parallel.png")
-fsm2img.fsm2img(simple, "png", "simple.png")
-os.execute("qiv" .. " *.png")
+if rtfsm.init(root) then
+   fsm2img.fsm2img(root, "png", "root.png")
+end
+
+if rtfsm.init(parallel) then
+   fsm2img.fsm2img(parallel, "png", "parallel.png")
+end
+
+if rtfsm.init(simple) then
+   fsm2img.fsm2img(simple, "png", "simple.png")
+end
+
+
+
+--os.execute("qiv" .. " *.png")
