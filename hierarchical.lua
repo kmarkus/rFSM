@@ -129,10 +129,27 @@ root = {
  	   }
 }
 
-if rtfsm.init(root) then
-   fsm2img.fsm2img(root, "png", "root.png")
+
+local fsm0 = rtfsm.init(simple)
+if fsm0 then
+   fsm2img.fsm2img(simple, "png", simple.id .. ".png")
 else
-   print("failed to init root fsm")
+   print("failed to init " .. simple.id)
 end
+
+local fsm1 = rtfsm.init(root)
+if fsm1 then
+   fsm2img.fsm2img(root, "png", root.id .. ".png")
+else
+   print("failed to init " .. root.id)
+end
+
+local fsm2 = rtfsm.init(parallel)
+if fsm2 then
+   fsm2img.fsm2img(parallel, "png", parallel.id .. ".png")
+else
+   print("failed to init " .. parallel.id)
+end
+
 
 -- os.execute("qiv" .. " *.png")

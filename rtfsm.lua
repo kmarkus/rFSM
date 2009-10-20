@@ -33,6 +33,7 @@ function make_state(templ, vartab)
    return ns
 end
 
+
 --
 -- local map helpers
 --
@@ -107,6 +108,7 @@ end
 -- construct parent links
 -- this modifies fsm
 local function add_parent_links(fsm)
+   fsm.parent = fsm
    map_state(function (fsm)
 		map(function (state)
 		       state.parent = fsm
@@ -126,11 +128,10 @@ end
 -- depends on parent links beeing available
 -- cst stands for composite state
 local function add_fqn(fsm)
-   map_states(function (cst)
-		 if cst.parent then
-		    cst.fqn = cst.parent.id .. "." .. cst.id
-		 end
-	      end, fsm)
+   fsm.fqn = fsm.id
+   map_state(function (s)
+		s.fqn = s.parent.id .. "." .. s.id
+	     end, fsm)
 end
 
 	   
@@ -167,15 +168,15 @@ end
 function init(fsm_templ)
    local fsm = utils.deepcopy(fsm_templ)
    add_parent_links(fsm)
-   
+
    if not verify(fsm) then
       param.err("failed to initalize fsm " .. fsm.id);
-      fsm.__initialized = false
+      return false
    else
-      fsm.__initialized = true
+      add_fqn(fsm)
    end
 
-   return fsm.__initialized
+   return fsm
 end
 
 --
