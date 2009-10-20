@@ -49,7 +49,7 @@ cs_homing_2 = {
 }
 
 cs_homing_3 = {
-   --id = 'cs_home_ax3',
+   id = 'cs_home_ax3',
    initial = 'home_axis3',
    states = { make_state(s_homing_tmpl, { id='home_axis3', param={ axis=3 } }) }
 }
@@ -131,16 +131,8 @@ root = {
 
 if rtfsm.init(root) then
    fsm2img.fsm2img(root, "png", "root.png")
+else
+   print("failed to init root fsm")
 end
 
-if rtfsm.init(parallel) then
-   fsm2img.fsm2img(parallel, "png", "parallel.png")
-end
-
-if rtfsm.init(simple) then
-   fsm2img.fsm2img(simple, "png", "simple.png")
-end
-
-
-
---os.execute("qiv" .. " *.png")
+-- os.execute("qiv" .. " *.png")

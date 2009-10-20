@@ -21,6 +21,7 @@ module("rtfsm")
 local map = utils.map
 local foldr = utils.foldr
 local AND = utils.AND
+local tab2str = utils.tab2str
 
 -- makestate creates a state from a template
 -- variables in vartab will override those in templ
@@ -33,14 +34,44 @@ function make_state(templ, vartab)
 end
 
 --
--- local helpers
+-- local map helpers
 --
+
+-- apply func to all parallel states
+local function map_pstate(func, fsm)
+   local function __map_pstate(f, state, tab)
+      local tmp = f(state)
+      table.insert(tab, tmp)
+      if state.states then
+	 map(function (s) __map_pstate(f, s, tab) end, state.parallel)
+      end
+      return tab
+   end
+
+   return __map_pstate(func, fsm, {})
+end
+
+
+-- apply func to all composite states
+local function map_cstate(func, fsm)
+
+   local function __map_cstate(f, state, tab)
+      local tmp = f(state)
+      table.insert(tab, tmp)
+      if state.states then
+	 map(function (s) __map_cstate(f, s, tab) end, state.states)
+      end
+      return tab
+   end
+
+   return __map_cstate(func, fsm, {})
+end
 
 -- apply func to all states incl. fsm itself
 local function map_state(func, fsm)
-   return utils.append( { func(fsm) },
-			map(function (state) map_state(func, state) end, fsm.states)),
-			map(function (state) map_state(func, state) end, fsm.parallel) )
+   return utils.append(map_cstate(func, fsm),
+		       map_pstate(func, fsm))
+		       
 end
 
 -- apply func to all transitions
@@ -48,16 +79,19 @@ local function foreach_trans(fsm, func)
 end
 
 -- perform checks
+-- test should bark loudly about problems and return false if
+-- initialization is to fail
 -- depends on parent links for more useful output
 function verify(fsm)
    local res = true
 
+   -- test: check if state has an id
    local function check_id(s)
       if not s.id then
 	 if s.parent and s.parent.id then
-	    param.err("error: child state of " .. s.parent.id .. " without id\n")
+	    param.err("ERROR: child state of '" .. s.parent.id .. "' without id")
 	 else
-	    param.err("error: state without id found\n") 
+	    param.err("ERROR: state without id found") 
 	 end
 	 return false
       else
@@ -65,8 +99,7 @@ function verify(fsm)
       end
    end
 
-   table.foreach(map_state(check_id, fsm), print)
-   -- res = res and foldr(AND, true, map_state(check_id, fsm))
+   res = res and foldr(AND, true, map_state(check_id, fsm))
    
    return res
 end
@@ -77,12 +110,14 @@ local function add_parent_links(fsm)
    map_state(function (fsm)
 		map(function (state)
 		       state.parent = fsm
+		       return true
 		    end, fsm.states)
 	     end, fsm)
 
    map_state(function (fsm)
 		map(function (state)
 		       state.parent = fsm
+		       return true
 		    end, fsm.parallel)
 	     end, fsm)
 end
@@ -129,18 +164,18 @@ end
 -- initialize fsm
 -- create parent links
 -- create table for lookups
-function init(_fsm)
-   local fsm = utils.deepcopy(_fsm)
+function init(fsm_templ)
+   local fsm = utils.deepcopy(fsm_templ)
    add_parent_links(fsm)
-
+   
    if not verify(fsm) then
-      param.err("failed to initalized fsm");
-      return false
+      param.err("failed to initalize fsm " .. fsm.id);
+      fsm.__initialized = false
+   else
+      fsm.__initialized = true
    end
 
-   fsm.__initalized = true
-
-   return fsm
+   return fsm.__initialized
 end
 
 --
