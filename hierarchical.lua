@@ -10,7 +10,7 @@ make_state=rtfsm.make_state
 -- example fsm
 
 --  simple state
--- constraints: 
+-- constraints:
 --   - must have 'id' field
 --   - transitions:
 --      - event can be table or string (tbd. types)
@@ -22,111 +22,100 @@ simple = {
    entry = function () print("simple_state: entry") end,
    doo = function () print("simple_state: doo") end,
    exit = function () print("simple_state: exit") end,
-   transitions = { { event='e_quit', target='final', guard=function () return 2>1 end },
-		   { event='e_foo', target='internal' } }
+   transitions = { { event='e_foo', tgt='internal' } }
 }
+
+
+-- transitions:
+--  - regular:  src='source-state', tgt='target-state', event='e_bla', guard=function () return true end
+--  - internal: src=not_allowed, tgt='internal', event='e_bla', guard=...
+--  - initial:  src='initial', tgt='target-state', event=not_allowed!, guard=...
+--  - final:    src='source-state', tgt='final', event=..., giard=...
 
 
 -- parallel state
 --   - 'parallel': table of composite or parallel states
 
-s_homing_tmpl = {
-   id='test',
-   doo = "homeAxis()",
-   transitions = { { event='e_completion', target='final' } }
-}
-
-cs_homing_1 = {
-   id = 'cs_home_ax1',
-   initial = 'home_axis1',
-   states = { make_state(s_homing_tmpl, { id='home_axis1', param={ axis=1 } }) }
-}
-
-cs_homing_2 = {
-   id = 'cs_home_ax2',
-   initial = 'home_axis2',
-   states = { make_state(s_homing_tmpl, { id='home_axis2', param={ axis=2 } }) }
-}
-
-cs_homing_3 = {
-   id = 'cs_home_ax3',
-   initial = 'home_axis3',
-   states = { make_state(s_homing_tmpl, { id='home_axis3', param={ axis=3 } }) }
-}
-      
 orthogonal_region = {
    id = 'homing',
-   parallel={ cs_homing_1, cs_homing_2, cs_homing_3 },
-   transitions = { { event=" e_complete ", target='off' } }
+   parallel={ { id = 'cs_home_ax1',
+		states = { { id='home_axis1', doo="homeAxis()" } },
+		transitions = { { src='initial', tgt='home_axis1' },
+				{ src='home_axis1', tgt='final' } } },
+	      { id = 'cs_home_ax2',
+		states = { { id='home_axis2', doo="homeAxis()" } },
+		transitions = { { src='initial', tgt='home_axis2' },
+				{ src='home_axis2', tgt='final' } } },
+	      { id = 'cs_home_ax3',
+		states = { { id='home_axis3', doo="homeAxis()" } },
+		transitions = { { src='initial', tgt='home_axis3' },
+				{ src='home_axis3', tgt='final' } } } }
 }
 
 -- composite state
 --   - must have 'initial': string of initial state in 'states'
 --   - states is a table of simple, composite or parallel states
 --   - must *not* have doo, only simple states may have that
---   - the target 'final' will exit the composite state
---   - the target 'terminate' will do exactly that to the fsm
+--   - the tgt 'final' will exit the composite state
+--   - the tgt 'terminate' will do exactly that to the fsm
 
 parallel = {
    id = 'motor_control',
    entry = nil,
    exit = nil,
-   
-   initial = 'off',
-      
+
    -- a table of simple states
    states = { {
 		 id = 'off',
 		 entry = function () print("off: entry") end,
 		 doo = function () print("off: doo") end,
-		 exit = function () print("off: exit") end,
-		 transitions = { { event=' e_quit ', target='homing' },
-				 { event=' e_on ', target='on' } }
+		 exit = function () print("off: exit") end
 	      },
 	      {
 		 id = 'on',
 		 entry = function () turn_motor_on() end,
 		 doo = function () print("on: doo") end,
-		 exit = function () print("on: exit") end,
-		 transitions = { { event=' e_off ', target='off' },
-				 { event=' e_home ', target='homing' } }
-
+		 exit = function () print("on: exit") end
 	      },
 	      orthogonal_region,
-	   }
+	   },
+   transitions = { { src='initial', tgt='off' },
+		   { src='homing', tgt='off', event='e_complete' },
+		   { src='on', tgt='off', event='e_off' },
+		   { src='on', tgt='homing', event='e_home' },
+		   { src='off', tgt='on', event='e_on' },
+		   { src='off', tgt='homing', event='e_quit' } }
 }
-
 
 root = {
    id = 'rtt_toplevel',
-   initial = 's_init',
    states = { {
-		 id = 's_init', 
+		 id = 's_init',
 		 entry = 'print("initalizing")',
-		 exit = 'print("exiting s_init state")',
-		 transitions = { { event='e_start', target='s_running' } } }, 
+		 exit = 'print("exiting s_init state")' },
 	      {
 		 id = 's_stopped',
-		 entry = 'print("entering s_stopped state")',
-		 transitions = { { event='e_reset', target="s_init", effect='print("reseting")' },
-				 { event='e_start', target="s_running", effect='print("restarting")' } } },
+		 entry = 'print("entering s_stopped state")' },
 	      {
 		 id = 's_running',
-		 initial = 's_working',
-		 states = { { 
+		 states = { {
 			       id = 's_working',
 			       entry = 'print("entering state s_working ")',
-			       doo = 'print("processing in state s_working")',
-			       transitions = { { event = 'e_obj_close', target = 's_obj_close' } } }, 
-			    { 
+			       doo = 'print("processing in state s_working")' },
+			    {
 			       id = 's_obj_close',
 			       entry = 'print("entering s_obj_close state")',
-			       doo = 'print("processing in s_obj_close_state")',
-			       transitions = { { event = 'e_range_free', target = 's_working' } } }
-			 },
-		 transitions = { { event='e_stopped', target='s_stopped' } }
-	      }
- 	   }
+			       doo = 'print("processing in s_obj_close_state")' } },
+		 transitions = { { src='initial', tgt='s_working' },
+				 { event='e_obj_close', src='s_working', tgt='s_obj_close' },
+				 { event='e_range_free', src='s_obj_close', tgt='s_working'} } } },
+
+   transitions = { { src='initial', tgt='s_init' },
+		   { src='s_running', tgt='s_stopped', event='e_stopped' },
+		   { src='s_stopped', tgt='s_init', event='e_reset', effect='print("reseting")' },
+		   { src='s_stopped', tgt='s_running', event='e_start', effect='print("restarting")' },
+		   { src='s_stopped', tgt='final', event='e_quit' },
+		   { src='s_init', tgt='s_running', event='e_start',  } }
 }
 
 

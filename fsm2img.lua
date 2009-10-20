@@ -15,7 +15,8 @@ param.cs_border_color = "black"
 param.cs_fillcolor = "white"
 param.layout="dot"
 
-dbg = function () end
+--dbg = function () end
+dbg=print
 
 
 -- utils
@@ -242,58 +243,68 @@ end
 
 local function proc_state(gh, parent, state)
 
-   -- need a final state?
-   if state.transitions then
-      for i,k in ipairs(state.transitions) do
-	 if k.target == 'final' then
-	    new_finsta(gh, parent, 'final')
+   -- need a final or initial state?
+   if parent.transitions then
+      for i,k in ipairs(parent.transitions) do
+	 if k.tgt == 'final' then
+	    new_finsta(gh, parent.id, 'final')
+	    break
+	 end
+      end
+
+      for i,k in ipairs(parent.transitions) do
+	 if k.src == 'initial' then
+	    new_inista(gh, parent.id, 'initial')
 	    break
 	 end
       end
    end
 
    if state.states then
-      local ch = new_csta(gh, parent, state.id)
-      if state.initial then
-	 new_inista(ch, state.id)
-      end
-      map(function (s) proc_state(gh, state.id, s) end, state.states)
+      local ch = new_csta(gh, parent.id, state.id)
+      map(function (s) proc_state(gh, state, s) end, state.states)
    elseif state.parallel then
-      local parh = new_csta(gh, parent, state.id, "(parallel state)")
-      map(function (s) proc_state(gh, state.id, s) end, state.parallel)
+      local parh = new_csta(gh, parent.id, state.id, "(parallel state)")
+      map(function (s) proc_state(gh, state, s) end, state.parallel)
    else
-      local sh = new_sista(gh, parent, state.id)
+      local sh = new_sista(gh, parent.id, state.id)
    end
 end
 
-local function proc_trans(gh, parent, state)
-   if state.initial then
-      new_tr(gh, state.id .. '_initial', state.initial)
-   end
+local function proc_trans(gh, state)
+   --if state.initial then
+   -- new_tr(gh, state.id .. '_initial', state.initial)
+   -- end
    map(function (t) 
-	  if t.target == 'final' then
-	     new_tr(gh, state.id, parent .. '_final', t.event)
+	  if t.tgt == 'internal' then
+	     return true
+	  elseif t.tgt == 'final' then
+	     new_tr(gh, t.src, state.id .. '_final', t.event)
+	  elseif t.src == 'initial' then
+	     new_tr(gh, state.id .. '_initial', t.tgt, t.event)
 	  else
-	     new_tr(gh, state.id, t.target, t.event)
+	     new_tr(gh, t.src, t.tgt, t.event)
 	  end
        end, state.transitions)
+
    -- map(function (t) proc_trans(gh, state.id, state.states) end, state.states)
-   map(function (s) proc_trans(gh, state.id, s) end, state.states)
-   map(function (s) proc_trans(gh, state.id, s) end, state.parallel)
+   map(function (s) proc_trans(gh, s) end, state.states)
+   map(function (s) proc_trans(gh, s) end, state.parallel)
 end
 
 local function fsm2gh(root)
    gh = new_gra(root.id)
-   if root.initial then
-      new_inista(gh, root.id)
-   end
-   map(function (s) proc_state(gh, root.id, s) end, root.states)
+   --if root.initial then
+   --      new_inista(gh, root.id)
+   -- end
+   map(function (s) proc_state(gh, root, s) end, root.states)
 
-   if root.initial then
-      new_tr(gh, root.id .. '_initial', root.initial)
-   end
+   --   if root.initial then
+   --      new_tr(gh, root.id .. '_initial', root.initial)
+   --   end
 
-   map(function (s) proc_trans(gh, root.id, s) end, root.states)
+   proc_trans(gh, root)
+
    return gh
 end
 
