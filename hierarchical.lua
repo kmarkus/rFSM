@@ -80,7 +80,7 @@ parallel = {
 	      orthogonal_region,
 	   },
    transitions = { { src='initial', tgt='off' },
-		   { src='homing', tgt='off', event='e_complete' },
+		   { src='homing', tgt='final', event='e_complete' },
 		   { src='on', tgt='off', event='e_off' },
 		   { src='on', tgt='homing', event='e_home' },
 		   { src='off', tgt='on', event='e_on' },
@@ -141,4 +141,4 @@ else
 end
 
 
--- os.execute("qiv" .. " *.png")
+os.execute("qiv" .. " *.png")

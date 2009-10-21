@@ -15,9 +15,7 @@ param.cs_border_color = "black"
 param.cs_fillcolor = "white"
 param.layout="dot"
 
---dbg = function () end
-dbg=print
-
+dbg = function () end
 
 -- utils
 local function map(f, tab)
@@ -97,7 +95,7 @@ local function new_inista(gh, pstr)
    name = pstr .. "_initial"
 
    if gv.findnode(ph, name) then
-      io.stderr:write("graph " .. pstr .. "already has a initial node\n")
+      io.stderr:write("graph " .. pstr .. " already has a initial node\n")
       return false
    end
 
@@ -106,7 +104,7 @@ local function new_inista(gh, pstr)
    gv.setv(nh, "shape", "point")
    gv.setv(nh, "height", "0.15")
 
-   dbg("creating new initial state in '" .. pstr .. "'")
+   dbg("creating new initial state (" .. name .. ") in '" .. pstr .. "'")
 
    return nh
 end
@@ -130,7 +128,7 @@ local function new_finsta(gh, pstr)
    gv.setv(nh, "label", "")
    gv.setv(nh, "height", "0.1")
 
-   dbg("creating new final state in '" .. pstr .. "'")
+   dbg("creating new final state (" .. name .. ") in '" .. pstr .. "'")
 
    return nh
 end
@@ -203,10 +201,13 @@ end
 
 -- new transition
 local function new_tr(gh, srcstr, tgtstr, label)
+
+   dbg("creating transition from '" .. srcstr .. "' to '" .. tgtstr .. "'")
    
    local sh, shtype = get_shandle(gh, srcstr)
-   assert(sh)
    local th, thtype = get_shandle(gh, tgtstr)
+
+   assert(sh)
    assert(th)
 
    if shtype == "subgraph" then
@@ -233,7 +234,6 @@ local function new_tr(gh, srcstr, tgtstr, label)
    end
 
    if label then gv.setv(eh, "label", " " .. label .. " ") end
-   dbg("creating transition from '" .. srcstr .. "' to '" .. tgtstr .. "'")
 end
 
 
@@ -241,33 +241,41 @@ end
 -- convert given fsm to a populated graphviz object
 -- 
 
+local function has_initial_tr(transitions)
+   for i,k in ipairs(transitions) do
+      if k.src == 'initial' then
+	 return true end end
+   return false
+end
+
+local function has_final_tr(transitions)
+   for i,k in ipairs(transitions) do
+      if k.tgt == 'final' then
+	 return true end end
+   return false
+end
+
+
 local function proc_state(gh, parent, state)
 
-   -- need a final or initial state?
-   if parent.transitions then
-      for i,k in ipairs(parent.transitions) do
-	 if k.tgt == 'final' then
-	    new_finsta(gh, parent.id, 'final')
-	    break
-	 end
-      end
-
-      for i,k in ipairs(parent.transitions) do
-	 if k.src == 'initial' then
-	    new_inista(gh, parent.id, 'initial')
-	    break
-	 end
-      end
-   end
-
-   if state.states then
+   if state.states then -- composite state?
       local ch = new_csta(gh, parent.id, state.id)
       map(function (s) proc_state(gh, state, s) end, state.states)
-   elseif state.parallel then
+   elseif state.parallel then -- parallel state?
       local parh = new_csta(gh, parent.id, state.id, "(parallel state)")
       map(function (s) proc_state(gh, state, s) end, state.parallel)
-   else
+   else -- simple state
       local sh = new_sista(gh, parent.id, state.id)
+   end
+
+   -- need a final or initial state?
+   if state.transitions then
+      if has_initial_tr(state.transitions) then
+	 new_inista(gh, state.id)
+      end
+      if has_final_tr(state.transitions) then
+	 new_finsta(gh, state.id)
+      end
    end
 end
 
@@ -294,9 +302,16 @@ end
 
 local function fsm2gh(root)
    gh = new_gra(root.id)
-   --if root.initial then
-   --      new_inista(gh, root.id)
-   -- end
+
+   if root.transitions then
+      if has_initial_tr(root.transitions) then
+	 new_inista(gh, root.id)
+      end
+      if has_final_tr(root.transitions) then
+	 new_finsta(gh, root.id)
+      end
+   end
+
    map(function (s) proc_state(gh, root, s) end, root.states)
 
    --   if root.initial then
