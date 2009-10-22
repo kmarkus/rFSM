@@ -1,6 +1,6 @@
 --
 --  Lua based robotics finite state machine engine
--- 
+--
 
 require ('utils')
 
@@ -41,7 +41,7 @@ end
 -- apply func to all substates of fsm
 local function map_state(func, fsm, checkf)
    local function __map_state(states, tab)
-      map(function (state) 
+      map(function (state)
 	     if checkf(state) then
 		local res = func(state)
 		table.insert(tab, res)
@@ -51,16 +51,17 @@ local function map_state(func, fsm, checkf)
 	  end,
 	  states)
    end
-   
-   local res={}
+
+   local res = {}
    checkf = checkf or function(s) return true end
    __map_state(fsm.states, res)
    __map_state(fsm.parallel, res)
-   return tab
+   return res
 end
 
 -- apply func to all transitions
 local function foreach_trans(fsm, func)
+
 end
 
 -- perform checks
@@ -76,7 +77,7 @@ function verify(fsm)
 	 if s.parent and s.parent.id then
 	    param.err("ERROR: child state of '" .. s.parent.id .. "' without id")
 	 else
-	    param.err("ERROR: state without id found") 
+	    param.err("ERROR: state without id found")
 	 end
 	 return false
       else
@@ -90,7 +91,7 @@ function verify(fsm)
    end
 
    res = res and foldr(AND, true, map_state(check_id, fsm))
-   
+
    return res
 end
 
@@ -106,7 +107,7 @@ local function add_parent_links(fsm)
 	 __add_pl(k.parallel, k)
       end
    end
-   
+
    fsm.parent = fsm
 
    __add_pl(fsm.states, fsm)
@@ -127,7 +128,7 @@ local function build_lt(fsm)
 
    tab[fsm.id] = fsm
 
-   map_state(function (s) 
+   map_state(function (s)
 		if tab[s.fqn] then
 		   param.err("ERROR: duplicate fully qualified name " .. s.fqn .. " found!")
 		   table.insert(tab['dupl'], s.fqn)
@@ -143,14 +144,11 @@ local function build_lt(fsm)
    end
 end
 
-	   
+
 -- resolve transition targets
 -- depends on fully qualified names
 local function resolve_trans(fsm)
-   
-end
 
-local function reset(fsm)
 end
 
 -- initialize fsm
@@ -174,11 +172,11 @@ end
 
 --
 -- operational functions
--- 
+--
 
 -- find least common ancestor
 local function findLCA(fsm, sx, sy)
-   
+
 end
 
 -- determine transition to take given a table of events
