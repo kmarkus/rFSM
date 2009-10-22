@@ -118,6 +118,7 @@ root = {
 		   { src='s_init', tgt='s_running', event='e_start',  } }
 }
 
+print("----------------------------------------------------")
 
 local fsm0 = rtfsm.init(simple)
 if fsm0 then
@@ -126,12 +127,16 @@ else
    print("failed to init " .. simple.id)
 end
 
+print("----------------------------------------------------")
+
 local fsm1 = rtfsm.init(root)
 if fsm1 then
    fsm2img.fsm2img(root, "png", root.id .. ".png")
 else
    print("failed to init " .. root.id)
 end
+
+print("----------------------------------------------------")
 
 local fsm2 = rtfsm.init(parallel)
 if fsm2 then

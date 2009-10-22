@@ -39,7 +39,7 @@ end
 --
 
 -- apply func to all parallel states
-local function map_pstate(func, fsm)
+local function map_pstate(func, fsm, excl_parent)
    local function __map_pstate(f, state, tab)
       local tmp = f(state)
       table.insert(tab, tmp)
@@ -48,13 +48,16 @@ local function map_pstate(func, fsm)
       end
       return tab
    end
-
-   return __map_pstate(func, fsm, {})
+   if excl_parent then
+      return utils.flatten( map(function(s) __map_pstate(func, s, {}) end, fsm.parallel))
+   else
+      return __map_pstate(func, fsm, {})
+   end
 end
 
 
 -- apply func to all composite states
-local function map_cstate(func, fsm)
+local function map_cstate(func, fsm, excl_parent)
 
    local function __map_cstate(f, state, tab)
       local tmp = f(state)
@@ -64,15 +67,18 @@ local function map_cstate(func, fsm)
       end
       return tab
    end
-
-   return __map_cstate(func, fsm, {})
+   
+   if excl_parent then
+      return utils.flatten( map(function(s) __map_cstate(func, s, {}) end, fsm.states))
+   else
+      return __map_cstate(func, fsm, {})
+   end
 end
 
 -- apply func to all states incl. fsm itself
-local function map_state(func, fsm)
-   return utils.append(map_cstate(func, fsm),
-		       map_pstate(func, fsm))
-		       
+local function map_state(func, fsm, excl_parent)
+   return utils.append(map_cstate(func, fsm, excl_parent),
+		       map_pstate(func, fsm, excl_parent))
 end
 
 -- apply func to all transitions
@@ -126,12 +132,33 @@ end
 
 -- add fully qualified names (fqn) to states
 -- depends on parent links beeing available
--- cst stands for composite state
 local function add_fqn(fsm)
+   local function __add_fqn(s) 
+      s.fqn = s.parent.fqn .. "." .. s.id 
+      print("setting fqn=" .. s.fqn .. "=" .. s.id )
+   end
    fsm.fqn = fsm.id
-   map_state(function (s)
-		s.fqn = s.parent.id .. "." .. s.id
+   print("setting root fqn=" .. fsm.fqn .. "=" .. fsm.id )
+   map_state(__add_fqn, fsm, true)
+end
+
+-- create a (fqn, state) lookup table
+local function build_lt(fsm)
+   local tab = {}
+   tab['dupl'] = {}
+   
+   map_state(function (s) 
+		print("checking fqn=" .. s.fqn)
+		if tab[s.fqn] then
+		   param.err("ERROR: duplicate fully qualified name " .. s.fqn .. " found!")
+		   table.insert(tab['dupl'], s.fqn)
+		else
+		   print("adding to lt: " .. s.fqn)
+		   tab[s.fqn] = s
+		end
 	     end, fsm)
+   if #tab['dupl'] == 0 then tab['dupl'] = nil end
+   return tab
 end
 
 	   
@@ -140,24 +167,6 @@ end
 local function resolve_trans(fsm)
    
 end
-
--- construct a name->{state,depth} lookup table (lut).
-local function build_namecache(fsm, tab, parid, depth)
-   if not tab then -- toplevel
-      lut = {}
-      -- two ways to address root
-      lut['root'] = { state=fsm, depth=0 }
-      lut[fsm.id] = { state=fsm, depth=0 }
-      map(function (state) 
-	     build_namecache(state, lut, parid, 1)
-	  end,
-	  fsm.states)
-   else -- deeper levels
-      -- 
-   end   
-
-end
-
 
 local function reset(fsm)
 end
@@ -174,6 +183,11 @@ function init(fsm_templ)
       return false
    else
       add_fqn(fsm)
+      map_state(function (s) print("fqn: ", s.fqn) end, fsm)
+      map_state(function (s) print("id : ", s.id) end, fsm)
+      fsm.lt = build_lt(fsm)
+      if fsm.lt.dupl then return false end
+      table.foreach(fsm.lt, print)
    end
 
    return fsm
