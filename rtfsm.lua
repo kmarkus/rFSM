@@ -11,10 +11,10 @@ param.dbg = print
 
 -- save references
 
-local param, pairs, ipairs, print, table, type, loadstring, assert,
-coroutine, setmetatable, getmetatable, utils = param, pairs, ipairs,
-print, table, type, loadstring, assert, coroutine, setmetatable,
-getmetatable, utils
+local param, pairs, ipairs, print, tostring, table, type, loadstring,
+assert, coroutine, setmetatable, getmetatable, utils = param, pairs,
+ipairs, print, tostring, table, type, loadstring, assert, coroutine,
+setmetatable, getmetatable, utils
 
 module("rtfsm")
 
@@ -59,9 +59,21 @@ local function map_state(func, fsm, checkf)
    return res
 end
 
--- apply func to all transitions
-local function foreach_trans(fsm, func)
+-- apply func(trans, cstate) to all transitions
+local function map_trans(func, fsm)
+   local function __map_trans(transitions, state, tab)
+      map(function (t)
+	     local res = func(t, state)
+	     table.insert(tab, res)
+	  end, transitions)
+   end
 
+   local tab = {}
+   __map_trans(fsm.transitions, fsm, tab)
+   map_state(function (s)
+		__map_trans(s.transitions, s, tab)
+	     end, fsm)
+   return tab
 end
 
 -- perform checks
@@ -148,6 +160,10 @@ end
 -- resolve transition targets
 -- depends on fully qualified names
 local function resolve_trans(fsm)
+   local function __resolve_trans(t)
+      -- mandatory: src must be at local level
+      --
+   end
 
 end
 
@@ -162,9 +178,17 @@ function init(fsm_templ)
       param.err("failed to initalize fsm " .. fsm.id);
       return false
    else
+      -- things are ok
       add_fqn(fsm)
       fsm.lt = build_lt(fsm)
       if not fsm.lt then return false end
+
+      map_trans(function (t, s)
+		   print("trans in " .. s.id .." from " ..
+			 tostring(t.src) .. " -> " .. t.tgt ..
+		      " caused by " .. tostring(t.event))
+		end, fsm)
+
    end
 
    return fsm
