@@ -122,7 +122,7 @@ function map(f, tab)
    local newtab = {}
    if tab == nil then return newtab end
    for i,v in pairs(tab) do
-      res = f(v)
+      local res = f(v)
       table.insert(newtab, res)
    end
    return newtab

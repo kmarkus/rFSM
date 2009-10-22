@@ -35,50 +35,28 @@ end
 
 
 --
--- local map helpers
+-- local map helper
 --
 
--- apply func to all parallel states
-local function map_pstate(func, fsm, excl_parent)
-   local function __map_pstate(f, state, tab)
-      local tmp = f(state)
-      table.insert(tab, tmp)
-      if state.states then
-	 map(function (s) __map_pstate(f, s, tab) end, state.parallel)
-      end
-      return tab
-   end
-   if excl_parent then
-      return utils.flatten( map(function(s) __map_pstate(func, s, {}) end, fsm.parallel))
-   else
-      return __map_pstate(func, fsm, {})
-   end
-end
-
-
--- apply func to all composite states
-local function map_cstate(func, fsm, excl_parent)
-
-   local function __map_cstate(f, state, tab)
-      local tmp = f(state)
-      table.insert(tab, tmp)
-      if state.states then
-	 map(function (s) __map_cstate(f, s, tab) end, state.states)
-      end
-      return tab
+-- apply func to all substates of fsm
+local function map_state(func, fsm, checkf)
+   local function __map_state(states, tab)
+      map(function (state) 
+	     if checkf(state) then
+		local res = func(state)
+		table.insert(tab, res)
+	     end
+	     __map_state(state.states, tab)
+	     __map_state(state.parallel, tab)
+	  end,
+	  states)
    end
    
-   if excl_parent then
-      return utils.flatten( map(function(s) __map_cstate(func, s, {}) end, fsm.states))
-   else
-      return __map_cstate(func, fsm, {})
-   end
-end
-
--- apply func to all states incl. fsm itself
-local function map_state(func, fsm, excl_parent)
-   return utils.append(map_cstate(func, fsm, excl_parent),
-		       map_pstate(func, fsm, excl_parent))
+   local res={}
+   checkf = checkf or function(s) return true end
+   __map_state(fsm.states, res)
+   __map_state(fsm.parallel, res)
+   return tab
 end
 
 -- apply func to all transitions
@@ -106,6 +84,11 @@ function verify(fsm)
       end
    end
 
+   if not fsm.id then
+      param.warn("WARNING: root fsm has no id, setting to 'root'")
+      fsm.id = 'root'
+   end
+
    res = res and foldr(AND, true, map_state(check_id, fsm))
    
    return res
@@ -114,51 +97,50 @@ end
 -- construct parent links
 -- this modifies fsm
 local function add_parent_links(fsm)
-   fsm.parent = fsm
-   map_state(function (fsm)
-		map(function (state)
-		       state.parent = fsm
-		       return true
-		    end, fsm.states)
-	     end, fsm)
+   local function __add_pl(states, parent)
+      if not states or #states == 0 then return end
 
-   map_state(function (fsm)
-		map(function (state)
-		       state.parent = fsm
-		       return true
-		    end, fsm.parallel)
-	     end, fsm)
+      for i,k in ipairs(states) do
+	 k.parent=parent
+	 __add_pl(k.states, k)
+	 __add_pl(k.parallel, k)
+      end
+   end
+   
+   fsm.parent = fsm
+
+   __add_pl(fsm.states, fsm)
+   __add_pl(fsm.parallel, fsm)
 end
 
 -- add fully qualified names (fqn) to states
 -- depends on parent links beeing available
 local function add_fqn(fsm)
-   local function __add_fqn(s) 
-      s.fqn = s.parent.fqn .. "." .. s.id 
-      print("setting fqn=" .. s.fqn .. "=" .. s.id )
-   end
-   fsm.fqn = fsm.id
-   print("setting root fqn=" .. fsm.fqn .. "=" .. fsm.id )
-   map_state(__add_fqn, fsm, true)
+   fsm.fqn = fsm.id -- root
+   map_state(function (s) s.fqn = s.parent.fqn .. "." .. s.id end, fsm)
 end
 
 -- create a (fqn, state) lookup table
 local function build_lt(fsm)
    local tab = {}
    tab['dupl'] = {}
-   
+
+   tab[fsm.id] = fsm
+
    map_state(function (s) 
-		print("checking fqn=" .. s.fqn)
 		if tab[s.fqn] then
 		   param.err("ERROR: duplicate fully qualified name " .. s.fqn .. " found!")
 		   table.insert(tab['dupl'], s.fqn)
 		else
-		   print("adding to lt: " .. s.fqn)
 		   tab[s.fqn] = s
 		end
 	     end, fsm)
-   if #tab['dupl'] == 0 then tab['dupl'] = nil end
-   return tab
+   if #tab['dupl'] == 0 then
+      tab['dupl'] = nil
+      return tab
+   else
+      return false
+   end
 end
 
 	   
@@ -183,11 +165,8 @@ function init(fsm_templ)
       return false
    else
       add_fqn(fsm)
-      map_state(function (s) print("fqn: ", s.fqn) end, fsm)
-      map_state(function (s) print("id : ", s.id) end, fsm)
       fsm.lt = build_lt(fsm)
-      if fsm.lt.dupl then return false end
-      table.foreach(fsm.lt, print)
+      if not fsm.lt then return false end
    end
 
    return fsm
