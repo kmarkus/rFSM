@@ -11,10 +11,10 @@ param.dbg = print
 
 -- save references
 
-local param, pairs, ipairs, print, tostring, table, type, loadstring,
-assert, coroutine, setmetatable, getmetatable, utils = param, pairs,
-ipairs, print, tostring, table, type, loadstring, assert, coroutine,
-setmetatable, getmetatable, utils
+local param, pairs, ipairs, print, tostring, table, string, type,
+loadstring, assert, coroutine, setmetatable, getmetatable, utils =
+param, pairs, ipairs, print, tostring, table, string, type,
+loadstring, assert, coroutine, setmetatable, getmetatable, utils
 
 module("rtfsm")
 
@@ -33,6 +33,27 @@ function make_state(templ, vartab)
    return ns
 end
 
+local function tr2str(tr)
+   local t = {}
+   if tr.tgt == 'internal' then
+      t[1] = "type: internal"
+      t[2] = "src: " .. tr.src
+      t[3] = "event: " .. tr.event
+   elseif tr.src == 'initial' then
+      t[1] = "type: initial"
+      t[2] = "tgt: " .. tr.tgt
+   elseif tr.tgt == 'final' then
+      t[1] = "type: final"
+      t[2] = "src: " .. tr.src
+      t[3] = "event: " .. tr.event
+   else
+      t[1] = "type: regular"
+      t[2] = "src: " .. tr.src
+      t[3] = "tgt: " .. tr.tgt
+      t[4] = "event: " .. tr.event
+   end
+   return table.concat(t, ', ')
+end
 
 --
 -- local map helper
@@ -60,6 +81,7 @@ local function map_state(func, fsm, checkf)
 end
 
 -- apply func(trans, cstate) to all transitions
+-- cstate is state which owns the transitions
 local function map_trans(func, fsm)
    local function __map_trans(transitions, state, tab)
       map(function (t)
@@ -81,7 +103,6 @@ end
 -- initialization is to fail
 -- depends on parent links for more useful output
 function verify(fsm)
-   local res = true
 
    -- test: check if state has an id
    local function check_id(s)
@@ -95,6 +116,13 @@ function verify(fsm)
       else
 	 return true
       end
+   end
+
+   local res = true
+
+   if type(fsm) ~= 'table' then
+      param.err("ERROR: fsm is not a table")
+      res = false
    end
 
    if not fsm.id then
@@ -134,6 +162,7 @@ local function add_fqn(fsm)
 end
 
 -- create a (fqn, state) lookup table
+-- add duplicates to __dupl entry
 local function build_lt(fsm)
    local tab = {}
    tab['dupl'] = {}
@@ -158,13 +187,38 @@ end
 
 
 -- resolve transition targets
--- depends on fully qualified names
+--    depends on local uniqueness
+--    depends on fully qualified names
+--    depends on lookup table
 local function resolve_trans(fsm)
-   local function __resolve_trans(t)
-      -- mandatory: src must be at local level
-      --
-   end
+   -- three types of targets:
+   --    1. local, only name given, no '.'
+   --    2. relative, leading dot
+   --    3. absolute, no leading dot
 
+   local function __resolve_trans(tr, parent)
+
+      if tr.tgt == 'internal' then
+	 -- hmm
+      elseif not string.find(tr.tgt, '[\\.]') then
+	 -- no dots, local target
+	 local tgtname = parent.fqn .. '.' .. tr.tgt
+	 local tgt = fsm.lt[tgtname]
+	 if not tgt then
+	    param.err("ERROR: unable to resolve transition target, fqn: " .. tgtname .. ", " .. tr2str(tr))
+	 end
+      elseif string.sub(tr.tgt, 1, 1) == '.' then
+	 -- leading dot, relative target
+	 print("relative trans tgt not supported yet")
+      else
+	 -- absolute target
+	 print("absolute trans tgt not supported yet")
+      end
+   end
+   
+   map_trans(__resolve_trans, fsm)
+
+   return true
 end
 
 -- initialize fsm
@@ -177,18 +231,16 @@ function init(fsm_templ)
    if not verify(fsm) then
       param.err("failed to initalize fsm " .. fsm.id);
       return false
-   else
-      -- things are ok
-      add_fqn(fsm)
-      fsm.lt = build_lt(fsm)
-      if not fsm.lt then return false end
+   end
 
-      map_trans(function (t, s)
-		   print("trans in " .. s.id .." from " ..
-			 tostring(t.src) .. " -> " .. t.tgt ..
-		      " caused by " .. tostring(t.event))
-		end, fsm)
+   add_fqn(fsm)
 
+   fsm.lt = build_lt(fsm)
+   if not fsm.lt then return false end
+   
+   if not resolve_trans(fsm) then
+      param.err("failed to resolve transitions of fsm " .. fsm.id)
+      return false
    end
 
    return fsm
@@ -210,6 +262,12 @@ end
 local function exec_trans(fsm, lca, src, target)
 end
 
-function step(fsm)
-   exec_trans(find_trans(fsm, fsm.queue))
+-- perform a run to completion step
+function rtc_step(fsm)
+   -- 1. find valid transitions
+   --    1.1.
+
+   -- 2. execute the transition
+   --    2.1 find transition trajectory
+   --    2.2 execute it
 end

@@ -56,7 +56,7 @@ end
 -- state names must be unique!
 local function get_shandle(gh, name)
 
-   if name == gv.nameof(gh) then 
+   if name == gv.nameof(gh) then
       return gh, "graph"
    end
 
@@ -81,6 +81,10 @@ local function new_gra(name)
    gv.setv(gh, "remincross", "true")
    gv.setv(gh, "splines", "true")
    gv.setv(gh, "rankdir", "TD")
+
+   -- layout clusters locally before integrating
+   -- doesn't seem to make any difference
+   -- gv.setv(gh, "clusterrank", "local")
 
    dbg("creating new graph " .. name)
    return gh
@@ -203,7 +207,7 @@ end
 local function new_tr(gh, srcstr, tgtstr, label)
 
    dbg("creating transition from '" .. srcstr .. "' to '" .. tgtstr .. "'")
-   
+
    local sh, shtype = get_shandle(gh, srcstr)
    local th, thtype = get_shandle(gh, tgtstr)
 
@@ -221,7 +225,7 @@ local function new_tr(gh, srcstr, tgtstr, label)
    else
       realth = th
    end
-   
+
    local eh = gv.edge(realsh, realth)
    set_trprops(eh)
 
@@ -239,7 +243,7 @@ end
 
 --
 -- convert given fsm to a populated graphviz object
--- 
+--
 
 local function has_initial_tr(transitions)
    for i,k in ipairs(transitions) do
@@ -283,7 +287,7 @@ local function proc_trans(gh, state)
    --if state.initial then
    -- new_tr(gh, state.id .. '_initial', state.initial)
    -- end
-   map(function (t) 
+   map(function (t)
 	  if t.tgt == 'internal' then
 	     return true
 	  elseif t.tgt == 'final' then
@@ -324,7 +328,7 @@ local function fsm2gh(root)
 end
 
 function fsm2img(root, format, outfile)
-   local gh =fsm2gh(root)
+   local gh = fsm2gh(root)
    gv.layout(gh, param.layout)
    dbg("running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)

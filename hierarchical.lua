@@ -28,7 +28,7 @@ simple = {
 
 -- transitions:
 --  - regular:  src='source-state', tgt='target-state', event='e_bla', guard=function () return true end
---  - internal: src=not_allowed, tgt='internal', event='e_bla', guard=...
+--  - internal: src=source-state, tgt='internal', event='e_bla', guard=...
 --  - initial:  src='initial', tgt='target-state', event=not_allowed!, guard=...
 --  - final:    src='source-state', tgt='final', event=..., giard=...
 
@@ -41,15 +41,15 @@ orthogonal_region = {
    parallel={ { id = 'cs_home_ax1',
 		states = { { id='home_axis1', doo="homeAxis()" } },
 		transitions = { { src='initial', tgt='home_axis1' },
-				{ src='home_axis1', tgt='final' } } },
+				{ src='home_axis1', tgt='final', event='e_complete' } } },
 	      { id = 'cs_home_ax2',
 		states = { { id='home_axis2', doo="homeAxis()" } },
 		transitions = { { src='initial', tgt='home_axis2' },
-				{ src='home_axis2', tgt='final' } } },
+				{ src='home_axis2', tgt='final', event='e_complete' } } },
 	      { id = 'cs_home_ax3',
 		states = { { id='home_axis3', doo="homeAxis()" } },
 		transitions = { { src='initial', tgt='home_axis3' },
-				{ src='home_axis3', tgt='final' } } } }
+				{ src='home_axis3', tgt='final', event='e_complete' } } } }
 }
 
 -- composite state
@@ -118,7 +118,8 @@ root = {
 		   { src='s_init', tgt='s_running', event='e_start',  } }
 }
 
-print("----------------------------------------------------")
+
+print(string.rep('-', 80))
 
 local fsm0 = rtfsm.init(simple)
 if fsm0 then
@@ -127,7 +128,7 @@ else
    print("failed to init " .. simple.id)
 end
 
-print("----------------------------------------------------")
+print(string.rep('-', 80))
 
 local fsm1 = rtfsm.init(root)
 if fsm1 then
@@ -136,7 +137,7 @@ else
    print("failed to init " .. root.id)
 end
 
-print("----------------------------------------------------")
+print(string.rep('-', 80))
 
 local fsm2 = rtfsm.init(parallel)
 if fsm2 then
