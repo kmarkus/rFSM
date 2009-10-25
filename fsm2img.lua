@@ -241,10 +241,6 @@ local function new_tr(gh, srcstr, tgtstr, label)
 end
 
 
---
--- convert given fsm to a populated graphviz object
---
-
 local function has_initial_tr(transitions)
    for i,k in ipairs(transitions) do
       if k.src == 'initial' then
@@ -304,6 +300,10 @@ local function proc_trans(gh, state)
    map(function (s) proc_trans(gh, s) end, state.parallel)
 end
 
+--
+-- convert given fsm to a populated graphviz object
+--
+
 local function fsm2gh(root)
    gh = new_gra(root.id)
 
@@ -330,7 +330,7 @@ end
 function fsm2img(root, format, outfile)
    local gh = fsm2gh(root)
    gv.layout(gh, param.layout)
-   dbg("running " .. param.layout .. " layouter")
+   dbg("fsm2img: running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
-   dbg("rendering to " .. format .. ", written result to " .. outfile)
+   dbg("fsm2img: rendering to " .. format .. ", written result to " .. outfile)
 end

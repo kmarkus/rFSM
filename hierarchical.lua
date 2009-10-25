@@ -3,9 +3,10 @@
 --
 
 require("fsm2img")
+require("fsm2tree")
 require("rtfsm")
 
-make_state=rtfsm.make_state
+make_state=fsmutils.make_state
 
 -- example fsm
 
@@ -124,6 +125,7 @@ print(string.rep('-', 80))
 local fsm0 = rtfsm.init(simple)
 if fsm0 then
    fsm2img.fsm2img(simple, "png", simple.id .. ".png")
+   fsm2tree.fsm2img(fsm0, "png", fsm0.id .. "-tree.png")
 else
    print("failed to init " .. simple.id)
 end
@@ -133,6 +135,7 @@ print(string.rep('-', 80))
 local fsm1 = rtfsm.init(root)
 if fsm1 then
    fsm2img.fsm2img(root, "png", root.id .. ".png")
+   fsm2tree.fsm2img(fsm1, "png", fsm1.id .. "-tree.png")
 else
    print("failed to init " .. root.id)
 end
@@ -142,9 +145,9 @@ print(string.rep('-', 80))
 local fsm2 = rtfsm.init(parallel)
 if fsm2 then
    fsm2img.fsm2img(parallel, "png", parallel.id .. ".png")
+   fsm2tree.fsm2img(fsm2, "png", fsm2.id .. "-tree.png")
 else
    print("failed to init " .. parallel.id)
 end
-
 
 os.execute("qiv" .. " *.png")
