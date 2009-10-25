@@ -200,12 +200,16 @@ local function resolve_trans(fsm)
 
       if tr.tgt == 'internal' then
 	 -- hmm
+      elseif tr.tgt =='final' then
+	 -- hmmm
       elseif not string.find(tr.tgt, '[\\.]') then
 	 -- no dots, local target
 	 local tgtname = parent.fqn .. '.' .. tr.tgt
 	 local tgt = fsm.lt[tgtname]
 	 if not tgt then
 	    param.err("ERROR: unable to resolve transition target, fqn: " .. tgtname .. ", " .. tr2str(tr))
+	 else
+	    tr.tgt = tgt
 	 end
       elseif string.sub(tr.tgt, 1, 1) == '.' then
 	 -- leading dot, relative target
@@ -215,11 +219,12 @@ local function resolve_trans(fsm)
 	 print("absolute trans tgt not supported yet")
       end
    end
-   
+
    map_trans(__resolve_trans, fsm)
 
    return true
 end
+
 
 -- initialize fsm
 -- create parent links
@@ -237,7 +242,7 @@ function init(fsm_templ)
 
    fsm.lt = build_lt(fsm)
    if not fsm.lt then return false end
-   
+
    if not resolve_trans(fsm) then
       param.err("failed to resolve transitions of fsm " .. fsm.id)
       return false
@@ -250,20 +255,57 @@ end
 -- operational functions
 --
 
--- find least common ancestor
-local function findLCA(fsm, sx, sy)
+-- calculate the transition trajectory, which is the path of states
+-- between the source and the target state
+--
+-- part1 is defined by: up the active tree up to the LCA (exiting)
+-- part2 is defined by: down from LCA to tgt. This is returned by
+-- calc_trans
+--
+-- Random idea: what if there were multiple but different possible
+-- trajectories? different ways to achieve sth? -> Think about
+-- alternative visualization of FSM
+--
+local function calc_trans_trj(fsm, src, tgt)
+   -- create sth like
+   -- { src, tgt, lca, part2 }
+end
+
+
+-- determine first enabled transition to take given a table of events
+--
+-- for each state starting from root, check if the list of events
+-- triggers a transition from an active state and (if existant) it's
+-- guard condition evaluates to false.
+--
+local function find_en_tr(fsm, events)
 
 end
 
--- determine transition to take given a table of events
-local function find_trans(fsm, events)
+local function exec_trans(fsm, trans)
 end
 
-local function exec_trans(fsm, lca, src, target)
+-- execute one microstep, ie one single state exit and entry
+function microstep(fsm)
+
 end
 
--- perform a run to completion step
-function rtc_step(fsm)
+
+-- perform a run to completion step which will, at least, cause the
+-- fsm to run until it has reached an stable configuration. It may run
+-- longer if no event become available and the currently active state
+-- has a doo program
+--
+-- a fsm can be in to states: stable or in-transition which is
+-- represented by the variable
+-- fsm.stable = true or false
+--
+-- if it's stable it can react to new events, otherwise not. If stable
+-- is nil then the fsm has not been entered yet (which is an unstable
+-- state because it can not react to events before the initial
+-- transition has been executed.
+--
+function rtcstep(fsm)
    -- 1. find valid transitions
    --    1.1.
 
