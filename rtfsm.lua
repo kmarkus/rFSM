@@ -125,8 +125,19 @@ local function resolve_trans(fsm)
    --    2. relative, leading dot
    --    3. absolute, no leading dot
 
-   local function __resolve_trans(tr, parent)
 
+   local function __resolve_trans(tr, parent)
+      -- resolve src first
+      local srcname = parent.fqn .. '.' .. tr.src
+      local src = fsm.lt[srcname]
+
+      if not src then
+	 param.err("ERROR: unable to resolve transition source, fqn: " .. srcname .. ", " .. fsmutils.tr2str(tr))
+      else
+	 tr.src = src
+      end
+
+      -- resolve target
       if tr.tgt == 'internal' then
 	 -- hmm
       elseif tr.tgt =='final' then
@@ -147,10 +158,11 @@ local function resolve_trans(fsm)
 	 -- absolute target
 	 print("absolute trans tgt not supported yet")
       end
+
+      return true
    end
 
    map_trans(__resolve_trans, fsm)
-
    return true
 end
 

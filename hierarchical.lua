@@ -23,7 +23,7 @@ simple = {
    entry = function () print("simple_state: entry") end,
    doo = function () print("simple_state: doo") end,
    exit = function () print("simple_state: exit") end,
-   transitions = { { event='e_foo', tgt='internal' } }
+   -- ? transitions = { { event='e_foo', tgt='internal' } }
 }
 
 
