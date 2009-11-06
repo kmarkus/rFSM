@@ -1,8 +1,8 @@
 
 require ('utils')
 
-local pairs, ipairs, utils, table, map = pairs, ipairs, utils, table,
-utils.map
+local pairs, ipairs, utils, table, map, tostring = pairs, ipairs,
+utils, table, utils.map, tostring
 
 module ('fsmutils')
 
@@ -20,20 +20,20 @@ function tr2str(tr)
    local t = {}
    if tr.tgt == 'internal' then
       t[1] = "type: internal"
-      t[2] = "src: " .. tr.src
-      t[3] = "event: " .. tr.event
+      t[2] = "src: " .. tostring(tr.src)
+      t[3] = "event: " .. tostring(tr.event)
    elseif tr.src == 'initial' then
       t[1] = "type: initial"
-      t[2] = "tgt: " .. tr.tgt
+      t[2] = "tgt: " .. tostring(tr.tgt)
    elseif tr.tgt == 'final' then
       t[1] = "type: final"
-      t[2] = "src: " .. tr.src
-      t[3] = "event: " .. tr.event
+      t[2] = "src: " .. tostring(tr.src)
+      t[3] = "event: " .. tostring(tr.event)
    else
       t[1] = "type: regular"
-      t[2] = "src: " .. tr.src
-      t[3] = "tgt: " .. tr.tgt
-      t[4] = "event: " .. tr.event
+      t[2] = "src: " .. tostring(tr.src)
+      t[3] = "tgt: " .. tostring(tr.tgt)
+      t[4] = "event: " .. tostring(tr.event)
    end
    return table.concat(t, ', ')
 end

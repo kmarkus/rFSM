@@ -47,6 +47,26 @@ function verify(fsm)
       end
    end
 
+
+   local function check_trans(t, parent)
+      local ret = true
+      local errors = {}
+      if not t.src then
+	 table.insert(errors, "missing source state")
+	 ret = false
+      end
+      if not t.tgt then
+	 table.insert(errors, "missing target state")
+	 ret = false
+      end
+      -- tbd: event
+      if not ret then
+	 param.err("Transition ERROR(s) in " .. fsmutils.tr2str(t) .. ", parent is '" .. parent.id .. "' :")
+	 map(function (e) param.err("", e) end, errors)
+      end
+      return ret
+   end
+
    local res = true
 
    if type(fsm) ~= 'table' then
@@ -60,6 +80,7 @@ function verify(fsm)
    end
 
    res = res and foldr(AND, true, map_state(check_id, fsm))
+   res = res and foldr(AND, true, map_trans(check_trans, fsm))
 
    return res
 end
