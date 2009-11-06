@@ -9,6 +9,8 @@ local pairs, ipairs, print, table, type, assert, gv, io, fsmutils
 module("fsm2tree")
 
 param = {}
+
+param.trfontsize = 7.0
 param.show_fqn = false
 param.and_color="green"
 param.and_style="dashed"
@@ -42,6 +44,10 @@ local function set_hier_trans_props(eh)
    gv.setv(eh, "arrowhead", "none")
    gv.setv(eh, "style", param.hedge_style)
    gv.setv(eh, "color", param.hedge_color)
+end
+
+local function set_trans_props(eh)
+   gv.setv(eh, "fontsize", param.trfontsize)
 end
 
 -- create new graph and add root node
@@ -110,6 +116,8 @@ local function add_trans(gh, tr, parent)
 
    eh = gv.edge(gh, src, tgt)
    gv.setv(eh, "constraint", "false")
+   if tr.event then gv.setv(eh, "label", tr.event) end
+   set_trans_props(eh)
 end
 
 local function fsm2gh(fsm)
