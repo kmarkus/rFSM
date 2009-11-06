@@ -119,35 +119,39 @@ root = {
 		   { src='s_init', tgt='s_running', event='e_start',  } }
 }
 
+hitball = {
+   id = 'hit_the_ball_demo',
+   states = { {
+		 id = 'operational',
+		 states = { { id = 'follow' },
+			    { id = 'hit'} },
+		 transitions = { { src='follow', tgt='hit', event='e_hit_ball' },
+				 { src='hit', tgt='follow', event='e_hit_done', effect='wait 2s' } }
+	      }, {
+		 id = 'calibration'
+	   } },
+   transitions = { { src='operational', tgt='calibration', event='e_calibrate' },
+		   { src='calibration', tgt='operational', event='e_calibrate_done' } }
+	      
+}
 
-print(string.rep('-', 80))
-
-local fsm0 = rtfsm.init(simple)
-if fsm0 then
-   fsm2img.fsm2img(simple, "png", simple.id .. ".png")
-   fsm2tree.fsm2img(fsm0, "png", fsm0.id .. "-tree.png")
-else
-   print("failed to init " .. simple.id)
+-- murky auxillary function
+local function do_all(_fsm)
+   print("Processing FSM '" .. _fsm.id .. "'")
+   local fsm = rtfsm.init(_fsm)
+   if not fsm then
+      print("ERROR: init failed")
+      return false
+   end
+   fsm2img.fsm2img(_fsm, "png", fsm.id .. ".png")
+   fsm2tree.fsm2img(fsm, "png", fsm.id .. "-tree.png")
+   print(string.rep('-', 80))
+   return fsm
 end
 
-print(string.rep('-', 80))
-
-local fsm1 = rtfsm.init(root)
-if fsm1 then
-   fsm2img.fsm2img(root, "png", root.id .. ".png")
-   fsm2tree.fsm2img(fsm1, "png", fsm1.id .. "-tree.png")
-else
-   print("failed to init " .. root.id)
-end
-
-print(string.rep('-', 80))
-
-local fsm2 = rtfsm.init(parallel)
-if fsm2 then
-   fsm2img.fsm2img(parallel, "png", parallel.id .. ".png")
-   fsm2tree.fsm2img(fsm2, "png", fsm2.id .. "-tree.png")
-else
-   print("failed to init " .. parallel.id)
-end
+fsm_simple = do_all(simple)
+fsm_root = do_all(root)
+fsm_parallel = do_all(parallel)
+fsm_hitball = do_all(hitball)
 
 os.execute("qiv" .. " *.png")
