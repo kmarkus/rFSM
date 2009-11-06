@@ -153,6 +153,7 @@ local function resolve_trans(fsm)
       local src = fsm.lt[srcname]
 
       if not src then
+	 -- tbd: these should fail !!
 	 param.err("ERROR: unable to resolve transition source, fqn: " .. srcname .. ", " .. fsmutils.tr2str(tr))
       else
 	 tr.src = src

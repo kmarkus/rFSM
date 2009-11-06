@@ -5,6 +5,7 @@
 require("fsm2img")
 require("fsm2tree")
 require("rtfsm")
+require("utils")
 
 make_state=fsmutils.make_state
 
@@ -135,6 +136,15 @@ hitball = {
 	      
 }
 
+--
+--
+-- currently fails because resolve logic can't find calibration
+--
+-- hitball2 = utils.deepcopy(hitball)
+-- hitball2.id = 'hit_the_ball_demo'
+-- hitball2.transitions[1] = { src='follow', tgt='calibration', event='e_calibrate' }
+
+
 -- murky auxillary function
 local function do_all(_fsm)
    print("Processing FSM '" .. _fsm.id .. "'")
@@ -153,5 +163,6 @@ fsm_simple = do_all(simple)
 fsm_root = do_all(root)
 fsm_parallel = do_all(parallel)
 fsm_hitball = do_all(hitball)
+--  fsm_hitball2 = do_all(hitball2)
 
 os.execute("qiv" .. " *.png")
