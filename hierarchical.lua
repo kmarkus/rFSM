@@ -9,7 +9,18 @@ require("utils")
 
 make_state=fsmutils.make_state
 
+---
+-- best practices:
+--
+-- 1) Don't depend on deferrable events -> robustness against lost events
+--
+--
+--
+---
+
 -- example fsm
+
+-- deferrable events?
 
 --  simple state
 -- constraints:
@@ -131,7 +142,7 @@ hitball = {
 	      }, {
 		 id = 'calibration'
 	   } },
-   transitions = { { src='operational', tgt='calibration', event='e_calibrate' },
+   transitions = { { src='hit_the_ball_demo.operational.follow', tgt='calibration', event='e_calibrate' },
 		   { src='calibration', tgt='operational', event='e_calibrate_done' } }
 	      
 }
@@ -153,7 +164,7 @@ local function do_all(_fsm)
       print("ERROR: init failed")
       return false
    end
-   fsm2img.fsm2img(_fsm, "png", fsm.id .. ".png")
+   -- fsm2img.fsm2img(_fsm, "png", fsm.id .. ".png")
    fsm2tree.fsm2img(fsm, "png", fsm.id .. "-tree.png")
    print(string.rep('-', 80))
    return fsm

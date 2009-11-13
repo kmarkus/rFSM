@@ -13,10 +13,10 @@ param.dbg = print
 -- save references
 
 local param, pairs, ipairs, print, tostring, table, string, type,
- loadstring, assert, coroutine, setmetatable, getmetatable, utils,
- fsmutils = param, pairs, ipairs, print, tostring, table, string,
- type, loadstring, assert, coroutine, setmetatable, getmetatable,
- utils, fsmutils
+loadstring, assert, coroutine, setmetatable, getmetatable, utils,
+fsmutils = param, pairs, ipairs, print, tostring, table, string,
+type, loadstring, assert, coroutine, setmetatable, getmetatable,
+utils, fsmutils
 
 module("rtfsm")
 
@@ -47,7 +47,6 @@ function verify(fsm)
       end
    end
 
-
    local function check_trans(t, parent)
       local ret = true
       local errors = {}
@@ -67,6 +66,7 @@ function verify(fsm)
       return ret
    end
 
+   -- run checks
    local res = true
 
    if type(fsm) ~= 'table' then
@@ -136,56 +136,71 @@ local function build_lt(fsm)
 end
 
 
--- resolve transition targets
+-- resolve transition src and target strings into references of the real states
 --    depends on local uniqueness
 --    depends on fully qualified names
 --    depends on lookup table
 local function resolve_trans(fsm)
+
    -- three types of targets:
    --    1. local, only name given, no '.'
    --    2. relative, leading dot
    --    3. absolute, no leading dot
 
-
    local function __resolve_trans(tr, parent)
-      -- resolve src first
-      local srcname = parent.fqn .. '.' .. tr.src
-      local src = fsm.lt[srcname]
-
-      if not src then
-	 -- tbd: these should fail !!
-	 param.err("ERROR: unable to resolve transition source, fqn: " .. srcname .. ", " .. fsmutils.tr2str(tr))
-      else
-	 tr.src = src
-      end
-
-      -- resolve target
-      if tr.tgt == 'internal' then
-	 -- hmm
-      elseif tr.tgt =='final' then
-	 -- hmmm
-      elseif not string.find(tr.tgt, '[\\.]') then
-	 -- no dots, local target
-	 local tgtname = parent.fqn .. '.' .. tr.tgt
-	 local tgt = fsm.lt[tgtname]
-	 if not tgt then
-	    param.err("ERROR: unable to resolve transition target, fqn: " .. tgtname .. ", " .. fsmutils.tr2str(tr))
+      -- resolve path
+      local function __resolve_path(state_str, parent)
+	 local state
+	 if not string.find(state_str, '[\\.]') then
+	    -- no dots, local state
+	    local state_fqn = parent.fqn .. '.' .. state_str
+	    state = fsm.lt[state_fqn]
+	 elseif string.sub(tr.src, 1, 1) == '.' then
+	    -- leading dot, relative target
+	    print("WARNING: relative transitions not supported and maybe never will!")
 	 else
-	    tr.tgt = tgt
+	    -- absolute target, this is a fqn!
+	    print("looking up absolute tgt=" .. state_str)
+	    state = fsm.lt[state_str]
 	 end
-      elseif string.sub(tr.tgt, 1, 1) == '.' then
-	 -- leading dot, relative target
-	 print("relative trans tgt not supported yet")
-      else
-	 -- absolute target
-	 print("absolute trans tgt not supported yet")
+	 return state
       end
 
-      return true
+      -- resolve transition src
+      local function __resolve_src(tr, parent)
+	 local ret = true
+	 if tr.src == 'initial' then
+	    -- ok
+	 else -- must be a path
+	    local src = __resolve_path(tr.src, parent)
+	    if not src then
+	       param.err("ERROR: unable to resolve transition src " .. tr.src .. " in " .. fsmutils.tr2str(tr))
+	       ret = false
+	    else tr.src = src end end
+	 return ret
+      end
+
+      -- resolve transition tgt
+      local function __resolve_tgt(tr, parent)
+	 local ret = true
+	 -- resolve target
+	 if tr.tgt == 'internal' then
+	    param.warn("WARNING: internal events not supported yet")
+	 elseif tr.tgt =='final' then
+	    -- leave it
+	 else
+	    local tgt = __resolve_path(tr.tgt, parent)
+	    if not tgt then
+	       param.err("ERROR: unable to resolve transition tgt " .. tr.tgt .. " in " .. fsmutils.tr2str(tr))
+	       ret = false
+	    else tr.tgt = tgt end end
+	 return ret
+      end
+
+      return __resolve_src(tr, parent) and __resolve_tgt(tr, parent)
    end
 
-   map_trans(__resolve_trans, fsm)
-   return true
+   return utils.andt(map_trans(__resolve_trans, fsm))
 end
 
 
@@ -223,8 +238,8 @@ end
 -- between the source and the target state
 --
 -- part1 is defined by: up the active tree up to the LCA (exiting)
--- part2 is defined by: down from LCA to tgt. This is returned by
--- calc_trans
+-- part2 is defined by: down from LCA to tgt (entering). Only the
+-- entering part is returned by calc_trans
 --
 -- Random idea: what if there were multiple but different possible
 -- trajectories? different ways to achieve sth? -> Think about
@@ -271,7 +286,8 @@ end
 --
 function rtcstep(fsm)
    -- 1. find valid transitions
-   --    1.1.
+   --    1.1. get list of events
+   --	 1.2 apply them top-down to active configuration
 
    -- 2. execute the transition
    --    2.1 find transition trajectory
