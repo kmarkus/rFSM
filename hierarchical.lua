@@ -155,6 +155,7 @@ hitball = {
 -- hitball2.id = 'hit_the_ball_demo'
 -- hitball2.transitions[1] = { src='follow', tgt='calibration', event='e_calibrate' }
 
+os.execute("rm -f *.png")
 
 -- murky auxillary function
 local function do_all(_fsm)
@@ -164,7 +165,7 @@ local function do_all(_fsm)
       print("ERROR: init failed")
       return false
    end
-   -- fsm2img.fsm2img(_fsm, "png", fsm.id .. ".png")
+   fsm2img.fsm2img(fsm, "png", fsm.id .. "-uml.png")
    fsm2tree.fsm2img(fsm, "png", fsm.id .. "-tree.png")
    print(string.rep('-', 80))
    return fsm
