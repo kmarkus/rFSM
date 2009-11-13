@@ -160,7 +160,6 @@ local function resolve_trans(fsm)
 	    print("WARNING: relative transitions not supported and maybe never will!")
 	 else
 	    -- absolute target, this is a fqn!
-	    print("looking up absolute tgt=" .. state_str)
 	    state = fsm.lt[state_str]
 	 end
 	 return state

@@ -6,7 +6,7 @@ require("fsmutils")
 local pairs, ipairs, print, table, type, assert, gv, io, fsmutils
    = pairs, ipairs, print, table, type, assert, gv, io, fsmutils
 
-module("fsm2img")
+module("fsm2uml")
 
 param = {}
 param.fontsize = 12.0
@@ -320,16 +320,16 @@ local function fsm2gh(root)
    return gh
 end
 
-function fsm2img(root, format, outfile)
+function fsm2uml(root, format, outfile)
 
    if not root.__initalized then
-      param.err("fsm2img ERROR: fsm " .. root.id .. " uninitialized")
+      param.err("fsm2uml ERROR: fsm " .. root.id .. " uninitialized")
       return false
    end
 
    local gh = fsm2gh(root)
    gv.layout(gh, param.layout)
-   dbg("fsm2img: running " .. param.layout .. " layouter")
+   dbg("fsm2uml: running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
-   dbg("fsm2img: rendering to " .. format .. ", written result to " .. outfile)
+   dbg("fsm2uml: rendering to " .. format .. ", written result to " .. outfile)
 end

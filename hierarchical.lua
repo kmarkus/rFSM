@@ -2,7 +2,7 @@
 -- FSM examples
 --
 
-require("fsm2img")
+require("fsm2uml")
 require("fsm2tree")
 require("rtfsm")
 require("utils")
@@ -165,16 +165,13 @@ local function do_all(_fsm)
       print("ERROR: init failed")
       return false
    end
-   fsm2img.fsm2img(fsm, "png", fsm.id .. "-uml.png")
-   fsm2tree.fsm2img(fsm, "png", fsm.id .. "-tree.png")
+   fsm2uml.fsm2uml(fsm, "png", fsm.id .. "-uml.png")
+   fsm2tree.fsm2tree(fsm, "png", fsm.id .. "-tree.png")
    print(string.rep('-', 80))
    return fsm
 end
 
-fsm_simple = do_all(simple)
-fsm_root = do_all(root)
-fsm_parallel = do_all(parallel)
-fsm_hitball = do_all(hitball)
+utils.map(do_all, {simple, root, parallel, hitball})
 --  fsm_hitball2 = do_all(hitball2)
 
 os.execute("qiv" .. " *.png")

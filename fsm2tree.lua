@@ -132,7 +132,7 @@ end
 
 
 -- convert fsm to 
-function fsm2img(fsm, format, outfile)
+function fsm2tree(fsm, format, outfile)
 
    if not fsm.__initalized then
       param.err("fsm2tree ERROR: fsm " .. fsm.id .. " uninitialized")
