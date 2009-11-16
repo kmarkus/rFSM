@@ -274,9 +274,8 @@ end
 -- longer if no event become available and the currently active state
 -- has a doo program
 --
--- a fsm can be in to states: stable or in-transition which is
--- represented by the variable
--- fsm.stable = true or false
+-- a fsm can be in two states: stable or in-transition which is
+-- represented by the variable fsm.stable = true|false
 --
 -- if it's stable it can react to new events, otherwise not. If stable
 -- is nil then the fsm has not been entered yet (which is an unstable
@@ -292,3 +291,10 @@ function rtcstep(fsm)
    --    2.1 find transition trajectory
    --    2.2 execute it
 end
+
+
+-- testing
+
+-- define sets of input events and expected trajectory and test
+-- against actually executed trajectory
+-- 

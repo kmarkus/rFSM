@@ -144,8 +144,48 @@ hitball = {
 	   } },
    transitions = { { src='hit_the_ball_demo.operational.follow', tgt='calibration', event='e_calibrate' },
 		   { src='calibration', tgt='operational', event='e_calibrate_done' } }
-	      
+
 }
+
+
+-- variant to be discussed
+-- make id the table index:
+-- advantages:
+--  - root.states.state2.states.state3 works
+--   (maybe nicer would be to omit 'states' table so that root.state2.state3 becomes possible)
+--  - id is separate from the state, better reuse. How deal with parameters?
+--
+hitball2 = {
+   id = 'hit_the_ball_demo',
+   states = { operational = {
+		 states = { { id = 'follow' },
+			    { id = 'hit'} },
+		 transitions = { { src='follow', tgt='hit', event='e_hit_ball' },
+				 { src='hit', tgt='follow', event='e_hit_done', effect='wait 2s' } }
+	      },
+	      calibration = { id = 'calibration' } },
+   transitions = { { src='hit_the_ball_demo.operational.follow', tgt='calibration', event='e_calibrate' },
+		   { src='calibration', tgt='operational', event='e_calibrate_done' } }
+
+}
+
+-- or better
+hitball3 = {
+   id = 'hit_the_ball_demo',
+   operational = {
+      follow = { entry="Scene.follow=true", exit="do_that()" },
+      hit = { },
+      transitions = { { src='follow', tgt='hit', event='e_hit_ball' },
+		      { src='hit', tgt='follow', event='e_hit_done', effect='wait 2s' } }
+   },
+
+   calibration = { },
+
+   transitions = { { src='hit_the_ball_demo.operational.follow', tgt='calibration', event='e_calibrate' },
+		   { src='calibration', tgt='operational', event='e_calibrate_done' } }
+
+}
+
 
 --
 --
@@ -171,7 +211,7 @@ local function do_all(_fsm)
    return fsm
 end
 
-utils.map(do_all, {simple, root, parallel, hitball})
+fsmt = utils.map(do_all, {simple, root, parallel, hitball})
 --  fsm_hitball2 = do_all(hitball2)
 
 os.execute("qiv" .. " *.png")
