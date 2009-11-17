@@ -162,6 +162,11 @@ function filter(f, tab)
    return newtab
 end
 
+function foreach(f, tab)
+   if not tab then return end
+   for i,v in pairs(tab) do f(v) end
+end
+
 function foldr(func, val, tab)
    if not tab then return val end
    for i,v in pairs(tab) do
