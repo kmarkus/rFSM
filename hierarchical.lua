@@ -12,15 +12,11 @@ make_state=fsmutils.make_state
 ---
 -- best practices:
 --
--- 1) Don't depend on deferrable events -> robustness against lost events
---
---
---
+-- 1) Don't depend on persistent events -> robustness against lost events
+--	- persistent instead of deferrable events?
 ---
 
 -- example fsm
-
--- deferrable events?
 
 --  simple state
 -- constraints:
@@ -128,7 +124,9 @@ root = {
 		   { src='s_stopped', tgt='s_init', event='e_reset', effect='print("reseting")' },
 		   { src='s_stopped', tgt='s_running', event='e_start', effect='print("restarting")' },
 		   { src='s_stopped', tgt='final', event='e_quit' },
-		   { src='s_init', tgt='s_running', event='e_start',  } }
+		   { src='s_init', tgt='s_running', event='e_start',  } },
+
+   connectors = { { id='initial' }, { id='final' }, { id="x12" } }
 }
 
 hitball = {

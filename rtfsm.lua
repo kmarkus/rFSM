@@ -1,6 +1,6 @@
---
+--------------------------------------------------------------------------------
 --  Lua based robotics finite state machine engine
---
+--------------------------------------------------------------------------------
 
 require ('utils')
 require ('fsmutils')
@@ -27,6 +27,7 @@ local tab2str = utils.tab2str
 local map_state = fsmutils.map_state
 local map_trans = fsmutils.map_trans
 
+--------------------------------------------------------------------------------
 -- perform checks
 -- test should bark loudly about problems and return false if
 -- initialization is to fail
@@ -85,6 +86,7 @@ function verify(fsm)
    return res
 end
 
+--------------------------------------------------------------------------------
 -- construct parent links
 -- this modifies fsm
 local function add_parent_links(fsm)
@@ -104,6 +106,7 @@ local function add_parent_links(fsm)
    __add_pl(fsm.parallel, fsm)
 end
 
+--------------------------------------------------------------------------------
 -- add fully qualified names (fqn) to states
 -- depends on parent links beeing available
 local function add_fqn(fsm)
@@ -111,31 +114,25 @@ local function add_fqn(fsm)
    map_state(function (s) s.fqn = s.parent.fqn .. "." .. s.id end, fsm)
 end
 
+--------------------------------------------------------------------------------
 -- create a (fqn, state) lookup table
--- add duplicates to __dupl entry
-local function build_lt(fsm)
-   local tab = {}
-   tab['dupl'] = {}
+-- and return a lookup function and a table of duplicates
+local function fqn2st_cache(fsm)
+   local cache = {}
+   local dupl = {}
 
-   tab[fsm.id] = fsm
+   cache[fsm.id] = fsm
+   cache['root'] = fsm
 
    map_state(function (s)
-		if tab[s.fqn] then
-		   param.err("ERROR: duplicate fully qualified name " .. s.fqn .. " found!")
-		   table.insert(tab['dupl'], s.fqn)
-		else
-		   tab[s.fqn] = s
-		end
-	     end, fsm)
-   if #tab['dupl'] == 0 then
-      tab['dupl'] = nil
-      return tab
-   else
-      return false
-   end
+		if cache[s.fqn] then dupl[#dupl+1] = s.fqn
+		else cache[s.fqn] = s end end,
+	     fsm)
+
+   return function (fqn) return cache[fqn] end, dupl
 end
 
-
+--------------------------------------------------------------------------------
 -- resolve transition src and target strings into references of the real states
 --    depends on local uniqueness
 --    depends on fully qualified names
@@ -154,13 +151,13 @@ local function resolve_trans(fsm)
 	 if not string.find(state_str, '[\\.]') then
 	    -- no dots, local state
 	    local state_fqn = parent.fqn .. '.' .. state_str
-	    state = fsm.lt[state_fqn]
+	    state = fsm.fqn2st(state_fqn)
 	 elseif string.sub(tr.src, 1, 1) == '.' then
 	    -- leading dot, relative target
 	    print("WARNING: relative transitions not supported and maybe never will!")
 	 else
 	    -- absolute target, this is a fqn!
-	    state = fsm.lt[state_str]
+	    state = fsm.fqn2st(state_str)
 	 end
 	 return state
       end
@@ -169,7 +166,7 @@ local function resolve_trans(fsm)
       local function __resolve_src(tr, parent)
 	 local ret = true
 	 if tr.src == 'initial' then
-	    -- ok
+	    parent.initial = tr
 	 else -- must be a path
 	    local src = __resolve_path(tr.src, parent)
 	    if not src then
@@ -202,12 +199,27 @@ local function resolve_trans(fsm)
    return utils.andt(map_trans(__resolve_trans, fsm))
 end
 
+--------------------------------------------------------------------------------
+-- create a state -> outgoing transition lookup cache
+local function st2otr_cache(fsm)
+   local cache = {}
 
+   map_trans(function (tr, parent)
+		if not cache[tr.src] then cache[tr.src] = {} end
+		table.insert(cache[tr.src], tr)
+	     end, fsm)
+
+   return function(srcfqn) return cache[srcfqn] end
+end
+
+--------------------------------------------------------------------------------
 -- initialize fsm
 -- create parent links
 -- create table for lookups
 function init(fsm_templ)
+
    local fsm = utils.deepcopy(fsm_templ)
+
    add_parent_links(fsm)
 
    if not verify(fsm) then
@@ -217,79 +229,203 @@ function init(fsm_templ)
 
    add_fqn(fsm)
 
-   fsm.lt = build_lt(fsm)
-   if not fsm.lt then return false end
+   -- build fqn->state cache and check for duplicates
+   do
+      local dupl
+      fsm.fqn2st, dupl = fqn2st_cache(fsm)
+      if #dupl > 0 then
+	 param.err("ERROR: duplicate fully qualified state names:\n",
+		   table.concat(dupl, '\n'))
+      end
+   end
 
    if not resolve_trans(fsm) then
       param.err("failed to resolve transitions of fsm " .. fsm.id)
       return false
    end
 
+   -- build state->outgoing-transition lookup function
+   fsm.st2otr = st2otr_cache(fsm)
+
+   -- local event queue is empty
+   fsm.evq = {}
+
+   -- getevents user hook supplied?
+   -- must return a table with events
+   if not fsm.getevents then
+      fsm.getevents = function () return {} end
+   end
+
+   -- All OK!
    fsm.__initalized = true
    return fsm
 end
 
---
--- operational functions
---
 
--- calculate the transition trajectory, which is the path of states
--- between the source and the target state
+
+--------------------------------------------------------------------------------
 --
--- part1 is defined by: up the active tree up to the LCA (exiting)
--- part2 is defined by: down from LCA to tgt (entering). Only the
--- entering part is returned by calc_trans
+-- Operational Functions
 --
--- Random idea: what if there were multiple but different possible
--- trajectories? different ways to achieve sth? -> Think about
--- alternative visualization of FSM
---
-local function calc_trans_trj(fsm, src, tgt)
-   -- create sth like
-   -- { src, tgt, lca, part2 }
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- send events to the local fsm event queue
+function send_events(fsm, ...)
+   for _,v in ipairs(args) do
+      table.insert(fsm.equeue, v)
+   end
+end
+
+--------------------------------------------------------------------------------
+-- fetch all external events into local queue
+local function update_evq(fsm)
+   local new_ev = fsm.getevents()
+   for _,v in ipairs(new_ev) do
+      table.insert(fsm.evq, v)
+   end
 end
 
 
--- determine first enabled transition to take given a table of events
---
--- for each state starting from root, check if the list of events
--- triggers a transition from an active state and (if existant) it's
--- guard condition evaluates to false.
---
-local function find_en_tr(fsm, events)
+--------------------------------------------------------------------------------
+-- run one doo functions of an active state and place it at the end of
+-- the active queue
+-- returns true if there is at least one active doo, otherwise false
+local function run_doos(fsm)
+   local has_run = false
+   for i in 1,#fsm.actq do
 
+      -- rotate
+      local state = table.remove(fsm.actq, 1)
+      table.insert(fsm.actq, state)
+
+      if state.doo and not state.doo_co then
+	 state.doo_co = coroutine.create(state.doo)
+      end
+
+      if coroutine.status == 'suspended' then
+	 coroutine.resume(state.doo_co)
+	 has_run = true
+	 break
+      end
+   end
+   return has_run
 end
 
+
+--------------------------------------------------------------------------------
+-- enter root state recursively
+local function enter_root(fsm)
+   fsm.state = 'active'
+   local path = find_enabled(fsm, fsm.connectors['initial'], events)
+
+   if #path == 0 then
+      fsm.state = 'inactive'
+      return false
+   end
+
+   exec_path(path)
+   return true
+end
+
+
+--------------------------------------------------------------------------------
+-- enter a state (and nothing else)
+local function enter(fsm, state)
+   if state.entry then state.entry(fsm, state) end
+   state.mode = 'active'
+   state.parent.act_child = state
+end
+
+--------------------------------------------------------------------------------
+-- exit a state (and nothing else)
+local function exit(fsm, state)
+   -- save this for possible history entry
+   if state.mode == 'active' then
+      state.parent.last_active = state
+   else
+      state.parent.last_active = false
+   end
+   state.mode = 'inactive'
+   state.parent.act_child = 'false'
+   if state.exit then state.exit(fsm, state) end
+end
+
+--------------------------------------------------------------------------------
+-- execute a simple transition
 local function exec_trans(fsm, trans)
+   local lca = getLCA(trans)  	-- if necessary, replace by cache later
+
+   -- implicit exit all up to but excluding LCA
+   -- run effect
+   -- implicit enter from but excluding LCA to trans.tgt
+   -- set fsm.act_leaves
 end
 
--- execute one microstep, ie one single state exit and entry
-function microstep(fsm)
-
+--------------------------------------------------------------------------------
+-- execute a compound transition
+-- ct is a table of transitions
+local function exec_ctrans(fsm, ct)
+   utils.foreach(function (tr) exec_trans(fsm, tr) end, ct)
 end
 
+--------------------------------------------------------------------------------
+-- return all enabled paths starting with tr
+-- this will undoubtly have to backtrack: O(#branches^depth)
+local function check_path(fsm, tr, events)
+end
 
--- perform a run to completion step which will, at least, cause the
--- fsm to run until it has reached an stable configuration. It may run
--- longer if no event become available and the currently active state
--- has a doo program
---
--- a fsm can be in two states: stable or in-transition which is
--- represented by the variable fsm.stable = true|false
---
--- if it's stable it can react to new events, otherwise not. If stable
--- is nil then the fsm has not been entered yet (which is an unstable
--- state because it can not react to events before the initial
--- transition has been executed.
---
-function rtcstep(fsm)
-   -- 1. find valid transitions
-   --    1.1. get list of events
-   --	 1.2 apply them top-down to active configuration
+--------------------------------------------------------------------------------
+-- find outgoing transitions from 'state' enabled by 'events'
+local function find_enabled(fsm, state, events)
+   -- map(
+end
 
-   -- 2. execute the transition
-   --    2.1 find transition trajectory
-   --    2.2 execute it
+--------------------------------------------------------------------------------
+--
+local function transition(fsm, events)
+   -- walk down tree of active states and call find_enabled on each
+   -- if one or more paths are returned, select one and call exec_trans
+end
+
+--------------------------------------------------------------------------------
+-- 0. any events? If not then run doo's of active states
+-- 1. find valid transitions
+--    1.1. get list of events
+--	 1.2 apply them top-down to active configuration
+-- 2. execute the transition
+--    2.1 find transition trajectory
+--    2.2 execute it
+function step(fsm)
+   local idling = true
+
+   update_evq(fsm)
+
+   -- entering fsm for the first time
+   --
+   -- it is impossible to exit it again, as there exist no transition
+   -- targets outside of the FSM
+   if fsm.state ~= 'active' then
+      enter_root(fsm)
+      idling = false
+   elseif #fsm.evq > 0 then
+      -- received events, attempt to transition
+      if transition(fsm, fsm.evq) then
+	 idling = false
+      end
+   else
+      -- no events, run do functions
+      if run_doos(fsm) then idling = false end
+   end
+
+   -- nothing to do - run an idle function or exit
+   if idling then
+      if fsm.idle then fsm.idle(fsm)
+      else return end
+   end
+
+   -- tail call
+   return step(fsm)
 end
 
 
@@ -297,4 +433,4 @@ end
 
 -- define sets of input events and expected trajectory and test
 -- against actually executed trajectory
--- 
+--
