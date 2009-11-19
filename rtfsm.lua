@@ -314,22 +314,6 @@ end
 
 
 --------------------------------------------------------------------------------
--- enter root state recursively
-local function enter_root(fsm)
-   fsm.state = 'active'
-   local path = find_enabled(fsm, fsm.connectors['initial'], events)
-
-   if #path == 0 then
-      fsm.state = 'inactive'
-      return false
-   end
-
-   exec_path(path)
-   return true
-end
-
-
---------------------------------------------------------------------------------
 -- enter a state (and nothing else)
 local function enter(fsm, state)
    if state.entry then state.entry(fsm, state) end
@@ -351,15 +335,39 @@ local function exit(fsm, state)
    if state.exit then state.exit(fsm, state) end
 end
 
+-- this function exploits the fact that the LCA is the first parent of
+-- tgt which is in state 'active'
+-- tbd: sure this works for parallel states?
+local function getLCA(tr)
+   local lca = trans.tgt.parent
+   -- looks dangerous, but root should always be active:
+   while lca ~= 'active' do
+      lca = lca.parent
+   end
+   return lca
+end
+
 --------------------------------------------------------------------------------
 -- execute a simple transition
-local function exec_trans(fsm, trans)
-   local lca = getLCA(trans)  	-- if necessary, replace by cache later
+local function exec_trans(fsm, tr)
+   -- sth would be very wrong if tgt is already active
+   if tr.tgt.state ~= 'inactive' then
+      param.err("ERROR: transition target " .. tr.tgt.fqn .. " in invalid state '" .. tr.tgt.state .. "'")
+   end
+
+   local lca = getLCA(trans)
+   local state_walker = tr.src
 
    -- implicit exit all up to but excluding LCA
+   while state_walker ~= lca do exit(fsm, state) end
+
    -- run effect
+   tr.effect(fsm, tr)
+
    -- implicit enter from but excluding LCA to trans.tgt
-   -- set fsm.act_leaves
+   -- tbd: haha, where do we get this path from?
+
+   -- set fsm.act_leaves -> this is done by enter()
 end
 
 --------------------------------------------------------------------------------
@@ -371,8 +379,26 @@ end
 
 --------------------------------------------------------------------------------
 -- check if transition is triggered by events and guard is true
+-- events is a table of entities which support '=='
+--
+-- tbd: allow more complex events: '+', '*', or functions
+-- important: no events is "null event"
 local function is_enabled(tr, events)
+   if tr.events then
+      for _,k in ipairs(tr.events) do
+	 for _kk in ipairs(events) do
+	    if k == kk then break end
+	 end
+      end
+      -- no matching events
+      return false
+   end
 
+   if not tr.guard(tr, events) then
+      return false
+   else
+      return true
+   end
 end
 
 --------------------------------------------------------------------------------
@@ -380,9 +406,9 @@ end
 -- backtracks, exponential complexity
 -- inefficient but practical: returns a table of valid paths.
 -- this means copying the existing path every step
-local function check_path(node, tab)
+local function find_enabled_node(node, events)
    local function __check_path(tr)
-      if not is_enabled(tr) then
+      if not is_enabled(tr, events) then
 	 return nil
       end
 
@@ -390,23 +416,62 @@ local function check_path(node, tab)
       newtab[#tab+1] = tr
 
       if tr.tgt.type == 'simple' then return newtab
-      else return check_path2(tr.tgt, newtab) end
+      else return check_path(tr.tgt, events, newtab) end
    end
+   local tab = {}
    return map(__check_path, node.otrs)
 end
 
 --------------------------------------------------------------------------------
--- find enabled path starting from 'node' enabled by 'events'
-local function find_path(fsm, node, events)
-   return check_path(fsm, node, events, {})
+-- walk down the active tree and call find_path for all active states
+-- tbd: deal with orthogonal regions?
+local function find_enabled_fsm(fsm, events)
+   local cur = fsm
+   local paths
+   while cur and  cur.state ~= 'inactive' do -- => 'dead' or 'active'
+      paths = find_enabled_node(cur, events)
+      if #paths > 0 then break end
+      cur = cur.act_child
+   end
+   return paths
 end
 
 --------------------------------------------------------------------------------
 -- attempt to transition the fsm
 local function transition(fsm, events)
-   -- walk down tree of active states and call find_enabled on each
-   -- if one or more paths are returned, select one and call exec_trans
+
+   -- conflict resolution could be more sophisticated
+   local function select_path(paths)
+      param.warn("WARNING: conflicting paths found")
+      return paths[1]
+   end
+
+   local cur = fsm
+   local paths = find_enabled_fsm(fsm, events)
+   if #paths == 0 then
+      return false
+   else
+      return exec_trans(select_path(paths))
+   end
 end
+
+
+--------------------------------------------------------------------------------
+-- enter root state recursively
+local function enter_root(fsm)
+   fsm.state = 'active'
+   local path = find_enabled_node(fsm, fsm.connectors['initial'], events)
+
+   if #path == 0 then
+      fsm.state = 'inactive'
+      return false
+   end
+
+   exec_path(path)
+   return true
+end
+
+
 
 --------------------------------------------------------------------------------
 -- 0. any events? If not then run doo's of active states
@@ -441,7 +506,10 @@ function step(fsm)
    -- nothing to do - run an idle function or exit
    if idling then
       if fsm.idle then fsm.idle(fsm)
-      else return end
+      else
+	 param.dbg("DEBUG: no doos, no events, no idle func, halting engines")
+	 return
+      end
    end
 
    -- tail call
