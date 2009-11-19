@@ -370,19 +370,39 @@ local function exec_ctrans(fsm, ct)
 end
 
 --------------------------------------------------------------------------------
--- return all enabled paths starting with tr
--- this will undoubtly have to backtrack: O(#branches^depth)
-local function check_path(fsm, tr, events)
+-- check if transition is triggered by events and guard is true
+local function is_enabled(tr, events)
+
 end
 
 --------------------------------------------------------------------------------
--- find outgoing transitions from 'state' enabled by 'events'
-local function find_enabled(fsm, state, events)
-   -- map(
+-- return all enabled paths starting with 'node'
+-- backtracks, exponential complexity
+-- inefficient but practical: returns a table of valid paths.
+-- this means copying the existing path every step
+local function check_path(node, tab)
+   local function __check_path(tr)
+      if not is_enabled(tr) then
+	 return nil
+      end
+
+      local newtab = utils.deepcopy(tab)
+      newtab[#tab+1] = tr
+
+      if tr.tgt.type == 'simple' then return newtab
+      else return check_path2(tr.tgt, newtab) end
+   end
+   return map(__check_path, node.otrs)
 end
 
 --------------------------------------------------------------------------------
---
+-- find enabled path starting from 'node' enabled by 'events'
+local function find_path(fsm, node, events)
+   return check_path(fsm, node, events, {})
+end
+
+--------------------------------------------------------------------------------
+-- attempt to transition the fsm
 local function transition(fsm, events)
    -- walk down tree of active states and call find_enabled on each
    -- if one or more paths are returned, select one and call exec_trans
