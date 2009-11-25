@@ -315,15 +315,16 @@ end
 
 --------------------------------------------------------------------------------
 -- enter a state (and nothing else)
-local function enter(fsm, state)
-   if state.entry then state.entry(fsm, state) end
+local function enter_state(state)
+   if state.entry then state.entry(state) end
    state.mode = 'active'
    state.parent.act_child = state
+   -- tbd: act_leaves, parallel states
 end
 
 --------------------------------------------------------------------------------
 -- exit a state (and nothing else)
-local function exit(fsm, state)
+local function exit_state(state)
    -- save this for possible history entry
    if state.mode == 'active' then
       state.parent.last_active = state
@@ -332,7 +333,7 @@ local function exit(fsm, state)
    end
    state.mode = 'inactive'
    state.parent.act_child = 'false'
-   if state.exit then state.exit(fsm, state) end
+   if state.exit then state.exit(state) end
 end
 
 -- this function exploits the fact that the LCA is the first parent of
@@ -347,10 +348,18 @@ local function getLCA(tr)
    return lca
 end
 
+-- get least-common parallel ancestor
+-- this function can be used to validate transitions.
+-- Runtime: a transition to an active parallel state is invalid
+-- Static: transition to a different region with the same LCPA is invalid
+local function getLCPA(tr)
+   -- tbd
+end
+
 --------------------------------------------------------------------------------
 -- execute a simple transition
 local function exec_trans(fsm, tr)
-   -- sth would be very wrong if tgt is already active
+   -- paranoid check: sth would be very wrong if tgt is already active
    if tr.tgt.state ~= 'inactive' then
       param.err("ERROR: transition target " .. tr.tgt.fqn .. " in invalid state '" .. tr.tgt.state .. "'")
    end
@@ -358,16 +367,29 @@ local function exec_trans(fsm, tr)
    local lca = getLCA(trans)
    local state_walker = tr.src
 
-   -- implicit exit all up to but excluding LCA
-   while state_walker ~= lca do exit(fsm, state) end
+   --  exit all states from src up to (but excluding) LCA
+   while state_walker ~= lca do 
+      exit_state(state)
+      state_walker = state_walker.parent
+   end
 
    -- run effect
    tr.effect(fsm, tr)
 
-   -- implicit enter from but excluding LCA to trans.tgt
-   -- tbd: haha, where do we get this path from?
+   -- implicit enter from (but excluding) LCA to trans.tgt
+   -- tbd: create walker function: foreach_[up|down](start, end, function)
+   local down_path = {}
+   local state_walker = trans.tgt
 
-   -- set fsm.act_leaves -> this is done by enter()
+   while state_walker ~= lca do
+      table.insert(down_path, state_walker)
+      state_walker = state_walker.parent
+   end
+   
+   -- now enter down_path
+   while #down_path > 0 do
+      state_enter(table.remove(down_path))
+   end
 end
 
 --------------------------------------------------------------------------------
@@ -384,21 +406,16 @@ end
 -- tbd: allow more complex events: '+', '*', or functions
 -- important: no events is "null event"
 local function is_enabled(tr, events)
+   -- matching events?
    if tr.events then
       for _,k in ipairs(tr.events) do
 	 for _kk in ipairs(events) do
-	    if k == kk then break end
-	 end
-      end
-      -- no matching events
+	    if k == kk then break end end end
       return false
    end
-
-   if not tr.guard(tr, events) then
-      return false
-   else
-      return true
-   end
+   -- guard condition?
+   if not tr.guard(tr, events) then return false
+   else return true end
 end
 
 --------------------------------------------------------------------------------
@@ -406,6 +423,9 @@ end
 -- backtracks, exponential complexity
 -- inefficient but practical: returns a table of valid paths.
 -- this means copying the existing path every step
+--
+-- parallel: if we enter a parallel state then we must check the paths
+-- into all regions!
 local function find_enabled_node(node, events)
    local function __check_path(tr)
       if not is_enabled(tr, events) then
@@ -446,19 +466,18 @@ local function transition(fsm, events)
       return paths[1]
    end
 
-   local cur = fsm
    local paths = find_enabled_fsm(fsm, events)
    if #paths == 0 then
       return false
    else
-      return exec_trans(select_path(paths))
+      return exec_ctrans(select_path(paths))
    end
 end
 
 
 --------------------------------------------------------------------------------
--- enter root state recursively
-local function enter_root(fsm)
+-- enter fsm for the first time
+local function enter_fsm(fsm)
    fsm.state = 'active'
    local path = find_enabled_node(fsm, fsm.connectors['initial'], events)
 
@@ -491,7 +510,7 @@ function step(fsm)
    -- it is impossible to exit it again, as there exist no transition
    -- targets outside of the FSM
    if fsm.state ~= 'active' then
-      enter_root(fsm)
+      enter_fsm(fsm)
       idling = false
    elseif #fsm.evq > 0 then
       -- received events, attempt to transition
