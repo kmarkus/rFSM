@@ -27,6 +27,89 @@ local tab2str = utils.tab2str
 local map_state = fsmutils.map_state
 local map_trans = fsmutils.map_trans
 
+
+--------------------------------------------------------------------------------
+-- Model Elements
+
+--
+-- simple state
+--
+simple_state = {}
+function simple_state:type() return 'simple' end
+function simple_state:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
+
+--
+-- composite state
+--
+composite_state = {}
+function composite_state:type() return 'composite' end
+function composite_state:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
+
+--
+-- parallel state
+--
+parallel_state = {}
+function parallel_state:type() return 'parallel' end
+function parallel_state:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
+
+--
+-- transition
+--
+transition = {}
+function transition:type() return 'transition' end
+function transition:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
+
+--
+-- connector
+--
+connector = {}
+function connector:type() return 'connector' end
+function connector:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
+
+--
+-- fork
+--
+fork = {}
+function fork:type() return 'fork' end
+function fork:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
+
+--
+-- join
+--
+join = {}
+function join:type() return 'join' end
+function join:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
+
+
+
 --------------------------------------------------------------------------------
 -- perform checks
 -- test should bark loudly about problems and return false if
