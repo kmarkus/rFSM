@@ -7,11 +7,11 @@ require("fsm2tree")
 require("rtfsm")
 require("utils")
 
-local sista = rtfsm.simple_state
-local csta = rtfsm.composite_state
-local psta = rtfsm.parallel_state
-local trans = rtfsm.transition
-local conn = rtfsm.connector
+local sista = rtfsm.sista
+local csta = rtfsm.csta
+local psta = rtfsm.psta
+local trans = rtfsm.trans
+local conn = rtfsm.conn
 local join = rtfsm.join
 local fork = rtfsm.fork
 

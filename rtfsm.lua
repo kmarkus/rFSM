@@ -34,9 +34,11 @@ local map_trans = fsmutils.map_trans
 --
 -- simple state
 --
-simple_state = {}
-function simple_state:type() return 'simple' end
-function simple_state:new(t)
+-- required: -
+-- optional: entry, doo, exit
+sista = {}
+function sista:type() return 'simple' end
+function sista:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
@@ -45,9 +47,13 @@ end
 --
 -- composite state
 --
-composite_state = {}
-function composite_state:type() return 'composite' end
-function composite_state:new(t)
+-- required: -
+-- optional: entry, exit, states, transitions
+-- disallowed: doo
+-- 'root' is a composite state which requires an 'initial' connector
+csta = {}
+function csta:type() return 'composite' end
+function csta:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
@@ -56,9 +62,12 @@ end
 --
 -- parallel state
 --
-parallel_state = {}
-function parallel_state:type() return 'parallel' end
-function parallel_state:new(t)
+-- required: --
+-- optional: composite states, parallel states, connectors, join, fork
+-- disallowed: simple_state
+psta = {}
+function psta:type() return 'parallel' end
+function psta:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
@@ -67,9 +76,9 @@ end
 --
 -- transition
 --
-transition = {}
-function transition:type() return 'transition' end
-function transition:new(t)
+trans = {}
+function trans:type() return 'trans' end
+function trans:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
@@ -78,9 +87,9 @@ end
 --
 -- connector
 --
-connector = {}
-function connector:type() return 'connector' end
-function connector:new(t)
+conn = {}
+function conn:type() return 'connector' end
+function conn:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
