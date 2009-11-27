@@ -15,6 +15,8 @@ local conn = rtfsm.conn
 local join = rtfsm.join
 local fork = rtfsm.fork
 
+local ex = {}
+
 -- simple state
 -- required: -
 -- optional: entry, doo, exit
@@ -59,7 +61,7 @@ homing_cstate = psta:new {
 -- root: composite state with additional constraints:
 -- required: 'initial' connector
 -- disallowed: -
-root_ex1 = csta:new{
+ex.on_off_homing = csta:new{
    entry=nil,
    exit=nil,
    
@@ -84,12 +86,13 @@ root_ex1 = csta:new{
    trans:new{ src='off', tgt='on', event='e_on' },
    trans:new{ src='off', tgt='homing', event='e_quit' }
 }
-   
-root_rtt_toplevel = {
-   sista:new{ entry = 'print("initalizing")', exit = 'print("exiting s_init state")' },
-   sista:new{ entry = 'print("entering s_stopped state")' },
 
-   csta:new{
+ex.rtt_toplevel = csta:new{
+   -- states
+   s_init = sista:new{ entry = 'print("initalizing")', exit = 'print("exiting s_init state")' },
+   s_stopped = sista:new{ entry = 'print("entering s_stopped state")' },
+
+   s_running = csta:new{
       s_working = sista:new{ 
 	 entry = 'print("entering state s_working ")',
 	 doo = 'print("doo in state s_working")' },
@@ -101,34 +104,39 @@ root_rtt_toplevel = {
       trans:new{ event='e_range_free', src='s_obj_close', tgt='s_working'}
    },
 
+   -- connectors
+   initial = conn:new{},
+   final = conn:new{},
+
+   -- transitions
    trans:new{ src='initial', tgt='s_init' },
    trans:new{ src='s_running', tgt='s_stopped', event='e_stopped' },
-   trans:new{ src='s_stopped', tgt='s_init',
-		   event='e_reset', effect='print("reseting")' },
-   trans:new{ src='s_stopped', tgt='s_running',
-		   event='e_start', effect='print("restarting")' },
-   conn:new{ src='s_stopped', tgt='final', event='e_quit' },
-   conn:new{ src='s_init', tgt='s_running', event='e_start'}
+   trans:new{ src='s_stopped', tgt='s_init', event='e_reset', effect='print("reseting")' },
+   trans:new{ src='s_stopped', tgt='s_running', event='e_start', effect='print("restarting")' },
+   trans:new{ src='s_stopped', tgt='final', event='e_quit' },
+   trans:new{ src='s_init', tgt='s_running', event='e_start'},
+
 }
 
 
 os.execute("rm -f *.png")
 
 -- murky auxillary function
-local function do_all(_fsm)
-   print("Processing FSM '" .. tostring(_fsm) .. "'")
-   local fsm = rtfsm.init(_fsm)
+local function do_all(_fsm, name)
+   io.write("Processing FSM '" .. name .. "'...\t\t")
+   local fsm = rtfsm.init(_fsm, name)
    if not fsm then
-      print("ERROR: init failed")
+      print("FAILED")
       return false
-   end
-   fsm2uml.fsm2uml(fsm, "png", fsm.id .. "-uml.png")
-   fsm2tree.fsm2tree(fsm, "png", fsm.id .. "-tree.png")
-   print(string.rep('-', 80))
+   else print("OK") end
+
+   --fsm2uml.fsm2uml(fsm, "png", fsm.id .. "-uml.png")
+   --fsm2tree.fsm2tree(fsm, "png", fsm.id .. "-tree.png")
+   --print(string.rep('-', 80))
    return fsm
 end
 
-fsmt = utils.map(do_all, {simple, homing_cstate, root_ex1, root_rtt_toplevel})
+fsmt = utils.map(do_all, ex)
 --  fsm_hitball2 = do_all(hitball2)
 
 os.execute("qiv" .. " *.png")

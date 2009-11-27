@@ -143,7 +143,7 @@ local function new_sista(gh, state, label)
    dbg("creating new simple state '" .. state.fqn)
 
    local __label
-   local ph, type = get_shandle(gh, state.parent.fqn)
+   local ph, type = get_shandle(gh, state.__parent.fqn)
    assert(ph)
    assert(type ~= "simple")
 
@@ -175,7 +175,7 @@ local function new_csta(gh, state, label)
    dbg("creating new composite state " .. state.fqn)
 
    local __label
-   local ph = get_shandle(gh, state.parent.fqn)
+   local ph = get_shandle(gh, state.__parent.fqn)
    assert(ph)
 
    iname = "cluster_" .. state.fqn
@@ -315,8 +315,8 @@ local function fsm2gh(root)
       end
    end
 
-   fsmutils.map_state(function (s) proc_state(gh, s) end, root)
-   fsmutils.map_trans(function (t, p) proc_trans(gh, t, p) end, root)
+   fsmutils.mapfsm(function (s) proc_state(gh, s) end, root, fsmutils.is_sta)
+   fsmutils.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, fsmutils.is_trans)
    return gh
 end
 

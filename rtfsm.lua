@@ -24,9 +24,10 @@ local map = utils.map
 local foldr = utils.foldr
 local AND = utils.AND
 local tab2str = utils.tab2str
-local map_state = fsmutils.map_state
-local map_trans = fsmutils.map_trans
+-- tbdel: local map_state = fsmutils.map_state
+-- tbdel: local map_trans = fsmutils.map_trans
 
+local mapfsm = fsmutils.mapfsm
 
 --------------------------------------------------------------------------------
 -- Model Elements
@@ -77,7 +78,21 @@ end
 -- transition
 --
 trans = {}
+
 function trans:type() return 'trans' end
+
+function trans:__tostring()
+   local src, tgt, event
+
+   if type(self.src) == 'string' then src = self.src
+   else src = self.src.fqn end
+
+   if type(self.tgt) == 'string' then tgt = self.tgt
+   else tgt = self.tgt.fqn end
+
+   return "Transition: src='" .. src .. "', tgt='" .. tgt .. "', event='" .. tostring(self.event) .. "'"
+end
+
 function trans:new(t)
    setmetatable(t, self)
    self.__index = self
@@ -117,8 +132,6 @@ function join:new(t)
    return t
 end
 
-
-
 --------------------------------------------------------------------------------
 -- perform checks
 -- test should bark loudly about problems and return false if
@@ -126,103 +139,116 @@ end
 -- depends on parent links for more useful output
 function verify(fsm)
 
-   -- test: check if state has an id
-   local function check_id(s)
-      if not s.id then
-	 if s.parent and s.parent.id then
-	    param.err("ERROR: child state of '" .. s.parent.id .. "' without id")
-	 else
-	    param.err("ERROR: state without id found")
+   -- validate states
+   local function check_state(s, parent)
+      local ret = true
+      if fsmutils.is_csta(s) then
+	 if s.doo then
+	    param.warn("WARNING: " .. s .. " 'doo' function in csta will never run")
+	    ret = false
 	 end
-	 return false
-      else
-	 return true
       end
+
+      return ret
    end
 
+   -- validate transitions
    local function check_trans(t, parent)
       local ret = true
-      local errors = {}
       if not t.src then
-	 table.insert(errors, "missing source state")
+	 mes[#mes+1] = "ERROR: " .. t .." missing src state, parent='" .. p.fqn .. "'"
 	 ret = false
       end
       if not t.tgt then
-	 table.insert(errors, "missing target state")
+	 mes[#mes+1] = "ERROR: " .. t .." missing tgt state, parent='" .. p.fqn .. "'"
 	 ret = false
       end
-      -- tbd: event
-      if not ret then
-	 param.err("Transition ERROR(s) in " .. fsmutils.tr2str(t) .. ", parent is '" .. parent.id .. "' :")
-	 map(function (e) param.err("", e) end, errors)
-      end
+      -- tbd event
       return ret
    end
 
    -- run checks
+   local mes = {}
    local res = true
 
-   if type(fsm) ~= 'table' then
-      param.err("ERROR: fsm is not a table")
+   if not fsmutils.is_csta(fsm)  then
+      mes[#mes+1] = "ERROR: fsm not a composite state but of type " .. fsm:type()
       res = false
    end
 
-   if not fsm.id then
-      param.warn("WARNING: root fsm has no id, setting to 'root'")
-      fsm.id = 'root'
-   end
-
-   res = res and foldr(AND, true, map_state(check_id, fsm))
-   res = res and foldr(AND, true, map_trans(check_trans, fsm))
-
-   return res
+   res = res and utils.andt(mapfsm(check_state, fsm, fsmutils.is_sta))
+   res = res and utils.andt(mapfsm(check_trans, fsm, fsmutils.is_trans))
+   return res, mes
 end
 
 --------------------------------------------------------------------------------
 -- construct parent links
 -- this modifies fsm
+
 local function add_parent_links(fsm)
-   local function __add_pl(states, parent)
-      if not states or #states == 0 then return end
-
-      for i,k in ipairs(states) do
-	 k.parent=parent
-	 __add_pl(k.states, k)
-	 __add_pl(k.parallel, k)
-      end
-   end
-
-   fsm.parent = fsm
-
-   __add_pl(fsm.states, fsm)
-   __add_pl(fsm.parallel, fsm)
+   fsm.__parent = fsm
+   mapfsm(function (s, p) s.__parent = p end, fsm, fsmutils.is_node)
 end
+
+-- tbdel:
+-- local function add_parent_links(fsm)
+--    local function __add_pl(states, parent)
+--       if not states or #states == 0 then return end
+
+--       for i,k in ipairs(states) do
+-- 	 k.__parent=parent
+-- 	 __add_pl(k.states, k)
+-- 	 __add_pl(k.parallel, k)
+--       end
+--    end
+
+--    fsm.__parent = fsm
+
+--    __add_pl(fsm.states, fsm)
+--    __add_pl(fsm.parallel, fsm)
+-- end
 
 --------------------------------------------------------------------------------
--- add fully qualified names (fqn) to states
--- depends on parent links beeing available
-local function add_fqn(fsm)
-   fsm.fqn = fsm.id -- root
-   map_state(function (s) s.fqn = s.parent.fqn .. "." .. s.id end, fsm)
+-- add id fields
+local function add_ids(fsm)
+   mapfsm(function (s,p,n) s.id = n end, fsm, fsmutils.is_node)
 end
+
+
+--------------------------------------------------------------------------------
+-- add fully qualified names (fqn) to node types
+-- depends on parent links beeing available
+local function add_fqns(fsm)
+   function __add_fqn(s, p)
+      if not s.id then
+	 param.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p.fqn)
+      end
+      s.fqn = p.fqn .. "." .. s.id
+      print("set fqn:", s.fqn)
+   end
+   
+   fsm.fqn = fsm.id
+   mapfsm(__add_fqn, fsm, fsmutils.is_node)
+end
+
 
 --------------------------------------------------------------------------------
 -- create a (fqn, state) lookup table
 -- and return a lookup function and a table of duplicates
-local function fqn2st_cache(fsm)
-   local cache = {}
-   local dupl = {}
+-- local function fqn2st_cache(fsm)
+--    local cache = {}
+--    local dupl = {}
 
-   cache[fsm.id] = fsm
-   cache['root'] = fsm
+--    cache[fsm.id] = fsm
+--    cache['root'] = fsm
 
-   map_state(function (s)
-		if cache[s.fqn] then dupl[#dupl+1] = s.fqn
-		else cache[s.fqn] = s end end,
-	     fsm)
+--    map_state(function (s)
+-- 		if cache[s.fqn] then dupl[#dupl+1] = s.fqn
+-- 		else cache[s.fqn] = s end end,
+-- 	     fsm)
 
-   return function (fqn) return cache[fqn] end, dupl
-end
+--    return function (fqn) return cache[fqn] end, dupl
+-- end
 
 --------------------------------------------------------------------------------
 -- resolve transition src and target strings into references of the real states
@@ -288,48 +314,54 @@ local function resolve_trans(fsm)
       return __resolve_src(tr, parent) and __resolve_tgt(tr, parent)
    end
 
-   return utils.andt(map_trans(__resolve_trans, fsm))
+   return utils.andt(mapfsm(__resolve_trans, fsm, fsmutils.is_trans))
 end
 
 --------------------------------------------------------------------------------
 -- create a state -> outgoing transition lookup cache
-local function st2otr_cache(fsm)
-   local cache = {}
+-- move to otrs field in state
+-- local function st2otr_cache(fsm)
+--    local cache = {}
 
-   map_trans(function (tr, parent)
-		if not cache[tr.src] then cache[tr.src] = {} end
-		table.insert(cache[tr.src], tr)
-	     end, fsm)
+--    map_trans(function (tr, parent)
+-- 		if not cache[tr.src] then cache[tr.src] = {} end
+-- 		table.insert(cache[tr.src], tr)
+-- 	     end, fsm)
 
-   return function(srcfqn) return cache[srcfqn] end
-end
+--    return function(srcfqn) return cache[srcfqn] end
+-- end
 
 --------------------------------------------------------------------------------
 -- initialize fsm
 -- create parent links
 -- create table for lookups
-function init(fsm_templ)
+function init(fsm_templ, name)
 
    local fsm = utils.deepcopy(fsm_templ)
 
-   add_parent_links(fsm)
+   fsm.id = name or 'root'
 
-   if not verify(fsm) then
-      param.err("failed to initalize fsm " .. fsm.id);
+   add_parent_links(fsm)
+   add_ids(fsm)
+   add_fqns(fsm)
+
+   -- verify
+   local ret, errs = verify(fsm)
+   if not ret then
+      param.err(table.concat(errs, '\n'))
       return false
    end
 
-   add_fqn(fsm)
-
-   -- build fqn->state cache and check for duplicates
-   do
-      local dupl
-      fsm.fqn2st, dupl = fqn2st_cache(fsm)
-      if #dupl > 0 then
-	 param.err("ERROR: duplicate fully qualified state names:\n",
-		   table.concat(dupl, '\n'))
-      end
-   end
+   -- tbddel:
+   -- -- build fqn->state cache and check for duplicates
+   -- do
+   --    local dupl
+   --    fsm.fqn2st, dupl = fqn2st_cache(fsm)
+   --    if #dupl > 0 then
+   -- 	 param.err("ERROR: duplicate fully qualified state names:\n",
+   -- 		   table.concat(dupl, '\n'))
+   --    end
+   -- end
 
    if not resolve_trans(fsm) then
       param.err("failed to resolve transitions of fsm " .. fsm.id)
@@ -337,7 +369,8 @@ function init(fsm_templ)
    end
 
    -- build state->outgoing-transition lookup function
-   fsm.st2otr = st2otr_cache(fsm)
+   -- tbdel: fsm.st2otr = st2otr_cache(fsm)
+
 
    -- local event queue is empty
    fsm.evq = {}
@@ -410,7 +443,7 @@ end
 local function enter_state(state)
    if state.entry then state.entry(state) end
    state.mode = 'active'
-   state.parent.act_child = state
+   state.__parent.act_child = state
    -- tbd: act_leaves, parallel states
 end
 
@@ -419,12 +452,12 @@ end
 local function exit_state(state)
    -- save this for possible history entry
    if state.mode == 'active' then
-      state.parent.last_active = state
+      state.__parent.last_active = state
    else
-      state.parent.last_active = false
+      state.__parent.last_active = false
    end
    state.mode = 'inactive'
-   state.parent.act_child = 'false'
+   state.__parent.act_child = 'false'
    if state.exit then state.exit(state) end
 end
 
@@ -432,10 +465,10 @@ end
 -- tgt which is in state 'active'
 -- tbd: sure this works for parallel states?
 local function getLCA(tr)
-   local lca = trans.tgt.parent
+   local lca = trans.tgt.__parent
    -- looks dangerous, but root should always be active:
    while lca ~= 'active' do
-      lca = lca.parent
+      lca = lca.__parent
    end
    return lca
 end
@@ -460,9 +493,9 @@ local function exec_trans(fsm, tr)
    local state_walker = tr.src
 
    --  exit all states from src up to (but excluding) LCA
-   while state_walker ~= lca do 
+   while state_walker ~= lca do
       exit_state(state)
-      state_walker = state_walker.parent
+      state_walker = state_walker.__parent
    end
 
    -- run effect
@@ -475,9 +508,9 @@ local function exec_trans(fsm, tr)
 
    while state_walker ~= lca do
       table.insert(down_path, state_walker)
-      state_walker = state_walker.parent
+      state_walker = state_walker.__parent
    end
-   
+
    -- now enter down_path
    while #down_path > 0 do
       state_enter(table.remove(down_path))

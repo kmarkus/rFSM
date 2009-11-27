@@ -122,11 +122,11 @@ end
 
 local function fsm2gh(fsm)
    local gh = new_graph(fsm)
-   fsmutils.map_trans(function (tr, p) add_ini_state(gh, tr, p) end, fsm)
-   fsmutils.map_state(function (s) add_state(gh, s.parent, s) end, fsm)
-   fsmutils.map_trans(function (tr, p) add_fini_state(gh, tr, p) end, fsm)
+   fsmutils.mapfsm(function (tr, p) add_ini_state(gh, tr, p) end, fsm, fsmutils.is_trans)
+   fsmutils.mapfsm(function (s) add_state(gh, s.parent, s) end, fsm, fsmutils.is_sta)
+   fsmutils.mapfsm(function (tr, p) add_fini_state(gh, tr, p) end, fsm, fsmutils.is_trans)
 
-   fsmutils.map_trans(function (tr, p) add_trans(gh, tr, p) end, fsm)
+   fsmutils.mapfsm(function (tr, p) add_trans(gh, tr, p) end, fsm, fsmutils.is_trans)
    return gh
 end
 

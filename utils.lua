@@ -145,7 +145,7 @@ function map(f, tab)
    local newtab = {}
    if tab == nil then return newtab end
    for i,v in pairs(tab) do
-      local res = f(v)
+      local res = f(v,i)
       table.insert(newtab, res)
    end
    return newtab
@@ -155,7 +155,7 @@ function filter(f, tab)
    local newtab= {}
    if not tab then return newtab end
    for i,v in pairs(tab) do
-      if f(v) then
+      if f(v,i) then
 	 table.insert(newtab, v)
       end
    end
