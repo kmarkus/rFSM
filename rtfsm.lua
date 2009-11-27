@@ -3,7 +3,6 @@
 --------------------------------------------------------------------------------
 
 require ('utils')
-require ('fsmutils')
 
 param = {}
 param.err = print
@@ -13,10 +12,9 @@ param.dbg = print
 -- save references
 
 local param, pairs, ipairs, print, tostring, table, string, type,
-loadstring, assert, coroutine, setmetatable, getmetatable, utils,
-fsmutils = param, pairs, ipairs, print, tostring, table, string,
-type, loadstring, assert, coroutine, setmetatable, getmetatable,
-utils, fsmutils
+loadstring, assert, coroutine, setmetatable, getmetatable, utils =
+param, pairs, ipairs, print, tostring, table, string, type,
+loadstring, assert, coroutine, setmetatable, getmetatable, utils
 
 module("rtfsm")
 
@@ -24,10 +22,7 @@ local map = utils.map
 local foldr = utils.foldr
 local AND = utils.AND
 local tab2str = utils.tab2str
--- tbdel: local map_state = fsmutils.map_state
--- tbdel: local map_trans = fsmutils.map_trans
 
-local mapfsm = fsmutils.mapfsm
 
 --------------------------------------------------------------------------------
 -- Model Elements
@@ -132,6 +127,40 @@ function join:new(t)
    return t
 end
 
+-- usefull predicates
+function is_sista(s) return type(s) == 'table' and s:type() == 'simple' end
+function is_csta(s) return type(s) == 'table' and s:type() == 'composite' end
+function is_psta(s) return type(s) == 'table' and s:type() == 'parallel' end
+function is_conn(s) return type(s) == 'table' and s:type() == 'connector' end
+function is_trans(s) return type(s) == 'table' and s:type() == 'transition' end
+function is_join(s) return type(s) == 'table' and s:type() == 'join' end
+function is_fork(s) return type(s) == 'table' and s:type() == 'fork' end
+
+function is_sta(s) return is_sista(s) or is_csta(s) or is_psta(s) end
+function is_cplx(s) return is_csta(s) or is_psta(s) end
+function is_node(s) return is_sta(s) or is_conn(s) end
+
+-- apply func to all fsm elements for which pred returns true
+function mapfsm(func, fsm, pred)
+   local res = {}
+
+   local function __mapfsm(states)
+      map(function (s, k)
+	     if k ~= '__parent' then  -- ugly: filter parent links or we'll cycle forever
+		if pred(s) then
+		   res[#res+1] = func(s, states, k)
+		end
+		if is_cplx(s) then
+		   __mapfsm(s)
+		end
+	     end
+	  end, states)
+   end
+   __mapfsm(fsm)
+   return res
+end
+
+
 --------------------------------------------------------------------------------
 -- perform checks
 -- test should bark loudly about problems and return false if
@@ -142,7 +171,7 @@ function verify(fsm)
    -- validate states
    local function check_state(s, parent)
       local ret = true
-      if fsmutils.is_csta(s) then
+      if is_csta(s) then
 	 if s.doo then
 	    param.warn("WARNING: " .. s .. " 'doo' function in csta will never run")
 	    ret = false
@@ -171,13 +200,13 @@ function verify(fsm)
    local mes = {}
    local res = true
 
-   if not fsmutils.is_csta(fsm)  then
+   if not is_csta(fsm)  then
       mes[#mes+1] = "ERROR: fsm not a composite state but of type " .. fsm:type()
       res = false
    end
 
-   res = res and utils.andt(mapfsm(check_state, fsm, fsmutils.is_sta))
-   res = res and utils.andt(mapfsm(check_trans, fsm, fsmutils.is_trans))
+   res = res and utils.andt(mapfsm(check_state, fsm, is_sta))
+   res = res and utils.andt(mapfsm(check_trans, fsm, is_trans))
    return res, mes
 end
 
@@ -187,31 +216,13 @@ end
 
 local function add_parent_links(fsm)
    fsm.__parent = fsm
-   mapfsm(function (s, p) s.__parent = p end, fsm, fsmutils.is_node)
+   mapfsm(function (s, p) s.__parent = p end, fsm, is_node)
 end
-
--- tbdel:
--- local function add_parent_links(fsm)
---    local function __add_pl(states, parent)
---       if not states or #states == 0 then return end
-
---       for i,k in ipairs(states) do
--- 	 k.__parent=parent
--- 	 __add_pl(k.states, k)
--- 	 __add_pl(k.parallel, k)
---       end
---    end
-
---    fsm.__parent = fsm
-
---    __add_pl(fsm.states, fsm)
---    __add_pl(fsm.parallel, fsm)
--- end
 
 --------------------------------------------------------------------------------
 -- add id fields
 local function add_ids(fsm)
-   mapfsm(function (s,p,n) s.id = n end, fsm, fsmutils.is_node)
+   mapfsm(function (s,p,n) s.id = n end, fsm, is_node)
 end
 
 
@@ -226,9 +237,9 @@ local function add_fqns(fsm)
       s.fqn = p.fqn .. "." .. s.id
       print("set fqn:", s.fqn)
    end
-   
+
    fsm.fqn = fsm.id
-   mapfsm(__add_fqn, fsm, fsmutils.is_node)
+   mapfsm(__add_fqn, fsm, is_node)
 end
 
 
@@ -288,7 +299,7 @@ local function resolve_trans(fsm)
 	 else -- must be a path
 	    local src = __resolve_path(tr.src, parent)
 	    if not src then
-	       param.err("ERROR: unable to resolve transition src " .. tr.src .. " in " .. fsmutils.tr2str(tr))
+	       param.err("ERROR: unable to resolve transition src " .. tr.src .. " in " .. tr)
 	       ret = false
 	    else tr.src = src end end
 	 return ret
@@ -305,7 +316,7 @@ local function resolve_trans(fsm)
 	 else
 	    local tgt = __resolve_path(tr.tgt, parent)
 	    if not tgt then
-	       param.err("ERROR: unable to resolve transition tgt " .. tr.tgt .. " in " .. fsmutils.tr2str(tr))
+	       param.err("ERROR: unable to resolve transition tgt " .. tr.tgt .. " in " .. tr)
 	       ret = false
 	    else tr.tgt = tgt end end
 	 return ret
@@ -314,7 +325,7 @@ local function resolve_trans(fsm)
       return __resolve_src(tr, parent) and __resolve_tgt(tr, parent)
    end
 
-   return utils.andt(mapfsm(__resolve_trans, fsm, fsmutils.is_trans))
+   return utils.andt(mapfsm(__resolve_trans, fsm, is_trans))
 end
 
 --------------------------------------------------------------------------------
@@ -352,7 +363,7 @@ function init(fsm_templ, name)
       return false
    end
 
-   -- tbddel:
+   -- tbdel:
    -- -- build fqn->state cache and check for duplicates
    -- do
    --    local dupl
