@@ -240,25 +240,6 @@ local function add_fqns(fsm)
    mapfsm(__add_fqn, fsm, is_node)
 end
 
-
---------------------------------------------------------------------------------
--- create a (fqn, state) lookup table
--- and return a lookup function and a table of duplicates
--- local function fqn2st_cache(fsm)
---    local cache = {}
---    local dupl = {}
-
---    cache[fsm.id] = fsm
---    cache['root'] = fsm
-
---    map_state(function (s)
--- 		if cache[s.fqn] then dupl[#dupl+1] = s.fqn
--- 		else cache[s.fqn] = s end end,
--- 	     fsm)
-
---    return function (fqn) return cache[fqn] end, dupl
--- end
-
 --------------------------------------------------------------------------------
 -- resolve transition src and target strings into references of the real states
 --    depends on local uniqueness
@@ -363,25 +344,10 @@ function init(fsm_templ, name)
       return false
    end
 
-   -- tbdel:
-   -- -- build fqn->state cache and check for duplicates
-   -- do
-   --    local dupl
-   --    fsm.fqn2st, dupl = fqn2st_cache(fsm)
-   --    if #dupl > 0 then
-   -- 	 param.err("ERROR: duplicate fully qualified state names:\n",
-   -- 		   table.concat(dupl, '\n'))
-   --    end
-   -- end
-
    if not resolve_trans(fsm) then
       param.err("failed to resolve transitions of fsm " .. fsm.id)
       return false
    end
-
-   -- build state->outgoing-transition lookup function
-   -- tbdel: fsm.st2otr = st2otr_cache(fsm)
-
 
    -- local event queue is empty
    fsm.evq = {}
