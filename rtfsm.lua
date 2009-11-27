@@ -19,10 +19,6 @@ loadstring, assert, coroutine, setmetatable, getmetatable, utils
 module("rtfsm")
 
 local map = utils.map
-local foldr = utils.foldr
-local AND = utils.AND
-local tab2str = utils.tab2str
-
 
 --------------------------------------------------------------------------------
 -- Model Elements
@@ -146,7 +142,9 @@ function mapfsm(func, fsm, pred)
 
    local function __mapfsm(states)
       map(function (s, k)
-	     if k ~= '__parent' then  -- ugly: filter parent links or we'll cycle forever
+	     -- ugly: filter parent links or we'll cycle forever
+	     -- maybe better: ignore '__*' keys?
+	     if k ~= '__parent' then
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
@@ -276,50 +274,52 @@ local function resolve_trans(fsm)
    local function __resolve_trans(tr, parent)
       -- resolve path
       local function __resolve_path(state_str, parent)
+
+	 local function index_tree(tree, tab)
+	    local res = tree
+	    for _, k in ipairs(tab) do
+	       res = res[k]
+	       if not res then break end
+	    end
+	    return res
+	 end
+
 	 local state
 	 if not string.find(state_str, '[\\.]') then
 	    -- no dots, local state
-	    local state_fqn = parent.fqn .. '.' .. state_str
-	    state = fsm.fqn2st(state_fqn)
+	    state = parent.fqn[state_str]
 	 elseif string.sub(tr.src, 1, 1) == '.' then
 	    -- leading dot, relative target
-	    print("WARNING: relative transitions not supported and maybe never will!")
+	    param.err("ERROR: relative transitions not supported and maybe never will!")
 	 else
 	    -- absolute target, this is a fqn!
-	    state = fsm.fqn2st(state_str)
+	    state = index_tree(fsm, utils.split(state_str, "[\\.]"))
 	 end
 	 return state
       end
 
       -- resolve transition src
       local function __resolve_src(tr, parent)
-	 local ret = true
-	 if tr.src == 'initial' then
-	    parent.initial = tr
-	 else -- must be a path
-	    local src = __resolve_path(tr.src, parent)
-	    if not src then
-	       param.err("ERROR: unable to resolve transition src " .. tr.src .. " in " .. tr)
-	       ret = false
-	    else tr.src = src end end
-	 return ret
+	 local src = __resolve_path(tr.src, parent)
+	 if not src then
+	    param.err("ERROR: unable to resolve transition src " .. tr)
+	    return false
+	 else tr.src = src end
+	 return true
       end
 
       -- resolve transition tgt
       local function __resolve_tgt(tr, parent)
-	 local ret = true
 	 -- resolve target
 	 if tr.tgt == 'internal' then
-	    param.warn("WARNING: internal events not supported yet")
-	 elseif tr.tgt =='final' then
-	    -- leave it
+	    param.warn("WARNING: internal events not supported (yet)")
 	 else
 	    local tgt = __resolve_path(tr.tgt, parent)
 	    if not tgt then
-	       param.err("ERROR: unable to resolve transition tgt " .. tr.tgt .. " in " .. tr)
-	       ret = false
+	       param.err("ERROR: unable to resolve transition tgt " .. tr)
+	       return false
 	    else tr.tgt = tgt end end
-	 return ret
+	 return true
       end
 
       return __resolve_src(tr, parent) and __resolve_tgt(tr, parent)

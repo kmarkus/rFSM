@@ -1,10 +1,9 @@
 #!/usr/bin/lua
 
 require('gv')
-require('fsmutils')
 
-local pairs, ipairs, print, table, type, assert, gv, io, fsmutils
-   = pairs, ipairs, print, table, type, assert, gv, io, fsmutils
+local pairs, ipairs, print, table, type, assert, gv, io
+   = pairs, ipairs, print, table, type, assert, gv, io
 
 module("fsm2tree")
 
@@ -122,11 +121,11 @@ end
 
 local function fsm2gh(fsm)
    local gh = new_graph(fsm)
-   fsmutils.mapfsm(function (tr, p) add_ini_state(gh, tr, p) end, fsm, fsmutils.is_trans)
-   fsmutils.mapfsm(function (s) add_state(gh, s.parent, s) end, fsm, fsmutils.is_sta)
-   fsmutils.mapfsm(function (tr, p) add_fini_state(gh, tr, p) end, fsm, fsmutils.is_trans)
+   rtfsm.mapfsm(function (tr, p) add_ini_state(gh, tr, p) end, fsm, rtfsm.is_trans)
+   rtfsm.mapfsm(function (s) add_state(gh, s.parent, s) end, fsm, rtfsm.is_sta)
+   rtfsm.mapfsm(function (tr, p) add_fini_state(gh, tr, p) end, fsm, rtfsm.is_trans)
 
-   fsmutils.mapfsm(function (tr, p) add_trans(gh, tr, p) end, fsm, fsmutils.is_trans)
+   rtfsm.mapfsm(function (tr, p) add_trans(gh, tr, p) end, fsm, rtfsm.is_trans)
    return gh
 end
 

@@ -1,10 +1,9 @@
 #!/usr/bin/lua
 
 require("gv")
-require("fsmutils")
 
-local pairs, ipairs, print, table, type, assert, gv, io, fsmutils
-   = pairs, ipairs, print, table, type, assert, gv, io, fsmutils
+local pairs, ipairs, print, table, type, assert, gv, io
+   = pairs, ipairs, print, table, type, assert, gv, io
 
 module("fsm2uml")
 
@@ -315,8 +314,8 @@ local function fsm2gh(root)
       end
    end
 
-   fsmutils.mapfsm(function (s) proc_state(gh, s) end, root, fsmutils.is_sta)
-   fsmutils.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, fsmutils.is_trans)
+   rtfsm.mapfsm(function (s) proc_state(gh, s) end, root, fsmutils.is_sta)
+   rtfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rtfsm.is_trans)
    return gh
 end
 
