@@ -70,18 +70,18 @@ end
 --
 trans = {}
 
-function trans:type() return 'trans' end
+function trans:type() return 'transition' end
 
 function trans:__tostring()
    local src, tgt, event
 
    if type(self.src) == 'string' then src = self.src
-   else src = self.src.fqn end
+   else src = self.src._fqn end
 
    if type(self.tgt) == 'string' then tgt = self.tgt
-   else tgt = self.tgt.fqn end
+   else tgt = self.tgt._fqn end
 
-   return "Transition: src='" .. src .. "', tgt='" .. tgt .. "', event='" .. tostring(self.event) .. "'"
+   return "T={ src='" .. src .. "', tgt='" .. tgt .. "', event='" .. tostring(self.event) .. "' }"
 end
 
 function trans:new(t)
@@ -124,17 +124,31 @@ function join:new(t)
 end
 
 -- usefull predicates
-function is_sista(s) return type(s) == 'table' and s:type() == 'simple' end
-function is_csta(s) return type(s) == 'table' and s:type() == 'composite' end
-function is_psta(s) return type(s) == 'table' and s:type() == 'parallel' end
-function is_conn(s) return type(s) == 'table' and s:type() == 'connector' end
-function is_trans(s) return type(s) == 'table' and s:type() == 'transition' end
-function is_join(s) return type(s) == 'table' and s:type() == 'join' end
-function is_fork(s) return type(s) == 'table' and s:type() == 'fork' end
+function is_fsmobj(s)
+   if type(s) ~= 'table' then
+      return false
+   end
+   local mt = getmetatable(s)
+   if mt and  mt.__index then
+      return true
+   else
+      print("no fsmobj: " .. utils.tab2str(s))
+      return false
+   end
+end
 
-function is_sta(s) return is_sista(s) or is_csta(s) or is_psta(s) end
-function is_cplx(s) return is_csta(s) or is_psta(s) end
-function is_node(s) return is_sta(s) or is_conn(s) end
+function is_sista(s) return is_fsmobj(s) and s:type() == 'simple' end
+function is_csta(s)  return is_fsmobj(s) and s:type() == 'composite' end
+function is_psta(s)  return is_fsmobj(s) and s:type() == 'parallel' end
+function is_trans(s) return is_fsmobj(s) and s:type() == 'transition' end
+function is_conn(s)  return is_fsmobj(s) and s:type() == 'connector' end
+function is_join(s)  return is_fsmobj(s) and s:type() == 'join' end
+function is_fork(s)  return is_fsmobj(s) and s:type() == 'fork' end
+
+function is_sta(s)   return is_sista(s) or is_csta(s) or is_psta(s) end
+function is_cplx(s)  return is_csta(s) or is_psta(s) end
+function is_node(s)  return is_sta(s) or is_conn(s) end
+function is_pseu(s)  return is_conn(s) or is_fork(s) or is_join(s) end
 
 -- apply func to all fsm elements for which pred returns true
 function mapfsm(func, fsm, pred)
@@ -142,9 +156,8 @@ function mapfsm(func, fsm, pred)
 
    local function __mapfsm(states)
       map(function (s, k)
-	     -- ugly: filter parent links or we'll cycle forever
-	     -- maybe better: ignore '__*' keys?
-	     if k ~= '__parent' then
+	     -- ugly: ignore entries starting with '_'
+	     if string.sub(k, 1, 1) ~= '_' then
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
@@ -183,11 +196,11 @@ function verify(fsm)
    local function check_trans(t, parent)
       local ret = true
       if not t.src then
-	 mes[#mes+1] = "ERROR: " .. t .." missing src state, parent='" .. p.fqn .. "'"
+	 mes[#mes+1] = "ERROR: " .. t .." missing src state, parent='" .. p._fqn .. "'"
 	 ret = false
       end
       if not t.tgt then
-	 mes[#mes+1] = "ERROR: " .. t .." missing tgt state, parent='" .. p.fqn .. "'"
+	 mes[#mes+1] = "ERROR: " .. t .." missing tgt state, parent='" .. p._fqn .. "'"
 	 ret = false
       end
       -- tbd event
@@ -213,14 +226,14 @@ end
 -- this modifies fsm
 
 local function add_parent_links(fsm)
-   fsm.__parent = fsm
-   mapfsm(function (s, p) s.__parent = p end, fsm, is_node)
+   fsm._parent = fsm
+   mapfsm(function (s, p) s._parent = p end, fsm, is_node)
 end
 
 --------------------------------------------------------------------------------
 -- add id fields
 local function add_ids(fsm)
-   mapfsm(function (s,p,n) s.id = n end, fsm, is_node)
+   mapfsm(function (s,p,n) s._id = n end, fsm, is_node)
 end
 
 
@@ -229,22 +242,20 @@ end
 -- depends on parent links beeing available
 local function add_fqns(fsm)
    function __add_fqn(s, p)
-      if not s.id then
-	 param.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p.fqn)
+      if not s._id then
+	 param.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p._fqn)
       end
-      s.fqn = p.fqn .. "." .. s.id
-      print("set fqn:", s.fqn)
+      s._fqn = p._fqn .. "." .. s._id
+      print("set fqn:", s._fqn)
    end
 
-   fsm.fqn = fsm.id
+   fsm._fqn = fsm._id
    mapfsm(__add_fqn, fsm, is_node)
 end
 
 --------------------------------------------------------------------------------
 -- resolve transition src and target strings into references of the real states
---    depends on local uniqueness
 --    depends on fully qualified names
---    depends on lookup table
 local function resolve_trans(fsm)
 
    -- three types of targets:
@@ -253,39 +264,59 @@ local function resolve_trans(fsm)
    --    3. absolute, no leading dot
 
    local function __resolve_trans(tr, parent)
-      -- resolve path
-      local function __resolve_path(state_str, parent)
 
-	 local function index_tree(tree, tab)
+      --
+      -- resolve path
+      --
+      local function __resolve_path(state_str, parent)
+	 -- index tree with array tab
+	 local function index_tree(tree, tab, mes)
 	    local res = tree
 	    for _, k in ipairs(tab) do
 	       res = res[k]
-	       if not res then break end
+	       if not res then
+		  mes = "no " .. k .. " in " .. table.concat(tab, ".")
+		  break
+	       end
 	    end
 	    return res
 	 end
 
-	 local state
+	 local state, mes
 	 if not string.find(state_str, '[\\.]') then
 	    -- no dots, local state
-	    state = parent.fqn[state_str]
+	    state = parent[state_str]
+	    if state == nil then
+	       mes = "no " .. state_str .. " in " .. parent._fqn
+	    end
 	 elseif string.sub(tr.src, 1, 1) == '.' then
 	    -- leading dot, relative target
-	    param.err("ERROR: relative transitions not supported and maybe never will!")
+	    param.err("relative transitions not supported (and maybe never will!)")
 	 else
 	    -- absolute target, this is a fqn!
 	    state = index_tree(fsm, utils.split(state_str, "[\\.]"))
 	 end
-	 return state
+	 return state, mes
       end
 
       -- resolve transition src
       local function __resolve_src(tr, parent)
-	 local src = __resolve_path(tr.src, parent)
+	 local src, mes = __resolve_path(tr.src, parent)
 	 if not src then
-	    param.err("ERROR: unable to resolve transition src " .. tr)
+	    param.err("ERROR: resolving src failed " .. tostring(tr) .. ": " .. mes)
 	    return false
-	 else tr.src = src end
+	 else
+	    if is_cplx(src) then
+	       if src.final == nil then
+		  param.err("ERROR: resolving src failed " .. tostring(tr) .. 
+			 " src on cplx state boundary without final connector")
+		  return false
+	       end
+	       tr.src = src.final
+	    else
+	       tr.src = src 
+	    end
+	 end
 	 return true
       end
 
@@ -294,12 +325,28 @@ local function resolve_trans(fsm)
 	 -- resolve target
 	 if tr.tgt == 'internal' then
 	    param.warn("WARNING: internal events not supported (yet)")
+	    return true
+	 end
+
+	 local tgt, mes = __resolve_path(tr.tgt, parent)
+
+	 if not tgt then
+	    param.err("ERROR: resolving tgt failed " .. tostring(tr) .. ": " .. mes )
+	    return false
 	 else
-	    local tgt = __resolve_path(tr.tgt, parent)
-	    if not tgt then
-	       param.err("ERROR: unable to resolve transition tgt " .. tr)
-	       return false
-	    else tr.tgt = tgt end end
+	    -- complex state, connect to 'initial'
+	    if is_cplx(tgt) then 
+	       if tgt.initial == nil then
+		  param.err("ERROR: transition " .. tostring(tr) .. 
+			 " ends on cstate without initial connector")
+		  return false
+	       else
+		  tr.tgt = tgt.initial
+	       end
+	    else
+	       tr.tgt = tgt 
+	    end
+	 end
 	 return true
       end
 
@@ -331,7 +378,7 @@ function init(fsm_templ, name)
 
    local fsm = utils.deepcopy(fsm_templ)
 
-   fsm.id = name or 'root'
+   fsm._id = name or 'root'
 
    add_parent_links(fsm)
    add_ids(fsm)
@@ -345,7 +392,7 @@ function init(fsm_templ, name)
    end
 
    if not resolve_trans(fsm) then
-      param.err("failed to resolve transitions of fsm " .. fsm.id)
+      param.err("failed to resolve transitions of fsm " .. fsm._id)
       return false
    end
 
@@ -359,7 +406,7 @@ function init(fsm_templ, name)
    end
 
    -- All OK!
-   fsm.__initalized = true
+   fsm._initalized = true
    return fsm
 end
 
@@ -420,7 +467,7 @@ end
 local function enter_state(state)
    if state.entry then state.entry(state) end
    state.mode = 'active'
-   state.__parent.act_child = state
+   state._parent.act_child = state
    -- tbd: act_leaves, parallel states
 end
 
@@ -429,12 +476,12 @@ end
 local function exit_state(state)
    -- save this for possible history entry
    if state.mode == 'active' then
-      state.__parent.last_active = state
+      state._parent.last_active = state
    else
-      state.__parent.last_active = false
+      state._parent.last_active = false
    end
    state.mode = 'inactive'
-   state.__parent.act_child = 'false'
+   state._parent.act_child = 'false'
    if state.exit then state.exit(state) end
 end
 
@@ -442,10 +489,10 @@ end
 -- tgt which is in state 'active'
 -- tbd: sure this works for parallel states?
 local function getLCA(tr)
-   local lca = trans.tgt.__parent
+   local lca = trans.tgt._parent
    -- looks dangerous, but root should always be active:
    while lca ~= 'active' do
-      lca = lca.__parent
+      lca = lca._parent
    end
    return lca
 end
@@ -463,7 +510,7 @@ end
 local function exec_trans(fsm, tr)
    -- paranoid check: sth would be very wrong if tgt is already active
    if tr.tgt.state ~= 'inactive' then
-      param.err("ERROR: transition target " .. tr.tgt.fqn .. " in invalid state '" .. tr.tgt.state .. "'")
+      param.err("ERROR: transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt.state .. "'")
    end
 
    local lca = getLCA(trans)
@@ -472,7 +519,7 @@ local function exec_trans(fsm, tr)
    --  exit all states from src up to (but excluding) LCA
    while state_walker ~= lca do
       exit_state(state)
-      state_walker = state_walker.__parent
+      state_walker = state_walker._parent
    end
 
    -- run effect
@@ -485,7 +532,7 @@ local function exec_trans(fsm, tr)
 
    while state_walker ~= lca do
       table.insert(down_path, state_walker)
-      state_walker = state_walker.__parent
+      state_walker = state_walker._parent
    end
 
    -- now enter down_path
@@ -626,7 +673,7 @@ function step(fsm)
 
    -- nothing to do - run an idle function or exit
    if idling then
-      if fsm.idle then fsm.idle(fsm)
+      if fsm._idle then fsm._idle(fsm)
       else
 	 param.dbg("DEBUG: no doos, no events, no idle func, halting engines")
 	 return

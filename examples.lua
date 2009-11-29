@@ -115,9 +115,7 @@ ex.rtt_toplevel = csta:new{
    trans:new{ src='s_stopped', tgt='s_running', event='e_start', effect='print("restarting")' },
    trans:new{ src='s_stopped', tgt='final', event='e_quit' },
    trans:new{ src='s_init', tgt='s_running', event='e_start'},
-
 }
-
 
 os.execute("rm -f *.png")
 
@@ -130,9 +128,9 @@ local function do_all(_fsm, name)
       return false
    else print("OK") end
 
-   --fsm2uml.fsm2uml(fsm, "png", fsm.id .. "-uml.png")
+   fsm2uml.fsm2uml(fsm, "png", fsm._id .. "-uml.png")
    --fsm2tree.fsm2tree(fsm, "png", fsm.id .. "-tree.png")
-   --print(string.rep('-', 80))
+   print(string.rep('-', 80))
    return fsm
 end
 

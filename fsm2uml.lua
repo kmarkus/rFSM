@@ -1,9 +1,11 @@
 #!/usr/bin/lua
 
 require("gv")
+require("utils")
+require("rtfsm")
 
-local pairs, ipairs, print, table, type, assert, gv, io
-   = pairs, ipairs, print, table, type, assert, gv, io
+local pairs, ipairs, print, table, type, assert, gv, io, utils, rtfsm
+   = pairs, ipairs, print, table, type, assert, gv, io, utils, rtfsm
 
 module("fsm2uml")
 
@@ -16,23 +18,10 @@ param.cs_fillcolor = "white"
 param.layout="dot"
 param.show_fqn = false
 
-dbg = function () end
+param.err = print
+param.warn = print
+param.dbg = print
 
--- utils
-local function map(f, tab)
-   local newtab = {}
-   if not tab then return newtab end
-   for i,v in pairs(tab) do
-      res = f(v)
-      table.insert(newtab, res)
-   end
-   return newtab
-end
-
-
---
--- graphviz convenience wrappers for creating statechart like entities
---
 
 -- setup common properties
 local function set_props(h)
@@ -66,7 +55,7 @@ local function get_shandle(gh, fqn)
    local nh = gv.findnode(gh, fqn)
    if nh then return nh, "node" end
 
-   io.stderr:write("No state '" .. fqn .. "'\n")
+   param.err("No state '" .. fqn .. "'")
    return false
 end
 
@@ -86,102 +75,123 @@ local function new_gra(name)
    -- doesn't seem to make any difference
    -- gv.setv(gh, "clusterrank", "local")
 
-   dbg("creating new graph " .. name)
+   param.dbg("creating new graph " .. name)
    return gh
 end
 
+-- tbdel
 -- create initial state in given parent state
-local function new_inista(gh, parent)
+-- local function new_inista(gh, parent)
 
-   dbg("creating new initial state in " .. parent.fqn )
+--    param.dbg("creating new initial state in " .. parent._fqn )
 
-   local ph, type = get_shandle(gh, parent.fqn)
+--    local ph, type = get_shandle(gh, parent._fqn)
+--    assert(ph)
+--    assert(type ~= "simple")
+--    local fqn = parent._fqn .. ".initial"
+
+--    if gv.findnode(ph, fqn) then
+--       io.stderr:write("cstate " .. parent._fqn .. " already has a initial node\n")
+--       return false
+--    end
+
+--    local nh = gv.node(ph, fqn)
+--    set_ndprops(n)
+--    gv.setv(nh, "shape", "point")
+--    gv.setv(nh, "height", "0.15")
+
+--    return nh
+-- end
+
+-- -- create final state in given parent
+-- local function new_finsta(gh, parent)
+
+--    local ph, type = get_shandle(gh, parent._fqn)
+--    assert(ph)
+--    assert(type ~= "simple")
+--    fqn = parent._fqn .. ".final"
+
+--    if gv.findnode(ph, fqn) then
+--       io.stderr:write("graph " .. parent._fqn .. "already has a final node\n")
+--       return false
+--    end
+
+--    local nh = gv.node(ph, fqn)
+--    set_ndprops(nh)
+--    gv.setv(nh, "shape", "doublecircle")
+--    gv.setv(nh, "label", "")
+--    gv.setv(nh, "height", "0.1")
+
+--    param.dbg("creating new final state " .. fqn)
+--    return nh
+-- end
+
+local function new_conn(gh, conn)
+   local ph, type = get_shandle(gh, conn._parent._fqn)
    assert(ph)
    assert(type ~= "simple")
-   local fqn = parent.fqn .. ".initial"
 
-   if gv.findnode(ph, fqn) then
-      io.stderr:write("cstate " .. parent.fqn .. " already has a initial node\n")
+   if gv.findnode(ph, conn._fqn) then
+      param.err("graph " .. conn._parent._fqn .. "already has a node " .. conn._fqn)
       return false
    end
 
-   local nh = gv.node(ph, fqn)
-   set_ndprops(n)
-   gv.setv(nh, "shape", "point")
-   gv.setv(nh, "height", "0.15")
-
-   return nh
-end
-
--- create final state in given parent
-local function new_finsta(gh, parent)
-
-   local ph, type = get_shandle(gh, parent.fqn)
-   assert(ph)
-   assert(type ~= "simple")
-   fqn = parent.fqn .. ".final"
-
-   if gv.findnode(ph, fqn) then
-      io.stderr:write("graph " .. parent.fqn .. "already has a final node\n")
-      return false
-   end
-
-   local nh = gv.node(ph, fqn)
+   local nh = gv.node(ph, conn._fqn)
    set_ndprops(nh)
-   gv.setv(nh, "shape", "doublecircle")
-   gv.setv(nh, "label", "")
-   gv.setv(nh, "height", "0.1")
+   gv.setv(nh, "shape", "circle")
+   gv.setv(nh, "label", conn._id)
+   gv.setv(nh, "height", "0.2")
 
-   dbg("creating new final state " .. fqn)
+   param.dbg("creating new connector " .. conn._fqn)
    return nh
 end
+
+-- tbd: fork, join
 
 -- create a new simple state
 local function new_sista(gh, state, label)
 
-   dbg("creating new simple state '" .. state.fqn)
+   param.dbg("creating new simple state '" .. state._fqn)
 
    local __label
-   local ph, type = get_shandle(gh, state.__parent.fqn)
+   local ph, type = get_shandle(gh, state._parent._fqn)
    assert(ph)
    assert(type ~= "simple")
 
    -- tbd: use gh here?
-   if gv.findnode(ph, state.fqn) then
-      io.stderr:write("graph already has a node " .. state.fqn .. "\n")
+   if gv.findnode(ph, state._fqn) then
+      param.err("graph already has a node " .. state._fqn)
       return false
    end
 
-   local nh = gv.node(ph, state.fqn)
+   local nh = gv.node(ph, state._fqn)
    set_ndprops(nh)
 
    gv.setv(nh, "style", "rounded")
    gv.setv(nh, "shape", "box")
 
-   if param.show_fqn then __label = state.fqn
-   else __label=state.id end
+   if param.show_fqn then __label = state._fqn
+   else __label=state._id end
 
    if label then __label = __label .. "\n" .. label end
    gv.setv(nh, "label", __label)
    return nh
 end
 
--- updates until here!
-
 -- create an new composite state
 local function new_csta(gh, state, label)
 
-   dbg("creating new composite state " .. state.fqn)
+   param.dbg("creating new composite state " .. state._fqn)
 
    local __label
-   local ph = get_shandle(gh, state.__parent.fqn)
+   local ph = get_shandle(gh, state._parent._fqn)
    assert(ph)
 
-   iname = "cluster_" .. state.fqn
+   iname = "cluster_" .. state._fqn
 
    -- tbd: use gh here?
    if gv.findsubg(ph, iname) then
-      io.stderr:write("graph already has a subgraph " .. state.fqn .. "\n")
+      param.err("graph already has a subgraph " .. state._fqn)
       return false
    end
 
@@ -197,21 +207,24 @@ local function new_csta(gh, state, label)
 
    -- add invisible dummy node as transition endpoint at boundary of
    -- this composite state
-   local dnh = gv.node(ch, state.fqn .. "_dummy")
-   gv.setv(dnh, "shape", "point")
-   gv.setv(dnh, "fixedsize", "true")
-   gv.setv(dnh, "height", "0.000001")
-   gv.setv(dnh, "style", "invisible") -- bug in gv, doesn't work
+   -- tbdel 
+   -- local dnh = gv.node(ch, state._fqn .. "_dummy")
+   -- gv.setv(dnh, "shape", "point")
+   -- gv.setv(dnh, "fixedsize", "true")
+   -- gv.setv(dnh, "height", "0.000001")
+   -- gv.setv(dnh, "style", "invisible") -- bug in gv, doesn't work
 
 
-   --if label then gv.setv(ch, "label", state.id .. "\n" .. label)
-   --else gv.setv(ch, "label", state.id) end
+   --if label then gv.setv(ch, "label", state._id .. "\n" .. label)
+   --else gv.setv(ch, "label", state._id) end
 
-   if param.show_fqn then __label = state.fqn
-   else __label=state.id end
+   -- fqn or id?
+   if param.show_fqn then __label = state._fqn
+   else __label=state._id end
 
+   -- append user label
    if label then __label = __label .. "\n" .. label end
-   gv.setv(nh, "label", __label)
+   gv.setv(ch, "label", __label)
 
    return ch
 end
@@ -220,7 +233,7 @@ end
 -- src and target are only fully qualified strings!
 local function new_tr(gh, src, tgt, label)
 
-   dbg("creating transition from '" .. src .. "' to '" .. tgt .. "'")
+   param.dbg("creating transition from '" .. src .. "' to '" .. tgt .. "'")
 
    local sh, shtype = get_shandle(gh, src)
    local th, thtype = get_shandle(gh, tgt)
@@ -228,107 +241,85 @@ local function new_tr(gh, src, tgt, label)
    assert(sh)
    assert(th)
 
+   -- tbdel
    -- if src/tgt is a cluster then src/tgt is fqn_dummy
-   if shtype == "subgraph" then realsh = gv.findnode(sh, src .. "_dummy")
-   else realsh = sh end
+   -- this should not be possible anymore!
+   -- if shtype == "subgraph" then 
+   --    -- realsh = gv.findnode(sh, src .. "_dummy")
+   assert(shtype ~= "subgraph")
+   assert(thtype ~= "subgraph")
+   -- else realsh = sh end
 
-   if thtype == "subgraph" then realth = gv.findnode(th, tgt .. "_dummy")
-   else realth = th end
+   -- if thtype == "subgraph" then realth = gv.findnode(th, tgt .. "_dummy")
+   -- else realth = th end
 
-   local eh = gv.edge(realsh, realth)
+   local eh = gv.edge(sh, th)
    set_trprops(eh)
 
+   -- tbdel
    -- transition stops on composite state boundary
-   if shtype == "subgraph" then
-      gv.setv(eh, "ltail", "cluster_" .. src)
-   end
+   -- we don't really want to hide the real connections
+   -- if shtype == "subgraph" then
+   --    gv.setv(eh, "ltail", "cluster_" .. src)
+   -- end
 
-   if thtype == "subgraph" then
-      gv.setv(eh, "lhead", "cluster_" .. tgt)
-   end
+   -- if thtype == "subgraph" then
+   --    gv.setv(eh, "lhead", "cluster_" .. tgt)
+   -- end
 
    if label then gv.setv(eh, "label", " " .. label .. " ") end
 end
 
 
-local function has_initial_tr(transitions)
-   for i,k in ipairs(transitions) do
-      if k.src == 'initial' then
-	 return true end end
-   return false
-end
-
-local function has_final_tr(transitions)
-   for i,k in ipairs(transitions) do
-      if k.tgt == 'final' then
-	 return true end end
-   return false
-end
-
-
-local function proc_state(gh, state)
-   if state.states then -- composite state?
-      new_csta(gh, state)
-   elseif state.parallel then -- parallel state?
-      new_csta(gh, state, "(parallel state)")
-   else -- simple state
-      new_sista(gh, state)
-   end
-
-   -- need a final or initial state?
-   if state.transitions then
-      if has_initial_tr(state.transitions) then
-	 new_inista(gh, state)
-      end
-      if has_final_tr(state.transitions) then
-	 new_finsta(gh, state)
-      end
+local function proc_node(gh, node)
+   if node:type() == 'composite' then new_csta(gh, node)
+   elseif node:type() == 'parallel' then new_csta(gh, node, "(parallel node)")
+   elseif node:type() == 'simple' then new_sista(gh, node)
+   elseif node:type() == 'connector' then new_conn(gh, node)
+   else
+      param.err("unknown node type: " .. node._fqn)
    end
 end
 
 local function proc_trans(gh, t, parent)
    if t.tgt == 'internal' then
       return true
-   elseif t.tgt == 'final' then
-      new_tr(gh, t.src.fqn, parent.fqn .. '.final', t.event)
-   elseif t.src == 'initial' then
-      new_tr(gh, parent.fqn .. '.initial', t.tgt.fqn, t.event)
    else
-      new_tr(gh, t.src.fqn, t.tgt.fqn, t.event)
+      new_tr(gh, t.src._fqn, t.tgt._fqn, t.event)
    end
 end
 
 --
 -- convert given fsm to a populated graphviz object
 --
-
 local function fsm2gh(root)
-   gh = new_gra(root.id)
+   gh = new_gra(root._id)
 
-   if root.transitions then
-      if has_initial_tr(root.transitions) then
-	 new_inista(gh, root)
-      end
-      if has_final_tr(root.transitions) then
-	 new_finsta(gh, root)
-      end
-   end
+   -- tbdel
+   -- if root.transitions then
+   --    if has_initial_tr(root.transitions) then
+   -- 	 new_inista(gh, root)
+   --    end
+   --    if has_final_tr(root.transitions) then
+   -- 	 new_finsta(gh, root)
+   --    end
+   -- end
 
-   rtfsm.mapfsm(function (s) proc_state(gh, s) end, root, fsmutils.is_sta)
+   rtfsm.mapfsm(function (s) proc_node(gh, s) end, root, rtfsm.is_node)
    rtfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rtfsm.is_trans)
    return gh
 end
 
 function fsm2uml(root, format, outfile)
 
-   if not root.__initalized then
-      param.err("fsm2uml ERROR: fsm " .. root.id .. " uninitialized")
+   if not root._initalized then
+      param.err("fsm2uml ERROR: fsm " .. root._id .. " uninitialized")
       return false
    end
 
    local gh = fsm2gh(root)
    gv.layout(gh, param.layout)
-   dbg("fsm2uml: running " .. param.layout .. " layouter")
+   param.dbg("fsm2uml: running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
-   dbg("fsm2uml: rendering to " .. format .. ", written result to " .. outfile)
+   param.dbg("fsm2uml: rendering to " .. format .. ", written result to " .. outfile)
 end
