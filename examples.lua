@@ -81,7 +81,7 @@ ex.on_off_homing = csta:new{
    -- transitions
    trans:new{ src='initial', tgt='off' },
    trans:new{ src='homing', tgt='off', event='e_complete(homing)' },
-   trans:new{ src='on', tgt='off', event='e_off' },g
+   trans:new{ src='on', tgt='off', event='e_off' },
    trans:new{ src='on', tgt='homing', event='e_home' },
    trans:new{ src='off', tgt='on', event='e_on' },
    trans:new{ src='off', tgt='homing', event='e_quit' }
@@ -127,7 +127,7 @@ local function do_all(_fsm, name)
    if not fsm then
       print("FAILED")
       return false
-   else print("... OK") end
+   else print("Processing OK!") end
 
    fsm2uml.fsm2uml(fsm, "png", fsm._id .. "-uml.png")
    --fsm2tree.fsm2tree(fsm, "png", fsm.id .. "-tree.png")
