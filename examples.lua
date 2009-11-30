@@ -11,7 +11,7 @@ local sista = rtfsm.sista
 local csta = rtfsm.csta
 local psta = rtfsm.psta
 local trans = rtfsm.trans
-local conn = rtfsm.conn
+local junc = rtfsm.junc
 local join = rtfsm.join
 local fork = rtfsm.fork
 
@@ -38,7 +38,7 @@ composite_homing = csta:new{
 
 -- parallel state
 -- required: --
--- optional: composite states, parallel states, connectors, join, fork
+-- optional: composite states, parallel states, junctions, join, fork
 -- disallowed: sista
 homing_cstate = psta:new {
    cs_home_ax1 = csta:new{
@@ -59,7 +59,7 @@ homing_cstate = psta:new {
 }
 
 -- root: composite state with additional constraints:
--- required: 'initial' connector
+-- required: 'initial' junction
 -- disallowed: -
 ex.on_off_homing = csta:new{
    entry=nil,
@@ -104,9 +104,9 @@ ex.rtt_toplevel = csta:new{
       trans:new{ event='e_range_free', src='s_obj_close', tgt='s_working'}
    },
 
-   -- connectors
-   initial = conn:new{},
-   final = conn:new{},
+   -- junctions
+   initial = junc:new{},
+   final = junc:new{},
 
    -- transitions
    trans:new{ src='initial', tgt='s_init' },
@@ -121,16 +121,16 @@ os.execute("rm -f *.png")
 
 -- murky auxillary function
 local function do_all(_fsm, name)
-   io.write("Processing FSM '" .. name .. "'...\t\t")
+   print(string.rep('-', 80))
+   print("Processing FSM '" .. name .. "' ...")
    local fsm = rtfsm.init(_fsm, name)
    if not fsm then
       print("FAILED")
       return false
-   else print("OK") end
+   else print("... OK") end
 
    fsm2uml.fsm2uml(fsm, "png", fsm._id .. "-uml.png")
    --fsm2tree.fsm2tree(fsm, "png", fsm.id .. "-tree.png")
-   print(string.rep('-', 80))
    return fsm
 end
 

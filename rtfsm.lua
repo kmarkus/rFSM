@@ -7,6 +7,7 @@ require ('utils')
 param = {}
 param.err = print
 param.warn = print
+param.info = print
 param.dbg = print
 
 -- save references
@@ -91,11 +92,11 @@ function trans:new(t)
 end
 
 --
--- connector
+-- junction
 --
-conn = {}
-function conn:type() return 'connector' end
-function conn:new(t)
+junc = {}
+function junc:type() return 'junction' end
+function junc:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
@@ -141,14 +142,15 @@ function is_sista(s) return is_fsmobj(s) and s:type() == 'simple' end
 function is_csta(s)  return is_fsmobj(s) and s:type() == 'composite' end
 function is_psta(s)  return is_fsmobj(s) and s:type() == 'parallel' end
 function is_trans(s) return is_fsmobj(s) and s:type() == 'transition' end
-function is_conn(s)  return is_fsmobj(s) and s:type() == 'connector' end
+function is_junc(s)  return is_fsmobj(s) and s:type() == 'junction' end
 function is_join(s)  return is_fsmobj(s) and s:type() == 'join' end
 function is_fork(s)  return is_fsmobj(s) and s:type() == 'fork' end
 
 function is_sta(s)   return is_sista(s) or is_csta(s) or is_psta(s) end
 function is_cplx(s)  return is_csta(s) or is_psta(s) end
+function is_conn(s)  return is_junc(s) or is_fork(s) or is_join(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
-function is_pseu(s)  return is_conn(s) or is_fork(s) or is_join(s) end
+
 
 -- apply func to all fsm elements for which pred returns true
 function mapfsm(func, fsm, pred)
@@ -246,11 +248,94 @@ local function add_fqns(fsm)
 	 param.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p._fqn)
       end
       s._fqn = p._fqn .. "." .. s._id
-      print("set fqn:", s._fqn)
    end
 
    fsm._fqn = fsm._id
    mapfsm(__add_fqn, fsm, is_node)
+end
+
+local function add_defconn(fsm)
+   local function __add_defconn(tr, p)
+      if tr.src == 'initial' and p.initial == nil then
+	 p.initial = junc:new{}
+      	 param.dbg("DBG: created missing " .. p._fqn .. ".initial")
+      end
+      if tr.tgt == 'final' and p.final == nil then
+	 p.final = junc:new{}
+      	 param.dbg("DBG: created missing " .. p._fqn .. ".final")
+      end
+   end
+   mapfsm(__add_defconn, fsm, is_trans)
+end
+--------------------------------------------------------------------------------
+-- resolve path function
+-- turn string state into the real thing
+local function __resolve_path(fsm, state_str, parent)
+
+   -- conveniance, create missing initial and final connectors
+   -- called by lookup when it fails
+   local function lookup_failure(str, state)
+      if is_csta(state) then
+	 if str == 'initial' or str == 'final' then
+	    state[str] = junc:new{}
+	    param.info("INFO: creating " .. str .. " junction " .. state._fqn .. '.initial')
+	 end
+      elseif is_psta(state) then
+	 if str == 'initial' then
+	    state[str] = fork:new{}
+	    param.info("INFO: creating initial fork " .. state._fqn .. '.initial')
+	 elseif str == 'final' then
+	    state[str] = join:new{}
+	    param.info("INFO: creating final join " .. state._fqn .. '.final')
+	 end
+      else
+	 -- don't know what to do
+	 param.warn("ERROR: Unhandled lookup failure for " .. state._fqn .. str)
+      end
+   end
+
+   -- lookup a substate of state named 'str'
+   -- call lookup_failure handler in case of error and retry
+   local function lookup(str, state)
+      assert(is_cplx(state))
+
+      local res = state[str]
+      if res == nil then
+	 lookup_failure(str, state)
+	 res = state[str]
+      end
+      return res
+   end
+
+   -- index tree with array tab
+   local function index_tree(tree, tab, mes)
+      local res = tree
+      for _, k in ipairs(tab) do
+	 res = lookup(k, res)
+	 if not res then
+	    mes = "no " .. k .. " in " .. table.concat(tab, ".")
+	    break
+	 end
+      end
+      return res
+   end
+
+   local state, mes
+   if not string.find(state_str, '[\\.]') then
+      -- no dots, local state
+      state = lookup(state_str, parent)
+      if state == nil then
+	 mes = "no " .. state_str .. " in " .. parent._fqn
+      end
+   elseif string.sub(tr.src, 1, 1) == '.' then
+      -- leading dot, relative target
+      param.err("ERROR: invalid relative transition (leading dot): " .. state_str)
+   else
+      -- absolute target, this is a fqn!
+      state = index_tree(fsm, utils.split(state_str, "[\\.]"), mes)
+   end
+   -- tbd: create default initial + final
+   return state, mes
 end
 
 --------------------------------------------------------------------------------
@@ -263,93 +348,59 @@ local function resolve_trans(fsm)
    --    2. relative, leading dot
    --    3. absolute, no leading dot
 
+   -- resolve transition src
+   local function __resolve_src(tr, parent)
+      local src, mes = __resolve_path(fsm, tr.src, parent)
+      if not src then
+	 param.err("ERROR: resolving src failed " .. tostring(tr) .. ": " .. mes)
+	 return false
+      else
+	 -- complex src, connect to 'final'
+	 if is_cplx(src) then
+	    if src.final == nil then
+	       param.err("ERROR: resolving src failed " .. tostring(tr) ..
+		      " origin on complex state without final connector")
+	       return false
+	    end
+	    tr.src = src.final
+	 else
+	    tr.src = src
+	 end
+      end
+      return true
+   end
+
+   -- resolve transition tgt
+   local function __resolve_tgt(tr, parent)
+      -- resolve target
+      if tr.tgt == 'internal' then
+	 param.warn("WARNING: internal events not supported (yet)")
+	 return true
+      end
+
+      local tgt, mes = __resolve_path(fsm, tr.tgt, parent)
+
+      if not tgt then
+	 param.err("ERROR: resolving tgt failed " .. tostring(tr) .. ": " .. mes )
+	 return false
+      else
+	 -- complex state, connect to 'initial'
+	 if is_cplx(tgt) then
+	    if tgt.initial == nil then
+	       param.err("ERROR: transition " .. tostring(tr) ..
+		      " ends on cstate without initial connector")
+	       return false
+	    else
+	       tr.tgt = tgt.initial
+	    end
+	 else
+	    tr.tgt = tgt
+	 end
+      end
+      return true
+   end
+
    local function __resolve_trans(tr, parent)
-
-      --
-      -- resolve path
-      --
-      local function __resolve_path(state_str, parent)
-	 -- index tree with array tab
-	 local function index_tree(tree, tab, mes)
-	    local res = tree
-	    for _, k in ipairs(tab) do
-	       res = res[k]
-	       if not res then
-		  mes = "no " .. k .. " in " .. table.concat(tab, ".")
-		  break
-	       end
-	    end
-	    return res
-	 end
-
-	 local state, mes
-	 if not string.find(state_str, '[\\.]') then
-	    -- no dots, local state
-	    state = parent[state_str]
-	    if state == nil then
-	       mes = "no " .. state_str .. " in " .. parent._fqn
-	    end
-	 elseif string.sub(tr.src, 1, 1) == '.' then
-	    -- leading dot, relative target
-	    param.err("relative transitions not supported (and maybe never will!)")
-	 else
-	    -- absolute target, this is a fqn!
-	    state = index_tree(fsm, utils.split(state_str, "[\\.]"))
-	 end
-	 return state, mes
-      end
-
-      -- resolve transition src
-      local function __resolve_src(tr, parent)
-	 local src, mes = __resolve_path(tr.src, parent)
-	 if not src then
-	    param.err("ERROR: resolving src failed " .. tostring(tr) .. ": " .. mes)
-	    return false
-	 else
-	    if is_cplx(src) then
-	       if src.final == nil then
-		  param.err("ERROR: resolving src failed " .. tostring(tr) .. 
-			 " src on cplx state boundary without final connector")
-		  return false
-	       end
-	       tr.src = src.final
-	    else
-	       tr.src = src 
-	    end
-	 end
-	 return true
-      end
-
-      -- resolve transition tgt
-      local function __resolve_tgt(tr, parent)
-	 -- resolve target
-	 if tr.tgt == 'internal' then
-	    param.warn("WARNING: internal events not supported (yet)")
-	    return true
-	 end
-
-	 local tgt, mes = __resolve_path(tr.tgt, parent)
-
-	 if not tgt then
-	    param.err("ERROR: resolving tgt failed " .. tostring(tr) .. ": " .. mes )
-	    return false
-	 else
-	    -- complex state, connect to 'initial'
-	    if is_cplx(tgt) then 
-	       if tgt.initial == nil then
-		  param.err("ERROR: transition " .. tostring(tr) .. 
-			 " ends on cstate without initial connector")
-		  return false
-	       else
-		  tr.tgt = tgt.initial
-	       end
-	    else
-	       tr.tgt = tgt 
-	    end
-	 end
-	 return true
-      end
-
       return __resolve_src(tr, parent) and __resolve_tgt(tr, parent)
    end
 
@@ -383,6 +434,7 @@ function init(fsm_templ, name)
    add_parent_links(fsm)
    add_ids(fsm)
    add_fqns(fsm)
+   add_defconn(fsm)
 
    -- verify
    local ret, errs = verify(fsm)
