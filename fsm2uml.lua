@@ -80,53 +80,6 @@ local function new_gra(name)
    return gh
 end
 
--- tbdel
--- create initial state in given parent state
--- local function new_inista(gh, parent)
-
---    param.dbg("creating new initial state in " .. parent._fqn )
-
---    local ph, type = get_shandle(gh, parent._fqn)
---    assert(ph)
---    assert(type ~= "simple")
---    local fqn = parent._fqn .. ".initial"
-
---    if gv.findnode(ph, fqn) then
---       io.stderr:write("cstate " .. parent._fqn .. " already has a initial node\n")
---       return false
---    end
-
---    local nh = gv.node(ph, fqn)
---    set_ndprops(n)
---    gv.setv(nh, "shape", "point")
---    gv.setv(nh, "height", "0.15")
-
---    return nh
--- end
-
--- -- create final state in given parent
--- local function new_finsta(gh, parent)
-
---    local ph, type = get_shandle(gh, parent._fqn)
---    assert(ph)
---    assert(type ~= "simple")
---    fqn = parent._fqn .. ".final"
-
---    if gv.findnode(ph, fqn) then
---       io.stderr:write("graph " .. parent._fqn .. "already has a final node\n")
---       return false
---    end
-
---    local nh = gv.node(ph, fqn)
---    set_ndprops(nh)
---    gv.setv(nh, "shape", "doublecircle")
---    gv.setv(nh, "label", "")
---    gv.setv(nh, "height", "0.1")
-
---    param.dbg("creating new final state " .. fqn)
---    return nh
--- end
-
 local function new_conn(gh, conn)
    local ph, type = get_shandle(gh, conn._parent._fqn)
    assert(ph)
@@ -303,16 +256,6 @@ end
 --
 local function fsm2gh(root)
    gh = new_gra(root._id)
-
-   -- tbdel
-   -- if root.transitions then
-   --    if has_initial_tr(root.transitions) then
-   -- 	 new_inista(gh, root)
-   --    end
-   --    if has_final_tr(root.transitions) then
-   -- 	 new_finsta(gh, root)
-   --    end
-   -- end
 
    rtfsm.mapfsm(function (s) proc_node(gh, s) end, root, rtfsm.is_node)
    rtfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rtfsm.is_trans)
