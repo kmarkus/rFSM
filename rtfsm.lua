@@ -133,7 +133,7 @@ function is_fsmobj(s)
    if mt and  mt.__index then
       return true
    else
-      print("no fsmobj: " .. utils.tab2str(s))
+      param.err("ERROR: no fsmobj: " .. utils.tab2str(s) .. " (interesting!)")
       return false
    end
 end
@@ -150,7 +150,6 @@ function is_sta(s)   return is_sista(s) or is_csta(s) or is_psta(s) end
 function is_cplx(s)  return is_csta(s) or is_psta(s) end
 function is_conn(s)  return is_junc(s) or is_fork(s) or is_join(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
-
 
 -- apply func to all fsm elements for which pred returns true
 function mapfsm(func, fsm, pred)
@@ -181,46 +180,108 @@ end
 -- depends on parent links for more useful output
 function verify(fsm)
 
-   -- validate states
-   local function check_state(s, parent)
-      local ret = true
-      if is_csta(s) then
-	 if s.doo then
-	    param.warn("WARNING: " .. s .. " 'doo' function in csta will never run")
-	    ret = false
-	 end
-      end
+   -- run checks
+   local mes = {}
+   local res = true
 
+   local function check_csta(s, p)
+      local ret = true
+      if s.initial and not is_junc(s.initial) then
+	 param.err("ERROR: in composite " .. s.initial._fqn .. " is not of type junction but " .. s.initial:type())
+	 ret = false
+      end
+      if s.final and not is_junc(s.final) then
+	 param.err("ERROR: in composite " .. s.final._fqn .. " is not of type junction but " .. s.initial:type())
+	 ret = false
+      end
       return ret
    end
 
+   -- validate parallel states
+   local function check_psta(s, p)
+      local ret = true
+      -- initial and final must be fork and join
+      if s.initial and not is_fork(s.initial) then
+	 mes[#mes+1] = "ERROR: parallel " .. s.initial._fqn .. " initial is not a fork but " .. s.initial:type()
+	 ret = false
+      end
+
+      if s.initial and not is_join(s.final) then
+	 mes[#mes+1] = "ERROR: parallel " .. s.initial._fqn .. " final is not a join but " .. s.initial:type()
+	 ret = false
+      end
+
+      -- assert that all child states are complex
+      return ret
+   end
+
+   -- validate complex states
+   local function check_cplx(s, parent)
+      if s.doo then
+	 mes[#mes+1] = "WARNING: " .. s .. " 'doo' function in csta will never run"
+	 ret = false
+      else
+	 return true
+      end
+   end
+
    -- validate transitions
-   local function check_trans(t, parent)
+   local function check_trans(t, p)
       local ret = true
       if not t.src then
-	 mes[#mes+1] = "ERROR: " .. t .." missing src state, parent='" .. p._fqn .. "'"
+	 mes[#mes+1] = "ERROR: " .. tostring(t) .." missing src state, parent='" .. p._fqn .. "'"
 	 ret = false
       end
       if not t.tgt then
-	 mes[#mes+1] = "ERROR: " .. t .." missing tgt state, parent='" .. p._fqn .. "'"
+	 mes[#mes+1] = "ERROR: " .. tostring(t) .." missing tgt state, parent='" .. p._fqn .. "'"
 	 ret = false
       end
       -- tbd event
       return ret
    end
 
-   -- run checks
-   local mes = {}
-   local res = true
-
+   -- root
    if not is_csta(fsm)  then
       mes[#mes+1] = "ERROR: fsm not a composite state but of type " .. fsm:type()
       res = false
    end
 
-   res = res and utils.andt(mapfsm(check_state, fsm, is_sta))
+   -- no side effects, order does not matter
+   res = res and utils.andt(mapfsm(check_cplx, fsm, is_cplx))
+   res = res and utils.andt(mapfsm(check_csta, fsm, is_csta))
+   res = res and utils.andt(mapfsm(check_psta, fsm, is_psta))
    res = res and utils.andt(mapfsm(check_trans, fsm, is_trans))
+
    return res, mes
+end
+
+--------------------------------------------------------------------------------
+-- helper function for dynamically modifying fsm
+-- add obj with id under parent
+function fsm_merge(parent, id, obj)
+   local mes = nil
+   if not is_cplx(parent) then
+      mes = "parent " .. parent._fqn .. " of " .. id .. " not a complex state"
+   end
+   if parent[id] ~= nil then
+      mes = "parent " .. parent._fqn .. " already contains a sub element " .. id
+   end
+
+   if mes then
+      param.err("ERROR: merge failed: ", mes)
+      return false
+   end
+
+   -- simple types
+   if is_sista(obj) or is_conn(obj) then
+      parent[id] = obj
+      obj._parent = parent
+      obj._id = id
+      obj._fqn = parent._fqn ..'.' .. id
+   else
+      param.err("ERROR: merging of " .. obj:type() .. " objects not implemented (" .. id .. ")")
+   end
+   return true
 end
 
 --------------------------------------------------------------------------------
@@ -254,64 +315,64 @@ local function add_fqns(fsm)
    mapfsm(__add_fqn, fsm, is_node)
 end
 
+--------------------------------------------------------------------------------
+-- be nice: add default connectors so that the user doesn't not have
+-- to do this boring job
 local function add_defconn(fsm)
-   local function __add_defconn(tr, p)
-      if tr.src == 'initial' and p.initial == nil then
-	 p.initial = junc:new{}
-      	 param.dbg("DBG: created missing " .. p._fqn .. ".initial")
+
+   -- if initial (fork) or final (join) doesn't exist then create them
+   -- and add transitions to all initial composite states
+   local function __add_psta_defconn(psta, parent, id)
+      if not psta.initial then
+	 assert(fsm_merge(psta, 'initial', fork:new{}))
+	 -- add transitions
+	 for k,v in pairs(psta) do
+	    if is_cplx(v) then psta[#psta+1] = trans:new{ src="initial", tgt=v._id } end
+	 end
+	 param.info("INFO: created undeclared fork " .. psta._fqn .. ".initial")
       end
-      if tr.tgt == 'final' and p.final == nil then
-	 p.final = junc:new{}
-      	 param.dbg("DBG: created missing " .. p._fqn .. ".final")
+      if not psta.final then
+	 assert(fsm_merge(psta, 'final', join:new{}))
+	 -- add transitions
+	 for k,v in pairs(psta) do
+	    if is_cplx(v) then psta[#psta+1] = trans:new{ src=v._id, tgt='final' } end
+	 end
+	 param.info("INFO: created undeclared join " .. psta._fqn .. ".initial")
       end
    end
-   mapfsm(__add_defconn, fsm, is_trans)
+
+   -- if transition *locally* references a non-existant initial or
+   -- final connector create it
+   local function __add_trans_defconn(tr, p)
+      if is_csta(p) then
+	 if tr.src == 'initial' and p.initial == nil then
+	    fsm_merge(p, 'initial', junc:new{})
+	    param.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
+	 end
+	 if tr.tgt == 'final' and p.final == nil then
+	    fsm_merge(p, 'final', junc:new{})
+	    param.info("INFO: created undeclared connector " .. p._fqn .. ".final")
+	 end
+      elseif is_psta(p) then
+	 -- tbd: create fork and join
+      end
+   end
+
+   mapfsm(__add_psta_defconn, fsm, is_psta)
+   mapfsm(__add_trans_defconn, fsm, is_trans)
 end
+
+
 --------------------------------------------------------------------------------
 -- resolve path function
 -- turn string state into the real thing
 local function __resolve_path(fsm, state_str, parent)
 
-   -- conveniance, create missing initial and final connectors
-   -- called by lookup when it fails
-   local function lookup_failure(str, state)
-      if is_csta(state) then
-	 if str == 'initial' or str == 'final' then
-	    state[str] = junc:new{}
-	    param.info("INFO: creating " .. str .. " junction " .. state._fqn .. '.initial')
-	 end
-      elseif is_psta(state) then
-	 if str == 'initial' then
-	    state[str] = fork:new{}
-	    param.info("INFO: creating initial fork " .. state._fqn .. '.initial')
-	 elseif str == 'final' then
-	    state[str] = join:new{}
-	    param.info("INFO: creating final join " .. state._fqn .. '.final')
-	 end
-      else
-	 -- don't know what to do
-	 param.warn("ERROR: Unhandled lookup failure for " .. state._fqn .. str)
-      end
-   end
-
-   -- lookup a substate of state named 'str'
-   -- call lookup_failure handler in case of error and retry
-   local function lookup(str, state)
-      assert(is_cplx(state))
-
-      local res = state[str]
-      if res == nil then
-	 lookup_failure(str, state)
-	 res = state[str]
-      end
-      return res
-   end
-
    -- index tree with array tab
    local function index_tree(tree, tab, mes)
       local res = tree
       for _, k in ipairs(tab) do
-	 res = lookup(k, res)
+	 res = res[k]
 	 if not res then
 	    mes = "no " .. k .. " in " .. table.concat(tab, ".")
 	    break
@@ -323,7 +384,7 @@ local function __resolve_path(fsm, state_str, parent)
    local state, mes
    if not string.find(state_str, '[\\.]') then
       -- no dots, local state
-      state = lookup(state_str, parent)
+      state = parent[state_str]
       if state == nil then
 	 mes = "no " .. state_str .. " in " .. parent._fqn
       end
@@ -355,17 +416,7 @@ local function resolve_trans(fsm)
 	 param.err("ERROR: resolving src failed " .. tostring(tr) .. ": " .. mes)
 	 return false
       else
-	 -- complex src, connect to 'final'
-	 if is_cplx(src) then
-	    if src.final == nil then
-	       param.err("ERROR: resolving src failed " .. tostring(tr) ..
-		      " origin on complex state without final connector")
-	       return false
-	    end
-	    tr.src = src.final
-	 else
-	    tr.src = src
-	 end
+	 tr.src = src
       end
       return true
    end
@@ -449,7 +500,7 @@ function init(fsm_templ, name)
    end
 
    -- local event queue is empty
-   fsm.evq = {}
+   fsm._evq = { 'e_init_fsm' }
 
    -- getevents user hook supplied?
    -- must return a table with events

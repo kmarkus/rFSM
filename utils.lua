@@ -8,7 +8,7 @@ module('utils')
 function append(car, ...)
    assert(type(car) == 'table')
    local new_array = {}
-   
+
    for i,v in pairs(car) do
       table.insert(new_array, v)
    end
@@ -59,7 +59,7 @@ function lpad(str, len, char)
    return string.rep(char, len - #str) .. str
 end
 
-function rpad(str, len, char) 
+function rpad(str, len, char)
    if char == nil then char = ' ' end
    return str .. string.rep(char, len - #str)
 end
@@ -127,7 +127,7 @@ function deepcopy(object)
    local lookup_table = {}
    local function _copy(object)
       if type(object) ~= "table" then
-            return object
+	    return object
       elseif lookup_table[object] then
 	 return lookup_table[object]
       end
@@ -175,7 +175,7 @@ function foldr(func, val, tab)
    return val
 end
 
--- O' Scheme, where art thou? 
+-- O' Scheme, where art thou?
 -- turn operator into function
 function AND(a, b) return a and b end
 

@@ -16,11 +16,12 @@ param.ndfontsize = 8.0
 param.cs_border_color = "black"
 param.cs_fillcolor = "white"
 param.layout="dot"
+param.rankdir="TD"
 param.show_fqn = false
 
 param.err = print
 param.warn = print
-param.dbg = print
+param.dbg = function () return true end
 
 
 -- setup common properties
@@ -68,8 +69,8 @@ local function new_gra(name)
    gv.setv(gh, "labelloc", "t")
    gv.setv(gh, "label", name)
    gv.setv(gh, "remincross", "true")
-   gv.setv(gh, "splines", "true")
-   gv.setv(gh, "rankdir", "TD")
+   gv.setv(gh, "splines", "polyline")
+   gv.setv(gh, "rankdir", param.rankdir or "TD")
 
    -- layout clusters locally before integrating
    -- doesn't seem to make any difference
@@ -129,7 +130,8 @@ end
 local function new_conn(gh, conn)
    local ph, type = get_shandle(gh, conn._parent._fqn)
    assert(ph)
-   assert(type ~= "simple")
+   assert(type ~= "simple", "Parent not of type simple")
+   assert(rtfsm.is_conn(conn), "Obj not a connector")
 
    if gv.findnode(ph, conn._fqn) then
       param.err("graph " .. conn._parent._fqn .. "already has a node " .. conn._fqn)
@@ -138,15 +140,24 @@ local function new_conn(gh, conn)
 
    local nh = gv.node(ph, conn._fqn)
    set_ndprops(nh)
-   gv.setv(nh, "shape", "circle")
-   gv.setv(nh, "label", conn._id)
-   gv.setv(nh, "height", "0.2")
 
-   param.dbg("creating new connector " .. conn._fqn)
+   if rtfsm.is_junc(conn) then
+      gv.setv(nh, "shape", "circle")
+      gv.setv(nh, "height", "0.4")
+   elseif rtfsm.is_join(conn) then
+      gv.setv(nh, "shape", "Mdiamond")
+      gv.setv(nh, "height", "0.3")
+   elseif rtfsm.is_fork(conn) then
+      gv.setv(nh, "shape", "Mcircle")
+      gv.setv(nh, "height", "0.4")
+   else param.err("ERROR: unknown conn type")  end
+
+   gv.setv(nh, "label", conn._id)
+   gv.setv(nh, "fixedsize", "true")
+
+   param.dbg("creating new conntion " .. conn._fqn)
    return nh
 end
-
--- tbd: fork, join
 
 -- create a new simple state
 local function new_sista(gh, state, label)
@@ -207,12 +218,11 @@ local function new_csta(gh, state, label)
 
    -- add invisible dummy node as transition endpoint at boundary of
    -- this composite state
-   -- tbdel 
-   -- local dnh = gv.node(ch, state._fqn .. "_dummy")
-   -- gv.setv(dnh, "shape", "point")
-   -- gv.setv(dnh, "fixedsize", "true")
-   -- gv.setv(dnh, "height", "0.000001")
-   -- gv.setv(dnh, "style", "invisible") -- bug in gv, doesn't work
+   local dnh = gv.node(ch, state._fqn .. "_dummy")
+   gv.setv(dnh, "shape", "point")
+   gv.setv(dnh, "fixedsize", "true")
+   gv.setv(dnh, "height", "0.000001")
+   gv.setv(dnh, "style", "invisible") -- bug in gv, doesn't work
 
 
    --if label then gv.setv(ch, "label", state._id .. "\n" .. label)
@@ -233,7 +243,7 @@ end
 -- src and target are only fully qualified strings!
 local function new_tr(gh, src, tgt, label)
 
-   param.dbg("creating transition from '" .. src .. "' to '" .. tgt .. "'")
+   param.dbg("creating transition from " .. src .. " -> " .. tgt)
 
    local sh, shtype = get_shandle(gh, src)
    local th, thtype = get_shandle(gh, tgt)
@@ -241,27 +251,26 @@ local function new_tr(gh, src, tgt, label)
    assert(sh)
    assert(th)
 
-   -- tbdel
    -- if src/tgt is a cluster then src/tgt is fqn_dummy
-   -- this should not be possible anymore!
-   -- if shtype == "subgraph" then 
-   --    -- realsh = gv.findnode(sh, src .. "_dummy")
-   assert(shtype ~= "subgraph")
+   if shtype == "subgraph" then
+      realsh = gv.findnode(sh, src .. "_dummy")
+   else realsh = sh end
+
+   -- assert(shtype ~= "subgraph")
    assert(thtype ~= "subgraph")
-   -- else realsh = sh end
 
    -- if thtype == "subgraph" then realth = gv.findnode(th, tgt .. "_dummy")
    -- else realth = th end
+   realth = th
 
-   local eh = gv.edge(sh, th)
+   local eh = gv.edge(realsh, realth)
    set_trprops(eh)
 
-   -- tbdel
    -- transition stops on composite state boundary
    -- we don't really want to hide the real connections
-   -- if shtype == "subgraph" then
-   --    gv.setv(eh, "ltail", "cluster_" .. src)
-   -- end
+   if shtype == "subgraph" then
+      gv.setv(eh, "ltail", "cluster_" .. src)
+   end
 
    -- if thtype == "subgraph" then
    --    gv.setv(eh, "lhead", "cluster_" .. tgt)
@@ -272,12 +281,12 @@ end
 
 
 local function proc_node(gh, node)
-   if node:type() == 'composite' then new_csta(gh, node)
-   elseif node:type() == 'parallel' then new_csta(gh, node, "(parallel node)")
-   elseif node:type() == 'simple' then new_sista(gh, node)
-   elseif node:type() == 'connector' then new_conn(gh, node)
+   if rtfsm.is_csta(node) then new_csta(gh, node)
+   elseif rtfsm.is_psta(node) then new_csta(gh, node, "(parallel node)")
+   elseif rtfsm.is_sista(node) then new_sista(gh, node)
+   elseif rtfsm.is_conn(node) then new_conn(gh, node)
    else
-      param.err("unknown node type: " .. node._fqn)
+      param.err("unknown node type: " .. node:type() .. ", name=" .. node._fqn)
    end
 end
 

@@ -130,7 +130,7 @@ local function fsm2gh(fsm)
 end
 
 
--- convert fsm to 
+-- convert fsm to
 function fsm2tree(fsm, format, outfile)
 
    if not fsm.__initalized then

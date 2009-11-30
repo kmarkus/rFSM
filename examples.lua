@@ -44,18 +44,18 @@ homing_cstate = psta:new {
    cs_home_ax1 = csta:new{
       home_axis1 = sista:new{ doo="homeAxis()" },
       trans:new{ src='initial', tgt='home_axis1' },
-      trans:new{ src='home_axis1', tgt='final', events='completed(home_axis1)' }
+      trans:new{ src='home_axis1', tgt='final', event='completed(home_axis1)' }
    },
    cs_home_ax2 = csta:new{
       home_axis2 = sista:new{ doo="homeAxis()" },
       trans:new{ src='initial', tgt='home_axis2' },
-      trans:new{ src='home_axis2', tgt='final', events='completed(home_axis2)' }
+      trans:new{ src='home_axis2', tgt='final', event='completed(home_axis2)' }
    },
    cs_home_ax3 = csta:new{
       home_axis3 = sista:new{ doo="homeAxis()" },
       trans:new{ src='initial', tgt='home_axis3' },
-      trans:new{ src='home_axis3', tgt='final', events='completed(home_axis3)' }
-   } 
+      trans:new{ src='home_axis3', tgt='final', event='completed(home_axis3)' }
+   }
 }
 
 -- root: composite state with additional constraints:
@@ -64,7 +64,7 @@ homing_cstate = psta:new {
 ex.on_off_homing = csta:new{
    entry=nil,
    exit=nil,
-   
+
    -- states
    off = sista:new{
       entry = function () print("off: entry") end,
@@ -80,8 +80,8 @@ ex.on_off_homing = csta:new{
 
    -- transitions
    trans:new{ src='initial', tgt='off' },
-   trans:new{ src='homing', tgt='final', event='e_complete' },
-   trans:new{ src='on', tgt='off', event='e_off' },
+   trans:new{ src='homing', tgt='off', event='e_complete(homing)' },
+   trans:new{ src='on', tgt='off', event='e_off' },g
    trans:new{ src='on', tgt='homing', event='e_home' },
    trans:new{ src='off', tgt='on', event='e_on' },
    trans:new{ src='off', tgt='homing', event='e_quit' }
@@ -93,10 +93,10 @@ ex.rtt_toplevel = csta:new{
    s_stopped = sista:new{ entry = 'print("entering s_stopped state")' },
 
    s_running = csta:new{
-      s_working = sista:new{ 
+      s_working = sista:new{
 	 entry = 'print("entering state s_working ")',
 	 doo = 'print("doo in state s_working")' },
-      s_obj_close = sista:new{ 
+      s_obj_close = sista:new{
 	 entry = 'print("entering s_obj_close state")',
 	 doo = 'print("processing in s_obj_close_state")' },
       trans:new{ src='initial', tgt='s_working' },
