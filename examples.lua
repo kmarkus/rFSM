@@ -61,7 +61,7 @@ homing_cstate = psta:new {
 -- root: composite state with additional constraints:
 -- required: 'initial' junction
 -- disallowed: -
-ex.on_off_homing = csta:new{
+ex.on_off_root = csta:new{
    entry=nil,
    exit=nil,
 
@@ -87,7 +87,7 @@ ex.on_off_homing = csta:new{
    trans:new{ src='off', tgt='homing', event='e_quit' }
 }
 
-ex.rtt_toplevel = csta:new{
+ex.rtt_root = csta:new{
    -- states
    s_init = sista:new{ entry = 'print("initalizing")', exit = 'print("exiting s_init state")' },
    s_stopped = sista:new{ entry = 'print("entering s_stopped state")' },
@@ -116,6 +116,12 @@ ex.rtt_toplevel = csta:new{
    trans:new{ src='s_stopped', tgt='final', event='e_quit' },
    trans:new{ src='s_init', tgt='s_running', event='e_start'},
 }
+
+-- -- create and invalid version of ex.on_off_root
+-- ex.on_off_root_iv = utils.deepcopy(ex.on_off_root)
+-- table.insert(ex.on_off_root_iv, trans:new{ src="homing.cs_home_ax1.home_axis1",
+-- 					   tgt="homing.cs_home_ax2.home_axis2",
+-- 					   event="e_invalid_tr" } )
 
 os.execute("rm -f *.png")
 
