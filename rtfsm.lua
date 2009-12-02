@@ -4,6 +4,10 @@
 
 require ('utils')
 
+-- tbdel for release!!
+require ('luarocks.loader')
+require('std')
+
 param = {}
 param.err = print
 param.warn = print
@@ -148,9 +152,10 @@ function is_fork(s)  return is_fsmobj(s) and s:type() == 'fork' end
 
 function is_sta(s)   return is_sista(s) or is_csta(s) or is_psta(s) end
 function is_cplx(s)  return is_csta(s) or is_psta(s) end
-function is_conn(s)  return is_junc(s) or is_fork(s) or is_join(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
+function is_conn(s)  return is_junc(s) or is_fork(s) or is_join(s) end
 function is_pconn(s) return is_fork(s) or is_join(s) end
+
 
 -- apply func to all fsm elements for which pred returns true
 function mapfsm(func, fsm, pred)
@@ -245,7 +250,7 @@ local function add_defconn(fsm)
       if not psta.initial then
 	 assert(fsm_merge(psta, 'initial', fork:new{}))
 	 param.info("INFO: created undeclared fork " .. psta._fqn .. ".initial")
-	 -- add transitions
+	 -- add transitions. tbd: add only those which do not exist yet!
 	 for k,v in pairs(psta) do
 	    if is_cplx(v) then
 	       psta[#psta+1] = trans:new{ src="initial", tgt=v._id }
@@ -257,7 +262,7 @@ local function add_defconn(fsm)
       if not psta.final then
 	 assert(fsm_merge(psta, 'final', join:new{}))
 	 param.info("INFO: created undeclared join " .. psta._fqn .. ".initial")
-	 -- add transitions
+	 -- add transitions. tbd: add only those which do not exist yet!
 	 for k,v in pairs(psta) do
 	    if is_cplx(v) then
 	       psta[#psta+1] = trans:new{ src=v._id, tgt='final' }
@@ -288,6 +293,14 @@ local function add_defconn(fsm)
    mapfsm(__add_trans_defconn, fsm, is_trans)
 end
 
+--------------------------------------------------------------------------------
+-- assign transitions to source node field ._otrs
+local function add_otrs(fsm)
+   mapfsm(function (tr, p)
+	     if tr.src._otrs == nil then tr.src._otrs={} end
+	     table.insert(tr.src._otrs, tr)
+	  end, fsm, is_trans)
+end
 
 --------------------------------------------------------------------------------
 -- resolve path function
@@ -537,7 +550,7 @@ function verify_early(fsm)
    end
 
    if fsm.initial == nil then
-      mes[#mes+1] = "ERROR: fsm " .. fsm.id .. "without initial junction"
+      mes[#mes+1] = "ERROR: fsm " .. fsm._id .. " without initial junction"
       res = false
    end
 
@@ -617,6 +630,8 @@ function init(fsm_templ, name)
    local ret, errs = verify_late(fsm)
    if not ret then param.err(table.concat(errs, '\n')) return false end
 
+   add_otrs(fsm)
+
    -- local event queue is empty
    fsm._evq = { 'e_init_fsm' }
 
@@ -652,12 +667,11 @@ end
 local function getallev(fsm)
    local extq = fsm.getevents()
    local res = fsm._intq
+   fsm._intq = {}
 
    for _,v in ipairs(extq) do
       table.insert(res, v)
    end
-
-   fsm._intq = {}
    return res
 end
 
@@ -693,7 +707,7 @@ end
 --------------------------------------------------------------------------------
 -- enter a state (and nothing else)
 local function enter_state(state)
-   if state.entry then state.entry(state) end
+   if state.entry then state.entry(state, 'entry') end
    state._mode = 'active'
    state._parent.act_child = state
    -- tbd: act_leaves, parallel states
@@ -724,6 +738,16 @@ local function getLCA(tr)
       lca = lca._parent
    end
    return lca
+end
+
+-- get parallel parent
+local function getPParent(fsm, node)
+   local walker = node.parent
+
+   while walker ~= fsm do
+      if is_psta(walker) then return walker end
+   end
+   return false
 end
 
 
@@ -785,7 +809,7 @@ local function is_enabled(tr, events)
       return false
    end
    -- guard condition?
-   if not tr.guard(tr, events) then return false
+   if tr.guard and not tr.guard(tr, events) then return false
    else return true end
 end
 
@@ -797,34 +821,82 @@ end
 --
 -- parallel: if we enter a parallel state then we must check the paths
 -- into all regions!
-local function find_enabled_node(node, events)
+local function find_enabled_node2(node, events)
    local function __check_path(tr)
       if not is_enabled(tr, events) then
+	 print("not enabled: ", tostring(tr))
 	 return nil
       end
 
       local newtab = utils.deepcopy(tab)
-      newtab[#tab+1] = tr
+      newtab[#newtab+1] = tr
 
       if tr.tgt.type == 'simple' then return newtab
       else return check_path(tr.tgt, events, newtab) end
    end
    local tab = {}
-   return map(__check_path, node.otrs)
+   return map(__check_path, node._otrs)
+end
+
+--------------------------------------------------------------------------------
+-- returns a path starting from node which is enabled by events
+-- tbd: describe exactly what a transition looks like
+function node_find_enabled(start, events)
+
+   -- check starts from a fork from fork
+   local function __fork_find_path(fork, events)
+      local cur = { node=fork, next={} }
+      local tail
+
+      for k,tr in pairs(fork._otrs) do
+	 if not is_enabled(tr, events) then
+	    return false
+	 end
+	 tail = node_find_enabled(tr.tgt, events)
+
+	 -- if *any* path fails we return false
+	 if not tail then return false
+	 else table.insert(cur.next, { trans=tr, next=tail }) end
+      end
+      return cur
+   end
+
+   local function __junc_find_path(junc, events)
+      local cur = { node=junc, next={} }
+      local tail
+
+      for k,tr in pairs(junc._otrs) do
+	 if is_enabled(tr, events) then
+	    tail = node_find_enabled(tr.tgt, events)
+	    if tail then table.insert(cur.next, {trans=tr, next=tail}) end
+	 end
+      end
+      if #cur.next == 0 then
+	 return false
+      end
+      return cur
+   end
+
+   assert(is_node(start), "node type expected")
+
+   -- dispatch
+   if is_junc(start) then return __junc_find_path(start, events)
+   elseif is_fork(start) then return __fork_find_path(start, events)
+   elseif is_sta(start) or is_join(start) then return { node=start, next=false } end
 end
 
 --------------------------------------------------------------------------------
 -- walk down the active tree and call find_path for all active states
 -- tbd: deal with orthogonal regions?
-local function find_enabled_fsm(fsm, events)
+local function fsm_find_enabled(fsm, events)
    local cur = fsm
-   local paths
+   local path
    while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
-      paths = find_enabled_node(cur, events)
-      if #paths > 0 then break end
+      path = node_find_enabled(cur, events)
+      if path then break end
       cur = cur.act_child
    end
-   return paths
+   return path
 end
 
 --------------------------------------------------------------------------------
@@ -837,7 +909,7 @@ local function transition(fsm, events)
       return paths[1]
    end
 
-   local paths = find_enabled_fsm(fsm, events)
+   local paths = fsm_find_enabled(fsm, events)
    if #paths == 0 then
       return false
    else
@@ -846,13 +918,19 @@ local function transition(fsm, events)
 end
 
 
+local function path2str(path)
+end
+
 --------------------------------------------------------------------------------
 -- enter fsm for the first time
 local function enter_fsm(fsm, events)
    fsm._mode = 'active'
-   local path = find_enabled_node(fsm, fsm.connectors['initial'], events)
+   local path = node_find_enabled(fsm.initial, events)
 
-   if #path == 0 then
+   -- not helpful: print("PATH: ", path, "ENDPATH")
+   print(path2str(path))
+
+   if path == false then
       fsm._mode = 'inactive'
       return false
    end
@@ -860,7 +938,6 @@ local function enter_fsm(fsm, events)
    exec_path(path)
    return true
 end
-
 
 
 --------------------------------------------------------------------------------
@@ -881,7 +958,10 @@ function step(fsm)
    -- it is impossible to exit it again, as there exist no transition
    -- targets outside of the FSM
    if fsm._mode ~= 'active' then
-      enter_fsm(fsm, events)
+      if not enter_fsm(fsm, events) then
+	 param.err("ERROR: failed to enter fsm root " .. fsm._id .. ", no valid path from root.initial")
+	 return false
+      end
       idling = false
    elseif #events > 0 then
       -- received events, attempt to transition
