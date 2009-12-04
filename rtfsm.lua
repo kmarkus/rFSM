@@ -638,13 +638,15 @@ function init(fsm_templ, name)
    fsm._act_leaves = {}
 
    -- local event queue is empty
-   fsm._evq = { 'e_init_fsm' }
+   fsm._intq = { 'e_init_fsm' }
 
    -- getevents user hook supplied?
    -- must return a table with events
    if not fsm.getevents then
       fsm.getevents = function () return {} end
    end
+
+   fsm.drop_events = function (events) if #events>0 then print("dropping: ", events) end end
 
    -- All OK!
    fsm._initalized = true
@@ -1040,7 +1042,6 @@ local function enter_fsm(fsm, events)
    return true
 end
 
-
 --------------------------------------------------------------------------------
 -- 0. any events? If not then run doo's of active states
 -- 1. find valid transitions
@@ -1082,6 +1083,8 @@ function step(fsm)
 	 return
       end
    end
+
+   if fsm.drop_events then fsm.drop_events(events) end
 
    -- tail call
    return step(fsm)

@@ -69,5 +69,5 @@ end
 fsm2uml.fsm2uml(simple, "png", "on_off-uml.png")
 fsm2uml.fsm2uml(junc_chain, "png", "junc_chain-uml.png")
 
--- rtfsm.step(simple)
+rtfsm.step(simple)
 rtfsm.step(junc_chain)
