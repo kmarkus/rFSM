@@ -156,6 +156,10 @@ function is_node(s)  return is_sta(s) or is_conn(s) end
 function is_conn(s)  return is_junc(s) or is_fork(s) or is_join(s) end
 function is_pconn(s) return is_fork(s) or is_join(s) end
 
+function fsmobj_tochar(obj)
+   if not is_fsmobj(obj) then return end
+   return string.upper(string.sub(obj:type(), 1, 1)) 
+end
 
 -- apply func to all fsm elements for which pred returns true
 function mapfsm(func, fsm, pred)
@@ -790,8 +794,40 @@ end
 --------------------------------------------------------------------------------
 -- execute a compound transition
 -- ct is a table of transitions
-local function exec_ctrans(fsm, ct)
-   utils.foreach(function (tr) exec_trans(fsm, tr) end, ct)
+local function exec_path(fsm, path)
+   utils.foreach(function (tr) exec_trans(fsm, tr) end, path)
+end
+
+
+
+--------------------------------------------------------------------------------
+-- pretty print path
+-- path = pnode.next[1]->pnode.next[1]->pnode
+--                        .next[1]->pnode.next[1] = true
+--                        .next[2]->pnode.next[1] = true
+-- pnode = { pnode=join/fork, next={seg1, seg2, ... }
+-- seg = { trans=transition, next=pnode }
+local function path2str(pnode, indc, indmul)
+   indmul = indmul or 2
+   indc = indc or ' '
+   local strtab = {}
+
+   local function __path2str(pnode, ind)
+      strtab[#strtab+1] = pnode.node._fqn
+      strtab[#strtab+1] = '[' .. fsmobj_tochar(pnode.node) .. ']'
+      if not pnode.nextl then strtab[#strtab+1] = "\n" return end
+
+      if is_fork(pnode.node) or #pnode.nextl > 1 then
+	 strtab[#strtab+1] = "\n"
+	 strtab[#strtab+1] = string.rep(indc, ind*indmul)
+      end
+
+      strtab[#strtab+1] = '->'
+      map(function (seg) __path2str(seg.next, ind+1) end, pnode.nextl)
+   end
+
+   __path2str(pnode, 0)
+   return table.concat(strtab)
 end
 
 --------------------------------------------------------------------------------
@@ -814,38 +850,13 @@ local function is_enabled(tr, events)
 end
 
 --------------------------------------------------------------------------------
--- return all enabled paths starting with 'node'
--- backtracks, exponential complexity
--- inefficient but practical: returns a table of valid paths.
--- this means copying the existing path every step
---
--- parallel: if we enter a parallel state then we must check the paths
--- into all regions!
-local function find_enabled_node2(node, events)
-   local function __check_path(tr)
-      if not is_enabled(tr, events) then
-	 print("not enabled: ", tostring(tr))
-	 return nil
-      end
-
-      local newtab = utils.deepcopy(tab)
-      newtab[#newtab+1] = tr
-
-      if tr.tgt.type == 'simple' then return newtab
-      else return check_path(tr.tgt, events, newtab) end
-   end
-   local tab = {}
-   return map(__check_path, node._otrs)
-end
-
---------------------------------------------------------------------------------
 -- returns a path starting from node which is enabled by events
 -- tbd: describe exactly what a transition looks like
 function node_find_enabled(start, events)
 
    -- check starts from a fork from fork
    local function __fork_find_path(fork, events)
-      local cur = { node=fork, next={} }
+      local cur = { node=fork, nextl={} }
       local tail
 
       for k,tr in pairs(fork._otrs) do
@@ -856,22 +867,22 @@ function node_find_enabled(start, events)
 
 	 -- if *any* path fails we return false
 	 if not tail then return false
-	 else table.insert(cur.next, { trans=tr, next=tail }) end
+	 else table.insert(cur.nextl, { trans=tr, next=tail }) end
       end
       return cur
    end
 
    local function __junc_find_path(junc, events)
-      local cur = { node=junc, next={} }
+      local cur = { node=junc, nextl={} }
       local tail
 
       for k,tr in pairs(junc._otrs) do
 	 if is_enabled(tr, events) then
 	    tail = node_find_enabled(tr.tgt, events)
-	    if tail then table.insert(cur.next, {trans=tr, next=tail}) end
+	    if tail then table.insert(cur.nextl, {trans=tr, next=tail}) end
 	 end
       end
-      if #cur.next == 0 then
+      if #cur.nextl == 0 then
 	 return false
       end
       return cur
@@ -882,7 +893,9 @@ function node_find_enabled(start, events)
    -- dispatch
    if is_junc(start) then return __junc_find_path(start, events)
    elseif is_fork(start) then return __fork_find_path(start, events)
-   elseif is_sta(start) or is_join(start) then return { node=start, next=false } end
+   elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
+   else param.err("ERROR: node_find_path invalid starting node"
+		  .. start._fqn .. ", type" .. start:type()) end
 end
 
 --------------------------------------------------------------------------------
@@ -917,17 +930,12 @@ local function transition(fsm, events)
    end
 end
 
-
-local function path2str(path)
-end
-
 --------------------------------------------------------------------------------
 -- enter fsm for the first time
 local function enter_fsm(fsm, events)
    fsm._mode = 'active'
    local path = node_find_enabled(fsm.initial, events)
 
-   -- not helpful: print("PATH: ", path, "ENDPATH")
    print(path2str(path))
 
    if path == false then
