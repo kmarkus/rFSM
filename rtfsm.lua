@@ -137,7 +137,7 @@ function is_fsmobj(s)
    if mt and  mt.__index then
       return true
    else
-      param.err("ERROR: no fsmobj: " .. utils.tab2str(s) .. " (interesting!)")
+      param.err("ERROR: no fsmobj: " .. table.foreach(s, print) .. " (interesting!)")
       return false
    end
 end
@@ -635,6 +635,7 @@ function init(fsm_templ, name)
    if not ret then param.err(table.concat(errs, '\n')) return false end
 
    add_otrs(fsm)
+   fsm._act_leaves = {}
 
    -- local event queue is empty
    fsm._evq = { 'e_init_fsm' }
@@ -679,26 +680,40 @@ local function getallev(fsm)
    return res
 end
 
+local function actleaf_add(fsm, lf)
+   param.dbg("act_leaves added: " .. lf._fqn)
+   table.insert(fsm._act_leaves, lf)
+end
+
+local function actleaf_rm(fsm, lf)
+   param.dbg("act_leaves removed: " .. lf._fqn)
+   for i,v in ipairs(fsm._act_leaves) do
+      if v == lf then
+	 table.remove(fsm._act_leaves, lf)
+      end
+   end
+end
 
 --------------------------------------------------------------------------------
 -- run one doo functions of an active state and place it at the end of
 -- the active queue
 -- returns true if there is at least one active doo, otherwise false
 --
--- huh, _actq only contains the next lower active psta, right?
 local function run_doos(fsm)
    local has_run = false
-   for i in 1,#fsm._actq do
+   for i = 1,#fsm._act_leaves do
 
       -- rotate
-      local state = table.remove(fsm._actq, 1)
-      table.insert(fsm._actq, state)
+      local state = table.remove(fsm._act_leaves, 1)
+      table.insert(fsm._act_leaves, state)
 
       if state.doo and not state.doo_co then
+	 param.dbg("created coroutine for " .. state._fqn .. " doo")
 	 state.doo_co = coroutine.create(state.doo)
       end
 
-      if coroutine.status == 'suspended' then
+      -- not dead yet, can be resumed
+      if coroutine.status(state.doo_co) == 'suspended' then
 	 coroutine.resume(state.doo_co)
 	 has_run = true
 	 break
@@ -710,35 +725,43 @@ end
 
 --------------------------------------------------------------------------------
 -- enter a state (and nothing else)
-local function enter_state(state)
-   if state.entry then state.entry(state, 'entry') end
+local function enter_state(fsm, state)
    state._mode = 'active'
-   state._parent.act_child = state
-   -- tbd: act_leaves, parallel states
+
+   if state.entry then state.entry(state, 'entry') end
+   state._parent._act_child = state
+
+   if is_sista(state) then actleaf_add(fsm, state) end
+
+   param.dbg("enter(".. state._fqn ..")")
 end
 
 --------------------------------------------------------------------------------
 -- exit a state (and nothing else)
-local function exit_state(state)
+local function exit_state(fsm, state)
    -- save this for possible history entry
-   if state.mode == 'active' then
+   if state._mode == 'active' then
       state._parent.last_active = state
    else
       state._parent.last_active = false
    end
    state.mode = 'inactive'
-   state._parent.act_child = false
+   state._parent._act_child = false
    if state.exit then state.exit(state) end
+
+   if is_sista(state) then actleaf_rm(fsm, state) end
+
+   param.dbg("exit(".. state._fqn ..")")
 end
 
 -- this function exploits the fact that the LCA is the first parent of
 -- tgt which is in state 'active'
 -- tbd: sure this works for parallel states?
 local function getLCA(tr)
-   local lca = trans.tgt._parent
+   local lca = tr.tgt._parent
 
    -- looks dangerous, but root should always be active:
-   while lca ~= 'active' do
+   while lca._mode ~= 'active' do
       lca = lca._parent
    end
    return lca
@@ -756,29 +779,51 @@ end
 
 
 --------------------------------------------------------------------------------
--- execute a simple transition
-local function exec_trans(fsm, tr)
-   -- paranoid check: sth would be very wrong if tgt is already active
+-- simple transition consists of three parts:
+--  1. exec up to LCA
+--  2. run effect
+--  3a. implicit entry of parents of tgt
+--  3b. explicit entry of tgt
+
+-- optional runtime checks
+local function exec_trans_check(fsm, tr)
+   local res = true
    if tr.tgt._mode ~= 'inactive' then
       param.err("ERROR: transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt._mode .. "'")
+      res = false
    end
+   return res
+end
 
-   local lca = getLCA(trans)
-   local state_walker = tr.src
+-- must deal with all possible src types
+local function exec_trans_exit(fsm, tr)
 
-   --  exit all states from src up to (but excluding) LCA
+   local lca = getLCA(tr)
+
+   -- tbd: if is_cplx: exit all active children of src
+
+   -- one exit tr.src if it is a state (and not a connector!)
+   if is_sta(tr.src) then exit_state(fsm, tr.src) end
+
+   --  exit all states from src.parent up to (but excluding) LCA
+   local state_walker = tr.src._parent
    while state_walker ~= lca do
-      exit_state(state)
+      exit_state(fsm, state_walker)
       state_walker = state_walker._parent
    end
+end
 
+local function exec_trans_effect(fsm, tr)
    -- run effect
-   tr.effect(fsm, tr)
+   tr.effect(tr)
+end
 
+local function exec_trans_enter(fsm, tr)
    -- implicit enter from (but excluding) LCA to trans.tgt
    -- tbd: create walker function: foreach_[up|down](start, end, function)
    local down_path = {}
-   local state_walker = trans.tgt
+   local state_walker = tr.tgt
+   local lca = getLCA(tr)
 
    while state_walker ~= lca do
       table.insert(down_path, state_walker)
@@ -787,17 +832,16 @@ local function exec_trans(fsm, tr)
 
    -- now enter down_path
    while #down_path > 0 do
-      state_enter(table.remove(down_path))
+      enter_state(fsm, table.remove(down_path))
    end
 end
 
---------------------------------------------------------------------------------
--- execute a compound transition
--- ct is a table of transitions
-local function exec_path(fsm, path)
-   utils.foreach(function (tr) exec_trans(fsm, tr) end, path)
+-- can't fail in any way
+local function exec_trans(fsm, tr)
+   exec_trans_exit(fsm, tr)
+   exec_trans_effect(fsm, tr)
+   exec_trans_enter(fsm, tr)
 end
-
 
 
 --------------------------------------------------------------------------------
@@ -807,9 +851,9 @@ end
 --                        .next[2]->pnode.next[1] = true
 -- pnode = { pnode=join/fork, next={seg1, seg2, ... }
 -- seg = { trans=transition, next=pnode }
-local function path2str(pnode, indc, indmul)
-   indmul = indmul or 2
+local function path2str(path, indc, indmul)
    indc = indc or ' '
+   indmul = indmul or 2
    local strtab = {}
 
    local function __path2str(pnode, ind)
@@ -826,8 +870,59 @@ local function path2str(pnode, indc, indmul)
       map(function (seg) __path2str(seg.next, ind+1) end, pnode.nextl)
    end
 
-   __path2str(pnode, 0)
+   __path2str(path, 0)
    return table.concat(strtab)
+end
+
+
+-- just take first
+local function conflict_resolve(fsm, pnode)
+   param.warn("conflicting transitions from src " .. pnode.nextl[1].trans.src._fqn .. " to")
+   utils.foreach(function (seg) param.warn("\t", seg.trans.tgt._fqn) end, pnode.nextl)
+   return pnode.nextl[1]
+end
+
+--------------------------------------------------------------------------------
+-- execute a path (compound transition) starting with pnode
+local function exec_path(fsm, path)
+   -- heads is list parallel pnodes
+   local function __exec_path(heads)
+      local next_heads = {}
+
+      -- execute outgoing transitions from path node and write next
+      -- pnode to next_heads
+      local function __exec_pnode_step(pn)
+	 -- param.dbg("exec_pnode ", pn.node._fqn)
+	 if is_sista(pn.node) then
+	    return -- we already entered it in the last step
+	 elseif is_junc(pn.node) then -- step a junction
+	    local seg
+	    if #pn.nextl > 1 then seg = conflict_resolve(fsm, pn)
+	    else seg = pn.nextl[1] end
+	    exec_trans(fsm, seg.trans)
+	    next_heads[#next_heads+1] = seg.next
+	 elseif is_fork(pn.node) then -- step a fork
+	    exec_trans_exit(fsm, pn.nextl[1].trans) -- exit src only once
+	    for _,seg in ipairs(pn.nextl) do
+	       exec_trans_effect(fsm, seg.trans)
+	       exec_trans_enter(fsm, seg.trans)
+	       next_heads[#next_heads+1] = seg.next
+	    end
+	 elseif is_join(pn.node) then
+	    param.err("tbd exec_pnode_step join")
+	 else
+	    param.err("invalid head pnode: " .. pn.node._fqn)
+	 end
+      end
+
+      -- execute trans. and create new next_heads table
+      map(__exec_pnode_step, heads)
+      if #next_heads == 0 then return
+      else return __exec_path(next_heads) end
+   end
+
+   print("executing path: " ..  path2str(path))
+   __exec_path{path}
 end
 
 --------------------------------------------------------------------------------
@@ -907,7 +1002,7 @@ local function fsm_find_enabled(fsm, events)
    while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
       path = node_find_enabled(cur, events)
       if path then break end
-      cur = cur.act_child
+      cur = cur._act_child
    end
    return path
 end
@@ -936,14 +1031,12 @@ local function enter_fsm(fsm, events)
    fsm._mode = 'active'
    local path = node_find_enabled(fsm.initial, events)
 
-   print(path2str(path))
-
    if path == false then
       fsm._mode = 'inactive'
       return false
    end
 
-   exec_path(path)
+   exec_path(fsm, path)
    return true
 end
 
@@ -1024,9 +1117,9 @@ function dbg.get_act_conf(fsm)
       end
 
       if is_psta(root) then
-	 res[root.id] = map(__walk_act_path, root.act_child)
+	 res[root.id] = map(__walk_act_path, root._act_child)
       elseif is_csta(root) then
-	 res[root.id] = __walk_act_path(root.act_child)
+	 res[root.id] = __walk_act_path(root._act_child)
       elseif is_sista(root) then
 	 return root._mode
       else
@@ -1042,7 +1135,7 @@ function dbg.get_act_conf(fsm)
 end
 
 function dbg.pp_act_conf(fsm)
-   utils.tab2str(dbg.get_act_conf(fsm))
+   print(dbg.get_act_conf(fsm))
 end
 
 function dbg.table_cmp(t1, t2)

@@ -11,8 +11,8 @@ require("utils")
 -- required: -
 -- optional: entry, exit, states, transitions
 -- disallowed: doo
-local function trace(node, action)
-   print(action ..": " .. node._fqn)
+local function trace(obj)
+   --
 end
 
 local function true_guard()
@@ -25,7 +25,14 @@ local function false_guard()
    return false
 end
 
-dummy_state = rtfsm.sista:new{ entry=trace, doo=trace, exit=trace }
+local function test_doo()
+   for i = 1,10 do
+      print("doo:", i)
+      coroutine.yield()
+   end
+end
+
+dummy_state = rtfsm.sista:new{ entry=trace, doo=test_doo, exit=trace }
 
 simple_templ = rtfsm.csta:new{
    on = utils.deepcopy(dummy_state),
@@ -48,9 +55,9 @@ junc_chain_templ = rtfsm.csta:new{
 
 simple = rtfsm.init(simple_templ, "on_off")
 
-print(simple.on._fqn)
-print(simple.off._fqn)
-print(simple.on == simple.off)
+-- print(simple.on._fqn)
+-- print(simple.off._fqn)
+-- print(simple.on == simple.off)
 
 junc_chain = rtfsm.init(junc_chain_templ, "junc_chain")
 
