@@ -11,8 +11,8 @@ require('std')
 param = {}
 param.err = print
 param.warn = print
-param.info = print
-param.dbg = print
+param.info = function () return end
+param.dbg = function () return end
 
 -- save references
 

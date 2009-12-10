@@ -44,6 +44,14 @@ local function set_ndprops(h)
    gv.setv(h, "fontsize", param.ndfontsize)
 end
 
+local function setup_color(state, nh)
+   gv.setv(nh, "style", "filled")
+   if state._mode == 'active' then 
+      gv.setv(nh, "fillcolor", "green")
+   elseif state._mode == 'done' then 
+      gv.setv(nh, "fillcolor", "firebrick")
+   else gv.setv(nh, "fillcolor", "dimgrey") end
+end
 
 -- return handle, type for state fqn
 local function get_shandle(gh, fqn)
@@ -61,13 +69,13 @@ local function get_shandle(gh, fqn)
 end
 
 -- create a new graph
-local function new_gra(name)
+local function new_gra(name, caption)
    local gh = gv.digraph(name)
    set_props(gh)
    gv.setv(gh, "compound", "true")
    gv.setv(gh, "fontsize", param.fontsize)
    gv.setv(gh, "labelloc", "t")
-   gv.setv(gh, "label", name)
+   gv.setv(gh, "label", name .. '\n' .. caption )
    gv.setv(gh, "remincross", "true")
    gv.setv(gh, "splines", "polyline")
    gv.setv(gh, "rankdir", param.rankdir or "TD")
@@ -134,6 +142,8 @@ local function new_sista(gh, state, label)
    gv.setv(nh, "style", "rounded")
    gv.setv(nh, "shape", "box")
 
+   setup_color(state, nh)
+
    if param.show_fqn then __label = state._fqn
    else __label=state._id end
 
@@ -163,11 +173,7 @@ local function new_csta(gh, state, label)
    set_ndprops(ch)
    gv.setv(ch, "color", param.cs_border_color)
    gv.setv(ch, "style", "bold")
-
-   if param.cs_fillcolor then
-      gv.setv(ch, "style", "filled")
-      gv.setv(ch, "fillcolor", param.cs_fillcolor)
-   end
+   setup_color(state, ch)
 
    -- add invisible dummy node as transition endpoint at boundary of
    -- this composite state
@@ -254,22 +260,22 @@ end
 --
 -- convert given fsm to a populated graphviz object
 --
-local function fsm2gh(root)
-   gh = new_gra(root._id)
+local function fsm2gh(root, caption)
+   gh = new_gra(root._id, caption)
 
    rtfsm.mapfsm(function (s) proc_node(gh, s) end, root, rtfsm.is_node)
    rtfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rtfsm.is_trans)
    return gh
 end
 
-function fsm2uml(root, format, outfile)
+function fsm2uml(root, format, outfile, caption)
 
    if not root._initalized then
       param.err("fsm2uml ERROR: fsm " .. root._id .. " uninitialized")
       return false
    end
 
-   local gh = fsm2gh(root)
+   local gh = fsm2gh(root, caption)
    gv.layout(gh, param.layout)
    param.dbg("fsm2uml: running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
