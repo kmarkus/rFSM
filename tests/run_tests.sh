@@ -1,6 +1,6 @@
 
-# TEST=`echo test_*`
-TEST="test_simple.lua"
+TEST=`echo test_*`
+#TEST="test_simple.lua"
 
 rm -f *.png
 

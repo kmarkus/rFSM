@@ -853,7 +853,7 @@ local function exec_trans_exit(fsm, tr)
       exit_state(fsm, state_walker)
       state_walker = state_walker._parent
    end
-   param.dbg("TRANS ENTERED", tr.src._fqn)
+   param.dbg("TRANS EXITED", tr.src._fqn)
 end
 
 local function exec_trans_effect(fsm, tr)
@@ -1002,6 +1002,9 @@ end
 -- __find functions and including the __node function inside
 function node_find_enabled(start, events)
 
+   -- forward declarations
+   local __find_conj_path, __find_disj_path
+
    -- internal dispatcher
    local function __node_find_enabled(start, events)
 
@@ -1016,7 +1019,7 @@ function node_find_enabled(start, events)
 
    -- find conjunct path (src is fork), only valid of _all_ outgoing
    -- transitions return valid paths
-   local function __find_conj_path(fork, events)
+   function __find_conj_path(fork, events)
       local cur = { node=fork, nextl={} }
       local tail
 
@@ -1041,7 +1044,7 @@ function node_find_enabled(start, events)
    end
 
    -- find disjunct path, returns at least one valid path
-   local function __find_disj_path(nde, events)
+   function __find_disj_path(nde, events)
       local cur = { node=nde, nextl={} }
       local tail
 

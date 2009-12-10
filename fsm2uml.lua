@@ -71,11 +71,12 @@ end
 -- create a new graph
 local function new_gra(name, caption)
    local gh = gv.digraph(name)
+   caption = caption or ""
    set_props(gh)
    gv.setv(gh, "compound", "true")
    gv.setv(gh, "fontsize", param.fontsize)
    gv.setv(gh, "labelloc", "t")
-   gv.setv(gh, "label", name .. '\n' .. caption )
+   gv.setv(gh, "label", name .. '\n' .. caption)
    gv.setv(gh, "remincross", "true")
    gv.setv(gh, "splines", "polyline")
    gv.setv(gh, "rankdir", param.rankdir or "TD")
@@ -262,7 +263,6 @@ end
 --
 local function fsm2gh(root, caption)
    gh = new_gra(root._id, caption)
-
    rtfsm.mapfsm(function (s) proc_node(gh, s) end, root, rtfsm.is_node)
    rtfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rtfsm.is_trans)
    return gh
