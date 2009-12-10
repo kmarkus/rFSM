@@ -161,6 +161,13 @@ function fsmobj_tochar(obj)
    return string.upper(string.sub(obj:type(), 1, 1)) 
 end
 
+local function set_sta_mode(s, m)
+   -- tbdel
+   assert(is_sta(s), "can't set_mode on non state type")
+   assert(m=='active' or m=='inactive' or m=='done')
+   s._mode = m
+end
+
 -- apply func to all fsm elements for which pred returns true
 function mapfsm(func, fsm, pred)
    local res = {}
@@ -664,10 +671,35 @@ end
 --------------------------------------------------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
-   for _,v in ipairs(args) do
+   for _,v in pairs(arg) do
       table.insert(fsm._intq, v)
    end
 end
+
+
+-- this function exploits the fact that the LCA is the first parent of
+-- tgt which is in state 'active'
+-- tbd: sure this works for parallel states?
+local function getLCA(tr)
+   local lca = tr.tgt._parent
+
+   -- looks dangerous, but root should always be active:
+   while lca._mode ~= 'active' do
+      lca = lca._parent
+   end
+   return lca
+end
+
+-- get parallel parent
+local function getPParent(fsm, node)
+   local walker = node.parent
+
+   while walker ~= fsm do
+      if is_psta(walker) then return walker end
+   end
+   return false
+end
+
 
 --------------------------------------------------------------------------------
 -- merge all external and internal events into list
@@ -683,15 +715,15 @@ local function getallev(fsm)
 end
 
 local function actleaf_add(fsm, lf)
-   param.dbg("act_leaves added: " .. lf._fqn)
    table.insert(fsm._act_leaves, lf)
+   param.dbg("act_leaves added: " .. lf._fqn)
 end
 
 local function actleaf_rm(fsm, lf)
-   param.dbg("act_leaves removed: " .. lf._fqn)
-   for i,v in ipairs(fsm._act_leaves) do
-      if v == lf then
-	 table.remove(fsm._act_leaves, lf)
+   for i=1,#fsm._act_leaves do
+      if fsm._act_leaves[i] == lf then
+	 table.remove(fsm._act_leaves, i)
+	 param.dbg("act_leaves removed: " .. lf._fqn)
       end
    end
 end
@@ -699,8 +731,9 @@ end
 --------------------------------------------------------------------------------
 -- run one doo functions of an active state and place it at the end of
 -- the active queue
+-- active_leaf states might not have a doo function, so check
 -- returns true if there is at least one active doo, otherwise false
---
+-- tbd: where 'done' state set?
 local function run_doos(fsm)
    local has_run = false
    for i = 1,#fsm._act_leaves do
@@ -715,9 +748,13 @@ local function run_doos(fsm)
       end
 
       -- not dead yet, can be resumed
-      if coroutine.status(state.doo_co) == 'suspended' then
+      if state.doo_co and  coroutine.status(state.doo_co) == 'suspended' then
 	 coroutine.resume(state.doo_co)
 	 has_run = true
+	 if coroutine.status(state.doo_co) == 'dead' then
+	    set_sta_mode(state, 'done')
+	    -- tbd: generate completion event
+	 end
 	 break
       end
    end
@@ -754,29 +791,6 @@ local function exit_state(fsm, state)
    if is_sista(state) then actleaf_rm(fsm, state) end
 
    param.dbg("exit(".. state._fqn ..")")
-end
-
--- this function exploits the fact that the LCA is the first parent of
--- tgt which is in state 'active'
--- tbd: sure this works for parallel states?
-local function getLCA(tr)
-   local lca = tr.tgt._parent
-
-   -- looks dangerous, but root should always be active:
-   while lca._mode ~= 'active' do
-      lca = lca._parent
-   end
-   return lca
-end
-
--- get parallel parent
-local function getPParent(fsm, node)
-   local walker = node.parent
-
-   while walker ~= fsm do
-      if is_psta(walker) then return walker end
-   end
-   return false
 end
 
 
@@ -817,7 +831,9 @@ end
 
 local function exec_trans_effect(fsm, tr)
    -- run effect
-   tr.effect(tr)
+   if tr.effect then
+      tr.effect(tr)
+   end
 end
 
 local function exec_trans_enter(fsm, tr)
@@ -1118,7 +1134,7 @@ end
 
 function dbg.activate_leaf(fsm, leaf)
    map_from_to(fsm, function (fsm, s)
-		       set_mode(s, 'active')
+		       set_sta_mode(s, 'active')
 		    end, lead, fsm)
 end
 
@@ -1127,21 +1143,21 @@ end
 --
 function dbg.get_act_conf(fsm)
 
-   local function __walk_act_path(root)
+   local function __walk_act_path(s)
       local res = {}
       -- 'done' or 'inactive' are always the end of the active conf
-      if root._mode ~= 'active' then
-	 return root._mode
+      if s._mode ~= 'active' then
+	 return { [s._fqn]=s._mode }
       end
 
-      if is_psta(root) then
-	 res[root.id] = map(__walk_act_path, root._act_child)
-      elseif is_csta(root) then
-	 res[root.id] = __walk_act_path(root._act_child)
-      elseif is_sista(root) then
-	 return root._mode
+      if is_psta(s) then
+	 res[s._id] = map(__walk_act_path, s._act_child)
+      elseif is_csta(s) then
+	 res[s._id] = __walk_act_path(s._act_child)
+      elseif is_sista(s) then
+	 return { [s._fqn]=s._mode }
       else
-	 local mes="ERROR: active non state type found, fqn=" .. root.fqn .. ", type=" .. root:type()
+	 local mes="ERROR: active non state type found, fqn=" .. s.fqn .. ", type=" .. s:type()
 	 param.err(mes)
 	 return mes
       end

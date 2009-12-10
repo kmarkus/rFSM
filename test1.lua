@@ -32,11 +32,17 @@ local function test_doo()
    end
 end
 
+local function idle()
+   print("idle loop")
+   os.execute("sleep 3")
+end
+
 dummy_state = rtfsm.sista:new{ entry=trace, doo=test_doo, exit=trace }
 
 simple_templ = rtfsm.csta:new{
    on = utils.deepcopy(dummy_state),
    off = utils.deepcopy(dummy_state),
+   -- _idle = idle,
 
    rtfsm.trans:new{ src='off', tgt='on', event='e_on', effect=trace },
    rtfsm.trans:new{ src='on', tgt='off', event='e_off', effect=trace },
