@@ -607,6 +607,16 @@ function verify_late(fsm)
    return res, mes
 end
 
+function check_no_otrs(fsm)
+   local function __check_no_otrs(s, p)
+      if s._otrs == nil then
+	 param.warn("WARNING: no outgoing transitions from node '" .. s._fqn .. "'")
+	 return false
+      else return true end
+   end
+   return utils.andt(mapfsm(__check_no_otrs, fsm, is_node))
+end
+
 --------------------------------------------------------------------------------
 -- create a state -> outgoing transition lookup cache
 -- move to otrs field in state
@@ -651,6 +661,7 @@ function init(fsm_templ, name)
    if not ret then param.err(table.concat(errs, '\n')) return false end
 
    add_otrs(fsm)
+   check_no_otrs(fsm)
    fsm._act_leaves = {}
 
    -- local event queue is empty
@@ -785,7 +796,7 @@ local function enter_state(fsm, state)
 
    if is_sista(state) then actleaf_add(fsm, state) end
 
-   param.dbg("enter(".. state._fqn ..")")
+   param.dbg("ENTERED", state._fqn)
 end
 
 --------------------------------------------------------------------------------
@@ -797,13 +808,15 @@ local function exit_state(fsm, state)
    else
       state._parent.last_active = false
    end
-   state.mode = 'inactive'
+
+   sta_mode(state, 'inactive')
+
    state._parent._act_child = false
    if state.exit then state.exit(state) end
 
    if is_sista(state) then actleaf_rm(fsm, state) end
 
-   param.dbg("exit(".. state._fqn ..")")
+   param.dbg("EXIT", state._fqn)
 end
 
 
@@ -840,6 +853,7 @@ local function exec_trans_exit(fsm, tr)
       exit_state(fsm, state_walker)
       state_walker = state_walker._parent
    end
+   param.dbg("TRANS ENTERED", tr.src._fqn)
 end
 
 local function exec_trans_effect(fsm, tr)
@@ -865,6 +879,7 @@ local function exec_trans_enter(fsm, tr)
    while #down_path > 0 do
       enter_state(fsm, table.remove(down_path))
    end
+   param.dbg("TRANS ENTERED", tr.tgt._fqn)
 end
 
 -- can't fail in any way
@@ -924,8 +939,12 @@ local function exec_path(fsm, path)
       -- pnode to next_heads
       local function __exec_pnode_step(pn)
 	 -- param.dbg("exec_pnode ", pn.node._fqn)
-	 if is_sista(pn.node) then
-	    return -- we already entered it in the last step
+	 if pn.nextl == false then
+	    return
+	 elseif is_sista(pn.node) then
+	    local seg = pn.nextl[1]
+	    exec_trans(fsm, seg.trans)
+	    next_heads[#next_heads+1] = seg.next
 	 elseif is_junc(pn.node) then -- step a junction
 	    local seg
 	    if #pn.nextl > 1 then seg = conflict_resolve(fsm, pn)
@@ -978,19 +997,42 @@ end
 --------------------------------------------------------------------------------
 -- returns a path starting from node which is enabled by events
 -- tbd: describe exactly what a transition looks like
+--
+-- tbd: this function can be simplified a lot by merging the two
+-- __find functions and including the __node function inside
 function node_find_enabled(start, events)
 
-   -- check starts from a fork from fork
-   local function __fork_find_path(fork, events)
+   -- internal dispatcher
+   local function __node_find_enabled(start, events)
+
+      assert(is_node(start), "node type expected")
+
+      if is_junc(start) then return __find_disj_path(start, events)
+      elseif is_fork(start) then return __find_conj_path(start, events)
+      elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
+      else param.err("ERROR: node_find_path invalid starting node"
+		     .. start._fqn .. ", type" .. start:type()) end
+   end
+
+   -- find conjunct path (src is fork), only valid of _all_ outgoing
+   -- transitions return valid paths
+   local function __find_conj_path(fork, events)
       local cur = { node=fork, nextl={} }
       local tail
+
+      assert(nil, "needs review")
+
+      -- tbd: consider: how bad is this? Does is mean deadlock?
+      if fork._otrs == nil then
+	 param.warn("no outgoing transitions from " .. fork._fqn)
+	 return false 
+      end
 
       for k,tr in pairs(fork._otrs) do
 	 if not is_enabled(tr, events) then
 	    return false
 	 end
-	 tail = node_find_enabled(tr.tgt, events)
-
+	 tail = __node_find_enabled(tr.tgt, events)
 	 -- if *any* path fails we return false
 	 if not tail then return false
 	 else table.insert(cur.nextl, { trans=tr, next=tail }) end
@@ -998,16 +1040,24 @@ function node_find_enabled(start, events)
       return cur
    end
 
-   local function __junc_find_path(junc, events)
-      local cur = { node=junc, nextl={} }
+   -- find disjunct path, returns at least one valid path
+   local function __find_disj_path(nde, events)
+      local cur = { node=nde, nextl={} }
       local tail
 
-      for k,tr in pairs(junc._otrs) do
+      -- tbd: consider: how bad is this? Does is mean deadlock?
+      if nde._otrs == nil then
+	 param.warn("no outgoing transitions from " .. nde._fqn)
+	 return false 
+      end
+
+      for k,tr in pairs(nde._otrs) do
 	 if is_enabled(tr, events) then
-	    tail = node_find_enabled(tr.tgt, events)
+	    tail = __node_find_enabled(tr.tgt, events)
 	    if tail then table.insert(cur.nextl, {trans=tr, next=tail}) end
 	 end
       end
+
       if #cur.nextl == 0 then
 	 return false
       end
@@ -1016,12 +1066,14 @@ function node_find_enabled(start, events)
 
    assert(is_node(start), "node type expected")
 
-   -- dispatch
-   if is_junc(start) then return __junc_find_path(start, events)
-   elseif is_fork(start) then return __fork_find_path(start, events)
-   elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
-   else param.err("ERROR: node_find_path invalid starting node"
-		  .. start._fqn .. ", type" .. start:type()) end
+   if is_fork(start) then return __find_conj_path(start, events)
+   else return __find_disj_path(start, events) end
+
+   -- if is_junc(start) then return __find_disj_path(start, events)
+   -- elseif is_fork(start) then return __find_conj_path(start, events)
+   -- elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
+   -- else param.err("ERROR: node_find_path invalid starting node"
+   -- 		  .. start._fqn .. ", type" .. start:type()) end
 end
 
 --------------------------------------------------------------------------------
