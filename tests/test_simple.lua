@@ -33,16 +33,16 @@ end
 
 title="prestart"
 fsm2uml.fsm2uml(simple, "png", id .. '-' .. title .. ".png", title)
-print("act_conf prestart:", rtfsm.dbg.get_act_conf(simple))
+print("ACT_CONF:", "prestart:", rtfsm.dbg.get_act_conf(simple))
 
 title="after-first-step"
 rtfsm.step(simple)
 fsm2uml.fsm2uml(simple, "png", id .. '-' .. title  .. ".png", title)
-print("act_conf after first step:", rtfsm.dbg.get_act_conf(simple))
+print("ACT_CONF:", "after first step:", rtfsm.dbg.get_act_conf(simple))
 
 title="after-second-step"
 rtfsm.send_events(simple, 'e_on')
 rtfsm.step(simple)
 fsm2uml.fsm2uml(simple, "png", id .. '-' .. title .. ".png", title)
-print("act_conf after second step:", rtfsm.dbg.get_act_conf(simple))
+print("ACT_CONF:", "after second step:", rtfsm.dbg.get_act_conf(simple))
 

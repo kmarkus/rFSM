@@ -11,8 +11,8 @@ require('std')
 param = {}
 param.err = print
 param.warn = print
-param.info = function () return end
-param.dbg = function () return end
+param.info = print --function () return end
+param.dbg = print --function () return end
 
 -- save references
 
@@ -78,14 +78,18 @@ trans = {}
 function trans:type() return 'transition' end
 
 function trans:__tostring()
-   local src, tgt, event
+   local src, tgt, event = "none", "none", "none"
 
-   if type(self.src) == 'string' then src = self.src
-   else src = self.src._fqn end
+   if self.src then
+      if type(self.src) == 'string' then
+	 src = self.src
+      else src = self.src._fqn end
+   end
 
-   if type(self.tgt) == 'string' then tgt = self.tgt
-   else tgt = self.tgt._fqn end
-
+   if self.tgt then
+      if type(self.tgt) == 'string' then tgt = self.tgt
+      else tgt = self.tgt._fqn end
+   end
    return "T={ src='" .. src .. "', tgt='" .. tgt .. "', event='" .. tostring(self.event) .. "' }"
 end
 
@@ -161,11 +165,15 @@ function fsmobj_tochar(obj)
    return string.upper(string.sub(obj:type(), 1, 1)) 
 end
 
-local function set_sta_mode(s, m)
-   -- tbdel
+
+-- set or get state mode
+local function sta_mode(s, m)
    assert(is_sta(s), "can't set_mode on non state type")
-   assert(m=='active' or m=='inactive' or m=='done')
-   s._mode = m
+   if m then
+      assert(m=='active' or m=='inactive' or m=='done')
+      s._mode = m
+   end
+   return s._mode
 end
 
 -- apply func to all fsm elements for which pred returns true
@@ -534,11 +542,11 @@ function verify_early(fsm)
    end
 
    -- validate parallel connectors fork and join
-   local function check_pconn(s, p)
+   local function check_pconn(fj, p)
       local ret = true
       -- parent of fork/join must be a psta!
       if not is_psta(p) then
-	 mes[#mes+1] = "ERROR: " .. p._fqn .. " is not a parallel state"
+	 mes[#mes+1] = "ERROR: parent " .. p._fqn .. " of fork/join" .. fj._fqn .. " is not a parallel state"
 	 ret = false
       end
       return ret
@@ -548,7 +556,7 @@ function verify_early(fsm)
       -- parent of junction must be a csta!
       local ret = true
       if not is_csta(p) then
-	 mes[#mes+1] = "ERROR: " .. p._fqn .. " is not a composite state"
+	 mes[#mes+1] = "ERROR: parent " .. p._fqn .. " of junction " .. j._fqn .. "is not a composite state"
 	 ret = false
       end
       return ret
@@ -621,7 +629,8 @@ function init(fsm_templ, name)
 
    local fsm = utils.deepcopy(fsm_templ)
 
-   fsm._id = name or 'root'
+   -- fsm._id = name or 'root'
+   fsm._id = 'root'
 
    add_parent_links(fsm)
    add_ids(fsm)
@@ -653,7 +662,11 @@ function init(fsm_templ, name)
       fsm.getevents = function () return {} end
    end
 
-   fsm.drop_events = function (events) if #events>0 then print("dropping: ", events) end end
+   if not fsm.drop_events then
+      fsm.drop_events = 
+	 function (events) 
+	    if #events>0 then print("DROPPING: ", events) end end
+   end
 
    -- All OK!
    fsm._initalized = true
@@ -716,14 +729,14 @@ end
 
 local function actleaf_add(fsm, lf)
    table.insert(fsm._act_leaves, lf)
-   param.dbg("act_leaves added: " .. lf._fqn)
+   param.dbg("ACT_LEAVES", " added: " .. lf._fqn)
 end
 
 local function actleaf_rm(fsm, lf)
    for i=1,#fsm._act_leaves do
       if fsm._act_leaves[i] == lf then
 	 table.remove(fsm._act_leaves, i)
-	 param.dbg("act_leaves removed: " .. lf._fqn)
+	 param.dbg("ACT_LEAVES", " removed: " .. lf._fqn)
       end
    end
 end
@@ -752,7 +765,7 @@ local function run_doos(fsm)
 	 coroutine.resume(state.doo_co)
 	 has_run = true
 	 if coroutine.status(state.doo_co) == 'dead' then
-	    set_sta_mode(state, 'done')
+	    sta_mode(state, 'done')
 	    -- tbd: generate completion event
 	 end
 	 break
@@ -929,7 +942,7 @@ local function exec_path(fsm, path)
 	 elseif is_join(pn.node) then
 	    param.err("tbd exec_pnode_step join")
 	 else
-	    param.err("invalid head pnode: " .. pn.node._fqn)
+	    param.err("ERR (exec_path)", "invalid type of head pnode: " .. pn.node._fqn)
 	 end
       end
 
@@ -939,7 +952,7 @@ local function exec_path(fsm, path)
       else return __exec_path(next_heads) end
    end
 
-   print("executing path: " ..  path2str(path))
+   print("EXEC_PATH:", path2str(path))
    __exec_path{path}
 end
 
@@ -1018,6 +1031,7 @@ local function fsm_find_enabled(fsm, events)
    local cur = fsm
    local path
    while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
+      param.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'")
       path = node_find_enabled(cur, events)
       if path then break end
       cur = cur._act_child
@@ -1028,19 +1042,17 @@ end
 --------------------------------------------------------------------------------
 -- attempt to transition the fsm
 local function transition(fsm, events)
-
    -- conflict resolution could be more sophisticated
-   local function select_path(paths)
-      param.warn("WARNING: conflicting paths found")
-      return paths[1]
-   end
+   -- local function select_path(paths)
+   --    param.warn("WARNING: conflicting paths found")
+   --    return paths[1]
+   -- end
 
-   local paths = fsm_find_enabled(fsm, events)
-   if #paths == 0 then
+   local path = fsm_find_enabled(fsm, events)
+   if not path then
+      param.dbg("TRANSITION:", "no enabled paths found")
       return false
-   else
-      return exec_ctrans(select_path(paths))
-   end
+   else return exec_path(fsm, path) end
 end
 
 --------------------------------------------------------------------------------
@@ -1095,7 +1107,7 @@ function step(fsm)
    if idling then
       if fsm._idle then fsm._idle(fsm)
       else
-	 param.dbg("DEBUG: no doos, no events, no idle func, halting engines")
+	 param.dbg("HIBERNATING:\t no doos, no events, no idle func, halting engines")
 	 return
       end
    end
@@ -1134,7 +1146,7 @@ end
 
 function dbg.activate_leaf(fsm, leaf)
    map_from_to(fsm, function (fsm, s)
-		       set_sta_mode(s, 'active')
+		       sta_mode(s, 'active')
 		    end, lead, fsm)
 end
 
