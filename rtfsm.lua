@@ -1104,7 +1104,22 @@ end
 --
 dbg = {}
 
+-- execute func on all states between from and to
+-- from must be a child of to (for now)
+function map_from_to(fsm, func, from, to)
+   local walker = from
+   local res = {}
+   while from ~= to do
+      res[#res+1] = func(fsm, walker)
+      walker = walker._parent
+   end
+   return res
+end
+
 function dbg.activate_leaf(fsm, leaf)
+   map_from_to(fsm, function (fsm, s)
+		       set_mode(s, 'active')
+		    end, lead, fsm)
 end
 
 --
@@ -1142,5 +1157,21 @@ function dbg.pp_act_conf(fsm)
 end
 
 function dbg.table_cmp(t1, t2)
-   return false
+   -- t1 _and_ t2 are not tables
+   if not (type(t1) == 'table' and type(t2) == 'table') then
+      if t1 == t2 then return true
+      else return false end
+   elseif type(t1) == 'table' and type(t2) == 'table' then
+      if #t1 ~= #t2 then return false 
+      else
+	 for i=1,#t1 do
+	    if not table_cmp(t1[i], t2[i]) then
+	       return false
+	    end
+	 end
+	 return true
+      end
+   else -- t1 and t2 are not of the same type
+      return false
+   end
 end
