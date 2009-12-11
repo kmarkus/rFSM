@@ -11,8 +11,8 @@ require('std')
 param = {}
 param.err = print
 param.warn = print
-param.info = print --function () return end
-param.dbg = print --function () return end
+param.info = function () return end --print --function () return end
+param.dbg = function () return end --function () return end
 
 -- save references
 
@@ -197,6 +197,17 @@ function mapfsm(func, fsm, pred)
    return res
 end
 
+-- execute func on all states between from and to
+-- from must be a child of to (for now)
+function map_from_to(fsm, func, from, to)
+   local walker = from
+   local res = {}
+   while from ~= to do
+      res[#res+1] = func(fsm, walker)
+      walker = walker._parent
+   end
+   return res
+end
 
 --------------------------------------------------------------------------------
 -- helper function for dynamically modifying fsm
@@ -1171,90 +1182,4 @@ function step(fsm)
 
    -- tail call
    return step(fsm)
-end
-
-
---
--- testing/debugging
---
-
--- define sets of input events and expected trajectory and test
--- against actually executed trajectory
---
-
---
--- activate all states including leaf but without running any programs
---
-dbg = {}
-
--- execute func on all states between from and to
--- from must be a child of to (for now)
-function map_from_to(fsm, func, from, to)
-   local walker = from
-   local res = {}
-   while from ~= to do
-      res[#res+1] = func(fsm, walker)
-      walker = walker._parent
-   end
-   return res
-end
-
-function dbg.activate_leaf(fsm, leaf)
-   map_from_to(fsm, function (fsm, s)
-		       sta_mode(s, 'active')
-		    end, lead, fsm)
-end
-
---
--- return a table describing the active configuration
---
-function dbg.get_act_conf(fsm)
-
-   local function __walk_act_path(s)
-      local res = {}
-      -- 'done' or 'inactive' are always the end of the active conf
-      if s._mode ~= 'active' then
-	 return { [s._fqn]=s._mode }
-      end
-
-      if is_psta(s) then
-	 res[s._id] = map(__walk_act_path, s._act_child)
-      elseif is_csta(s) then
-	 res[s._id] = __walk_act_path(s._act_child)
-      elseif is_sista(s) then
-	 return { [s._fqn]=s._mode }
-      else
-	 local mes="ERROR: active non state type found, fqn=" .. s.fqn .. ", type=" .. s:type()
-	 param.err(mes)
-	 return mes
-      end
-
-      return res
-   end
-
-   return __walk_act_path(fsm)
-end
-
-function dbg.pp_act_conf(fsm)
-   print(dbg.get_act_conf(fsm))
-end
-
-function dbg.table_cmp(t1, t2)
-   -- t1 _and_ t2 are not tables
-   if not (type(t1) == 'table' and type(t2) == 'table') then
-      if t1 == t2 then return true
-      else return false end
-   elseif type(t1) == 'table' and type(t2) == 'table' then
-      if #t1 ~= #t2 then return false 
-      else
-	 for i=1,#t1 do
-	    if not table_cmp(t1[i], t2[i]) then
-	       return false
-	    end
-	 end
-	 return true
-      end
-   else -- t1 and t2 are not of the same type
-      return false
-   end
 end

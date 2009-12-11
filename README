@@ -1,0 +1,49 @@
+
+OVERVIEW
+=========
+
+
+EXAMPLE
+========
+
+API
+====
+
+rtfsm.sista:new{}
+rtfsm.csta:new{}
+rtfsm.psta:new{}
+rtfsm.junc:new{}
+rtfsm.join:new{}
+rtfsm.fork:new{}
+rtfsm.trans:new{}
+
+
+PARAMETERS
+===========
+
+toplevel
+---------
+
+Optional:
+
+'get_events()'
+	function which returns a table of events
+
+'drop_events(table)'
+	function which is called with a table of events which will be
+	dropped
+
+
+'err'
+'warn'
+'info'
+
+	print(...) like functions which take a variable amount of
+	string parameters. default will be printing to stderr(err,
+	warn) and stdout (info).
+
+
+INTERNALS
+==========
+
+

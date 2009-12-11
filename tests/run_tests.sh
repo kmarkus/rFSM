@@ -1,5 +1,5 @@
 
-TEST=`echo test_*`
+TEST=`echo fsmtest_*`
 #TEST="test_simple.lua"
 
 rm -f *.png
