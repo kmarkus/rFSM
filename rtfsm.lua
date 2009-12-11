@@ -8,14 +8,7 @@ require ('utils')
 require ('luarocks.loader')
 require('std')
 
-param = {}
-param.err = print
-param.warn = print
-param.info = function () return end --print --function () return end
-param.dbg = function () return end --function () return end
-
 -- save references
-
 local param, pairs, ipairs, print, tostring, table, string, type,
 loadstring, assert, coroutine, setmetatable, getmetatable, utils =
 param, pairs, ipairs, print, tostring, table, string, type,
@@ -141,7 +134,7 @@ function is_fsmobj(s)
    if mt and  mt.__index then
       return true
    else
-      param.err("ERROR: no fsmobj: " .. table.foreach(s, print) .. " (interesting!)")
+      fsm.err("ERROR: no fsmobj: " .. table.foreach(s, print) .. " (interesting!)")
       return false
    end
 end
@@ -162,7 +155,7 @@ function is_pconn(s) return is_fork(s) or is_join(s) end
 
 function fsmobj_tochar(obj)
    if not is_fsmobj(obj) then return end
-   return string.upper(string.sub(obj:type(), 1, 1)) 
+   return string.upper(string.sub(obj:type(), 1, 1))
 end
 
 
@@ -222,7 +215,7 @@ function fsm_merge(parent, id, obj)
    end
 
    if mes then
-      param.err("ERROR: merge failed: ", mes)
+      fsm.err("ERROR: merge failed: ", mes)
       return false
    end
 
@@ -233,7 +226,7 @@ function fsm_merge(parent, id, obj)
       obj._id = id
       obj._fqn = parent._fqn ..'.' .. id
    else
-      param.err("ERROR: merging of " .. obj:type() .. " objects not implemented (" .. id .. ")")
+      fsm.err("ERROR: merging of " .. obj:type() .. " objects not implemented (" .. id .. ")")
    end
    return true
 end
@@ -260,7 +253,7 @@ end
 local function add_fqns(fsm)
    function __add_fqn(s, p)
       if not s._id then
-	 param.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p._fqn)
+	 fsm.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p._fqn)
       end
       s._fqn = p._fqn .. "." .. s._id
    end
@@ -279,24 +272,24 @@ local function add_defconn(fsm)
    local function __add_psta_defconn(psta, parent, id)
       if not psta.initial then
 	 assert(fsm_merge(psta, 'initial', fork:new{}))
-	 param.info("INFO: created undeclared fork " .. psta._fqn .. ".initial")
+	 fsm.info("INFO: created undeclared fork " .. psta._fqn .. ".initial")
 	 -- add transitions. tbd: add only those which do not exist yet!
 	 for k,v in pairs(psta) do
 	    if is_cplx(v) then
 	       psta[#psta+1] = trans:new{ src="initial", tgt=v._id }
-	       param.info("\t added transition initial->" .. v._id )
+	       fsm.info("\t added transition initial->" .. v._id )
 	    end
 
 	 end
       end
       if not psta.final then
 	 assert(fsm_merge(psta, 'final', join:new{}))
-	 param.info("INFO: created undeclared join " .. psta._fqn .. ".initial")
+	 fsm.info("INFO: created undeclared join " .. psta._fqn .. ".initial")
 	 -- add transitions. tbd: add only those which do not exist yet!
 	 for k,v in pairs(psta) do
 	    if is_cplx(v) then
 	       psta[#psta+1] = trans:new{ src=v._id, tgt='final' }
-	       param.info("\t added transition " .. v._id ..  "->final" )
+	       fsm.info("\t added transition " .. v._id ..  "->final" )
 	    end
 	 end
       end
@@ -308,11 +301,11 @@ local function add_defconn(fsm)
       if is_csta(p) then
 	 if tr.src == 'initial' and p.initial == nil then
 	    fsm_merge(p, 'initial', junc:new{})
-	    param.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
+	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
 	 end
 	 if tr.tgt == 'final' and p.final == nil then
 	    fsm_merge(p, 'final', junc:new{})
-	    param.info("INFO: created undeclared connector " .. p._fqn .. ".final")
+	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".final")
 	 end
       elseif is_psta(p) then
 	 -- tbd: create fork and join
@@ -359,7 +352,7 @@ local function __resolve_path(fsm, state_str, parent)
       end
    elseif string.sub(state_str, 1, 1) == '.' then
       -- leading dot, relative target
-      param.err("ERROR: invalid relative transition (leading dot): " .. state_str)
+      fsm.err("ERROR: invalid relative transition (leading dot): " .. state_str)
    else
       -- absolute target, this is a fqn!
       state = index_tree(fsm, utils.split(state_str, "[\\.]"), mes)
@@ -381,7 +374,7 @@ local function resolve_trans(fsm)
    local function __resolve_src(tr, parent)
       local src, mes = __resolve_path(fsm, tr.src, parent)
       if not src then
-	 param.err("ERROR: resolving src failed " .. tostring(tr) .. ": " .. mes)
+	 fsm.err("ERROR: resolving src failed " .. tostring(tr) .. ": " .. mes)
 	 return false
       else
 	 tr.src = src
@@ -393,20 +386,20 @@ local function resolve_trans(fsm)
    local function __resolve_tgt(tr, parent)
       -- resolve target
       if tr.tgt == 'internal' then
-	 param.warn("WARNING: internal events not supported (yet)")
+	 fsm.warn("WARNING: internal events not supported (yet)")
 	 return true
       end
 
       local tgt, mes = __resolve_path(fsm, tr.tgt, parent)
 
       if not tgt then
-	 param.err("ERROR: resolving tgt failed " .. tostring(tr) .. ": " .. mes )
+	 fsm.err("ERROR: resolving tgt failed " .. tostring(tr) .. ": " .. mes )
 	 return false
       else
 	 -- complex state, connect to 'initial'
 	 if is_cplx(tgt) then
 	    if tgt.initial == nil then
-	       param.err("ERROR: transition " .. tostring(tr) ..
+	       fsm.err("ERROR: transition " .. tostring(tr) ..
 		      " ends on cstate without initial connector")
 	       return false
 	    else
@@ -483,12 +476,12 @@ function verify_early(fsm)
       local ret = true
       -- all nodes have a parent which is a node
       if not p then
-	 param.err("ERROR: parent of " .. s.fqn .. " is nil")
+	 fsm.err("ERROR: parent of " .. s.fqn .. " is nil")
 	 ret = false
       end
 
       if not is_node(p) then
-	 param.err("ERROR: parent of " .. s.fqn .. " is not a node but of type " .. p:type())
+	 fsm.err("ERROR: parent of " .. s.fqn .. " is not a node but of type " .. p:type())
 	 ret = false
       end
 
@@ -498,11 +491,11 @@ function verify_early(fsm)
    local function check_csta(s, p)
       local ret = true
       if s.initial and not is_junc(s.initial) then
-	 param.err("ERROR: in composite " .. s.initial._fqn .. " is not of type junction but " .. s.initial:type())
+	 fsm.err("ERROR: in composite " .. s.initial._fqn .. " is not of type junction but " .. s.initial:type())
 	 ret = false
       end
       if s.final and not is_junc(s.final) then
-	 param.err("ERROR: in composite " .. s.final._fqn .. " is not of type junction but " .. s.initial:type())
+	 fsm.err("ERROR: in composite " .. s.final._fqn .. " is not of type junction but " .. s.initial:type())
 	 ret = false
       end
       return ret
@@ -621,11 +614,27 @@ end
 function check_no_otrs(fsm)
    local function __check_no_otrs(s, p)
       if s._otrs == nil then
-	 param.warn("WARNING: no outgoing transitions from node '" .. s._fqn .. "'")
+	 fsm.warn("WARNING: no outgoing transitions from node '" .. s._fqn .. "'")
 	 return false
       else return true end
    end
    return utils.andt(mapfsm(__check_no_otrs, fsm, is_node))
+end
+
+--------------------------------------------------------------------------------
+-- set log/printing functions to reasonable defaults
+local function setup_printers(fsm)
+   local function setup_printer(p)
+      local function __null_func() return end
+      if fsm[p] == nil or fsm[p] == false then
+	 fsm[p] = __null_func
+      elseif fsm[p] == true then fsm[p] = print
+      elseif type(fsm[p]) ~= 'function' then
+	 print("unknown printer: " .. tostring(p))
+	 fsm[p] = print
+      end
+   end
+   utils.foreach(setup_printer, { "err", "warn", "info", "dbg" } )
 end
 
 --------------------------------------------------------------------------------
@@ -641,7 +650,6 @@ end
 
 --    return function(srcfqn) return cache[srcfqn] end
 -- end
-
 --------------------------------------------------------------------------------
 -- initialize fsm
 -- create parent links
@@ -653,6 +661,8 @@ function init(fsm_templ, name)
    -- fsm._id = name or 'root'
    fsm._id = 'root'
 
+   setup_printers(fsm)
+
    add_parent_links(fsm)
    add_ids(fsm)
    add_fqns(fsm)
@@ -660,20 +670,21 @@ function init(fsm_templ, name)
 
    -- verify (early)
    local ret, errs = verify_early(fsm)
-   if not ret then param.err(table.concat(errs, '\n')) return false end
+   if not ret then fsm.err(table.concat(errs, '\n')) return false end
 
    if not resolve_trans(fsm) then
-      param.err("ERROR: failed to resolve transitions of fsm " .. fsm._id)
+      fsm.err("ERROR: failed to resolve transitions of fsm " .. fsm._id)
       return false
    end
 
    -- verify (late)
    local ret, errs = verify_late(fsm)
-   if not ret then param.err(table.concat(errs, '\n')) return false end
+   if not ret then fsm.err(table.concat(errs, '\n')) return false end
 
    add_otrs(fsm)
    check_no_otrs(fsm)
    fsm._act_leaves = {}
+
 
    -- local event queue is empty
    fsm._intq = { 'e_init_fsm' }
@@ -685,8 +696,8 @@ function init(fsm_templ, name)
    end
 
    if not fsm.drop_events then
-      fsm.drop_events = 
-	 function (events) 
+      fsm.drop_events =
+	 function (events)
 	    if #events>0 then print("DROPPING: ", events) end end
    end
 
@@ -751,14 +762,14 @@ end
 
 local function actleaf_add(fsm, lf)
    table.insert(fsm._act_leaves, lf)
-   param.dbg("ACT_LEAVES", " added: " .. lf._fqn)
+   fsm.dbg("ACT_LEAVES", " added: " .. lf._fqn)
 end
 
 local function actleaf_rm(fsm, lf)
    for i=1,#fsm._act_leaves do
       if fsm._act_leaves[i] == lf then
 	 table.remove(fsm._act_leaves, i)
-	 param.dbg("ACT_LEAVES", " removed: " .. lf._fqn)
+	 fsm.dbg("ACT_LEAVES", " removed: " .. lf._fqn)
       end
    end
 end
@@ -778,7 +789,7 @@ local function run_doos(fsm)
       table.insert(fsm._act_leaves, state)
 
       if state.doo and not state.doo_co then
-	 param.dbg("created coroutine for " .. state._fqn .. " doo")
+	 fsm.dbg("created coroutine for " .. state._fqn .. " doo")
 	 state.doo_co = coroutine.create(state.doo)
       end
 
@@ -807,7 +818,7 @@ local function enter_state(fsm, state)
 
    if is_sista(state) then actleaf_add(fsm, state) end
 
-   param.dbg("ENTERED", state._fqn)
+   fsm.dbg("ENTERED", state._fqn)
 end
 
 --------------------------------------------------------------------------------
@@ -827,7 +838,7 @@ local function exit_state(fsm, state)
 
    if is_sista(state) then actleaf_rm(fsm, state) end
 
-   param.dbg("EXIT", state._fqn)
+   fsm.dbg("EXIT", state._fqn)
 end
 
 
@@ -842,7 +853,7 @@ end
 local function exec_trans_check(fsm, tr)
    local res = true
    if tr.tgt._mode ~= 'inactive' then
-      param.err("ERROR: transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt._mode .. "'")
+      fsm.err("ERROR: transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt._mode .. "'")
       res = false
    end
    return res
@@ -864,7 +875,7 @@ local function exec_trans_exit(fsm, tr)
       exit_state(fsm, state_walker)
       state_walker = state_walker._parent
    end
-   param.dbg("TRANS EXITED", tr.src._fqn)
+   fsm.dbg("TRANS EXITED", tr.src._fqn)
 end
 
 local function exec_trans_effect(fsm, tr)
@@ -890,7 +901,7 @@ local function exec_trans_enter(fsm, tr)
    while #down_path > 0 do
       enter_state(fsm, table.remove(down_path))
    end
-   param.dbg("TRANS ENTERED", tr.tgt._fqn)
+   fsm.dbg("TRANS ENTERED", tr.tgt._fqn)
 end
 
 -- can't fail in any way
@@ -934,8 +945,8 @@ end
 
 -- just take first
 local function conflict_resolve(fsm, pnode)
-   param.warn("conflicting transitions from src " .. pnode.nextl[1].trans.src._fqn .. " to")
-   utils.foreach(function (seg) param.warn("\t", seg.trans.tgt._fqn) end, pnode.nextl)
+   fsm.warn("conflicting transitions from src " .. pnode.nextl[1].trans.src._fqn .. " to")
+   utils.foreach(function (seg) fsm.warn("\t", seg.trans.tgt._fqn) end, pnode.nextl)
    return pnode.nextl[1]
 end
 
@@ -949,7 +960,7 @@ local function exec_path(fsm, path)
       -- execute outgoing transitions from path node and write next
       -- pnode to next_heads
       local function __exec_pnode_step(pn)
-	 -- param.dbg("exec_pnode ", pn.node._fqn)
+	 -- fsm.dbg("exec_pnode ", pn.node._fqn)
 	 if pn.nextl == false then
 	    return
 	 elseif is_sista(pn.node) then
@@ -970,9 +981,9 @@ local function exec_path(fsm, path)
 	       next_heads[#next_heads+1] = seg.next
 	    end
 	 elseif is_join(pn.node) then
-	    param.err("tbd exec_pnode_step join")
+	    fsm.err("tbd exec_pnode_step join")
 	 else
-	    param.err("ERR (exec_path)", "invalid type of head pnode: " .. pn.node._fqn)
+	    fsm.err("ERR (exec_path)", "invalid type of head pnode: " .. pn.node._fqn)
 	 end
       end
 
@@ -1011,7 +1022,7 @@ end
 --
 -- tbd: this function can be simplified a lot by merging the two
 -- __find functions and including the __node function inside
-function node_find_enabled(start, events)
+function node_find_enabled(fsm, start, events)
 
    -- forward declarations
    local __find_conj_path, __find_disj_path
@@ -1024,7 +1035,7 @@ function node_find_enabled(start, events)
       if is_junc(start) then return __find_disj_path(start, events)
       elseif is_fork(start) then return __find_conj_path(start, events)
       elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
-      else param.err("ERROR: node_find_path invalid starting node"
+      else fsm.err("ERROR: node_find_path invalid starting node"
 		     .. start._fqn .. ", type" .. start:type()) end
    end
 
@@ -1038,8 +1049,8 @@ function node_find_enabled(start, events)
 
       -- tbd: consider: how bad is this? Does is mean deadlock?
       if fork._otrs == nil then
-	 param.warn("no outgoing transitions from " .. fork._fqn)
-	 return false 
+	 fsm.warn("no outgoing transitions from " .. fork._fqn)
+	 return false
       end
 
       for k,tr in pairs(fork._otrs) do
@@ -1061,8 +1072,8 @@ function node_find_enabled(start, events)
 
       -- tbd: consider: how bad is this? Does is mean deadlock?
       if nde._otrs == nil then
-	 param.warn("no outgoing transitions from " .. nde._fqn)
-	 return false 
+	 fsm.warn("no outgoing transitions from " .. nde._fqn)
+	 return false
       end
 
       for k,tr in pairs(nde._otrs) do
@@ -1086,7 +1097,7 @@ function node_find_enabled(start, events)
    -- if is_junc(start) then return __find_disj_path(start, events)
    -- elseif is_fork(start) then return __find_conj_path(start, events)
    -- elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
-   -- else param.err("ERROR: node_find_path invalid starting node"
+   -- else fsm.err("ERROR: node_find_path invalid starting node"
    -- 		  .. start._fqn .. ", type" .. start:type()) end
 end
 
@@ -1097,8 +1108,8 @@ local function fsm_find_enabled(fsm, events)
    local cur = fsm
    local path
    while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
-      param.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'")
-      path = node_find_enabled(cur, events)
+      fsm.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'")
+      path = node_find_enabled(fsm, cur, events)
       if path then break end
       cur = cur._act_child
    end
@@ -1110,13 +1121,13 @@ end
 local function transition(fsm, events)
    -- conflict resolution could be more sophisticated
    -- local function select_path(paths)
-   --    param.warn("WARNING: conflicting paths found")
+   --    fsm.warn("WARNING: conflicting paths found")
    --    return paths[1]
    -- end
 
    local path = fsm_find_enabled(fsm, events)
    if not path then
-      param.dbg("TRANSITION:", "no enabled paths found")
+      fsm.dbg("TRANSITION:", "no enabled paths found")
       return false
    else return exec_path(fsm, path) end
 end
@@ -1125,7 +1136,7 @@ end
 -- enter fsm for the first time
 local function enter_fsm(fsm, events)
    fsm._mode = 'active'
-   local path = node_find_enabled(fsm.initial, events)
+   local path = node_find_enabled(fsm, fsm.initial, events)
 
    if path == false then
       fsm._mode = 'inactive'
@@ -1155,7 +1166,7 @@ function step(fsm)
    -- targets outside of the FSM
    if fsm._mode ~= 'active' then
       if not enter_fsm(fsm, events) then
-	 param.err("ERROR: failed to enter fsm root " .. fsm._id .. ", no valid path from root.initial")
+	 fsm.err("ERROR: failed to enter fsm root " .. fsm._id .. ", no valid path from root.initial")
 	 return false
       end
       idling = false
@@ -1173,7 +1184,7 @@ function step(fsm)
    if idling then
       if fsm._idle then fsm._idle(fsm)
       else
-	 param.dbg("HIBERNATING:\t no doos, no events, no idle func, halting engines")
+	 fsm.dbg("HIBERNATING:\t no doos, no events, no idle func, halting engines")
 	 return
       end
    end

@@ -10,8 +10,16 @@ require("fsm2tree")
 require("fsmdbg")
 require("utils")
 
+local function printer_gen(s)
+   return function (...) print(s, unpack(arg)) end
+end
 
 simple_templ = rtfsm.csta:new{
+   err = printer_gen("ERR:"),
+   warn = printer_gen("WARN:"),
+   info = printer_gen("INFO:"),
+   dbg = printer_gen("DBG:"),
+
    on = rtfsm.sista:new{},
    off = rtfsm.sista:new{},
 
