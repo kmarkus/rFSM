@@ -29,24 +29,31 @@ simple_templ = rtfsm.csta:new{
 }
 
 
-local simple_tests = {
-   {
-      descr='testing fsm entry',
-      preact = nil,
-      events = nil,
-      expect = { root={ ['root.off']='active' } }
-   }, {
-      descr='testing transition to on',
-      events = { 'e_on' },
-      expect = { root={ ['root.on']='active'} }
-   }, {
-      descr='testing transition back to off',
-      events = { 'e_off' },
-      expect = { root={ ['root.off']='active'} }
-   }, {
-      descr='doing nothing',
-      expect = { root={ ['root.off']='done'} }
+local test = {
+   id = 'simple_tests',
+   pics = true,
+   tests = {
+      {
+	 id='testing_fsm_entry',
+	 preact = nil,
+	 events = nil,
+	 expect = { root={ ['root.off']='active' } }
+      }, {
+	 id='testing_transition_to_on',
+	 events = { 'e_on' },
+	 expect = { root={ ['root.on']='active'} }
+      }, {
+	 id='testing_transition_back_to_off',
+	 events = { 'e_off' },
+	 expect = { root={ ['root.off']='active'} }
+      }, {
+	 id='doing_nothing',
+	 expect = { root={ ['root.off']='done'} }
+      }
    }
 }
 
-fsmdbg.test_fsm(simple_templ, "simple_tests", simple_tests)
+fsm = rtfsm.init(simple_templ, "simple_test")
+
+if fsmdbg.test_fsm(fsm, test) then os.exit(0)
+else os.exit(1) end

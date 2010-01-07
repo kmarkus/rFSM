@@ -19,8 +19,8 @@ require("rtfsm")
 require("fsm2uml")
 require("utils")
 
-local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string
-   = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string
+local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml
+   = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml
 
 module("fsmdbg")
 
@@ -103,9 +103,10 @@ end
 --   3. running step(fsm)
 --   4. asserting that the new active configuration is as exected and printing 
 -- Options
---  - generate snapshot images for each step 'snapshot'=true
+--  id = 'test_id', no whitespace, will be used as name for pics
+--  pics = true|false, generate fsm2uml snapshots for each step.
 
-function test_fsm(_fsm, id, tests)
+function test_fsm(fsm, test)
    local function cmp_ac(act, exp)
       if not table_cmp(act, exp) then
 	 print("FAILED: Active configurations differ!")
@@ -117,17 +118,21 @@ function test_fsm(_fsm, id, tests)
 	 return true
       end
    end
-   print("TESTING", id)
-   local fsm = rtfsm.init(_fsm, id)
 
-   if not fsm then print("\tinit of " .. id .. " FAILED")  end
+   local retval = true
+   assert(fsm._initalized, "tests_fsm requires an initialized fsm!")
+   print("TESTING:", test.id)
    
-   for i,t in ipairs(tests) do
-      print("RUNNING test: " .. t.descr)
+   fsm2uml.fsm2uml(fsm, "png", test.id .. "-0-initial-state.png")
+
+   for i,t in ipairs(test.tests) do
+      print("RUNNING test: " .. t.id)
       utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
       utils.foreach(function (e) rtfsm.send_events(fsm, e) end, t.events)
       rtfsm.step(fsm)
-      cmp_ac(get_act_conf(fsm), t.expect)
+      retval = retval and cmp_ac(get_act_conf(fsm), t.expect)
       print(string.rep("-", 10))
+      fsm2uml.fsm2uml(fsm, "png", test.id .. "-" .. i .. "-after-" .. t.id .. ".png")
    end
+   return retval
 end
