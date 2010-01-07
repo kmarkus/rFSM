@@ -1,4 +1,3 @@
-
 --
 -- testing/debugging
 --
@@ -26,7 +25,7 @@ module("fsmdbg")
 
 --
 -- activate a node and all parent
--- 
+--
 function activate_node(fsm, node)
    assert(is_sta(node), "can only set states types active!")
    map_from_to(fsm, function (fsm, s)
@@ -77,7 +76,7 @@ function table_cmp(t1, t2)
 	 if t1 == t2 then return true
 	 else return false end
       elseif type(t1) == 'table' and type(t2) == 'table' then
-	 if #t1 ~= #t2 then return false 
+	 if #t1 ~= #t2 then return false
 	 else
 	    -- iterate over all keys and compare against k's keys
 	    for k,v in pairs(t1) do
@@ -101,7 +100,7 @@ end
 --   1. setting an active configuration (optional): give table of lowest active nodes in 'preac'
 --   2. raising events: 'events' = {...}
 --   3. running step(fsm)
---   4. asserting that the new active configuration is as exected and printing 
+--   4. asserting that the new active configuration is as exected and printing
 -- Options
 --  id = 'test_id', no whitespace, will be used as name for pics
 --  pics = true|false, generate fsm2uml snapshots for each step.
@@ -122,18 +121,27 @@ function test_fsm(fsm, test)
    local retval = true
    assert(fsm._initalized, "tests_fsm requires an initialized fsm!")
    print("TESTING:", test.id)
-   
+
    fsm2uml.fsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")
 
    for i,t in ipairs(test.tests) do
-      print("RUNNING test: " .. t.descr)
+      local ret
+      local boiler = "test: " .. t.descr .. '\n' ..
+	 "   preact:      " .. tostring(t.preact) .. '\n' ..
+	 "   sent events: " .. tostring(t.events) .. '\n' ..
+	 "   pre ievq:    " .. tostring(fsm._intq) .. '\n'
+
+      print(boiler)
+
       utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
       utils.foreach(function (e) rtfsm.send_events(fsm, e) end, t.events)
+
       rtfsm.step(fsm)
-      retval = retval and cmp_ac(get_act_conf(fsm), t.expect)
-      print(string.rep("-", 10))
-      fsm2uml.fsm2uml(fsm, "png", test.id .. "-" .. i .. ".png", 
-		      "after: " .. t.descr .. "\nin-events: " .. tostring(t.events))
+
+      ret = cmp_ac(get_act_conf(fsm), t.expect)
+      print(string.rep("-", 80))
+      fsm2uml.fsm2uml(fsm, "png", test.id .. "-" .. i .. ".png", boiler)
+      retval = retval and ret
    end
    return retval
 end

@@ -686,7 +686,7 @@ function init(fsm_templ, name)
    fsm._act_leaves = {}
 
 
-   -- local event queue is empty
+   -- internal event queue is empty
    fsm._intq = { 'e_init_fsm' }
 
    -- getevents user hook supplied?
@@ -788,22 +788,26 @@ local function run_doos(fsm)
       local state = table.remove(fsm._act_leaves, 1)
       table.insert(fsm._act_leaves, state)
 
+      -- create new coroutine
       if state.doo and not state.doo_co then
 	 fsm.dbg("created coroutine for " .. state._fqn .. " doo")
-	 state.doo_co = coroutine.create(state.doo)
+	 state._doo_co = coroutine.create(state.doo)
       end
 
-      -- not dead yet, can be resumed
-      if state.doo_co and  coroutine.status(state.doo_co) == 'suspended' then
-	 coroutine.resume(state.doo_co)
+      -- corountine still active, can be resumed
+      if state._doo_co and  coroutine.status(state._doo_co) == 'suspended' then
+	 coroutine.resume(state._doo_co)
 	 has_run = true
-	 if coroutine.status(state.doo_co) == 'dead' then
+	 if coroutine.status(state._doo_co) == 'dead' then
+	    state._doo_co = nil
 	    sta_mode(state, 'done')
 	    -- tbd: generate completion event
 	 end
 	 break
       end
+
    end
+
    return has_run
 end
 
@@ -816,7 +820,10 @@ local function enter_state(fsm, state)
    if state.entry then state.entry(state, 'entry') end
    state._parent._act_child = state
 
-   if is_sista(state) then actleaf_add(fsm, state) end
+   if is_sista(state) then
+      if state.doo then actleaf_add(fsm, state)
+      else sta_mode(state, "done") end
+   end
 
    fsm.dbg("ENTERED\t", state._fqn)
 end
@@ -825,7 +832,7 @@ end
 -- exit a state (and nothing else)
 local function exit_state(fsm, state)
    -- save this for possible history entry
-   if state._mode == 'active' then
+   if sta_mode(state) == 'active' then
       state._parent.last_active = state
    else
       state._parent.last_active = false
@@ -1047,7 +1054,9 @@ function node_find_enabled(fsm, start, events)
 
       assert(nil, "needs review")
 
-      -- tbd: consider: how bad is this? Does is mean deadlock?
+      -- tbd: consider: how bad is this? Does is mean deadlock? This
+      -- is checked earlier and is not necessary here any
+      -- more. Remove. Also it complains warn that root has #_otrs=0.
       if fork._otrs == nil then
 	 fsm.warn("no outgoing transitions from " .. fork._fqn)
 	 return false

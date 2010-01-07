@@ -46,10 +46,10 @@ end
 
 local function setup_color(state, nh)
    gv.setv(nh, "style", "filled")
-   if state._mode == 'active' then 
+   if state._mode == 'active' then
       gv.setv(nh, "fillcolor", "green")
-   elseif state._mode == 'done' then 
-      gv.setv(nh, "fillcolor", "firebrick")
+   elseif state._mode == 'done' then
+      gv.setv(nh, "fillcolor", "chocolate")
    else gv.setv(nh, "fillcolor", "dimgrey") end
 end
 

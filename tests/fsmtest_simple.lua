@@ -18,7 +18,7 @@ simple_templ = rtfsm.csta:new{
    err = printer_gen("ERR:"),
    warn = printer_gen("WARN:"),
    info = printer_gen("INFO:"),
-   -- dbg = printer_gen("DBG:"),
+   dbg = printer_gen("DBG:"),
 
    on = rtfsm.sista:new{},
    off = rtfsm.sista:new{},
@@ -37,15 +37,15 @@ local test = {
 	 descr='testing entry',
 	 preact = nil,
 	 events = nil,
-	 expect = { root={ ['root.off']='active' } }
+	 expect = { root={ ['root.off']='done' } }
       }, {
 	 descr='testing transition to on',
 	 events = { 'e_on' },
-	 expect = { root={ ['root.on']='active'} }
+	 expect = { root={ ['root.on']='done'} }
       }, {
 	 descr='testing transition back to off',
 	 events = { 'e_off' },
-	 expect = { root={ ['root.off']='active'} }
+	 expect = { root={ ['root.off']='done'} }
       }, {
 	 descr='doing nothing',
 	 expect = { root={ ['root.off']='done'} }
