@@ -698,7 +698,7 @@ function init(fsm_templ, name)
    if not fsm.drop_events then
       fsm.drop_events =
 	 function (events)
-	    if #events>0 then print("DROPPING: ", events) end end
+	    if #events>0 then fsm.dbg("DROPPING: ", events) end end
    end
 
    -- All OK!
@@ -818,7 +818,7 @@ local function enter_state(fsm, state)
 
    if is_sista(state) then actleaf_add(fsm, state) end
 
-   fsm.dbg("ENTERED", state._fqn)
+   fsm.dbg("ENTERED\t", state._fqn)
 end
 
 --------------------------------------------------------------------------------
@@ -838,7 +838,7 @@ local function exit_state(fsm, state)
 
    if is_sista(state) then actleaf_rm(fsm, state) end
 
-   fsm.dbg("EXIT", state._fqn)
+   fsm.dbg("EXIT\t", state._fqn)
 end
 
 
@@ -993,7 +993,7 @@ local function exec_path(fsm, path)
       else return __exec_path(next_heads) end
    end
 
-   print("EXEC_PATH:", path2str(path))
+   fsm.dbg("EXEC_PATH:", path2str(path))
    __exec_path{path}
 end
 

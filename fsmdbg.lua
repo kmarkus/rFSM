@@ -16,10 +16,11 @@ require ('luarocks.loader')
 require('std')
 
 require("rtfsm")
+require("fsm2uml")
 require("utils")
 
-local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring
-   = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring
+local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string
+   = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string
 
 module("fsmdbg")
 
@@ -101,29 +102,32 @@ end
 --   2. raising events: 'events' = {...}
 --   3. running step(fsm)
 --   4. asserting that the new active configuration is as exected and printing 
+-- Options
+--  - generate snapshot images for each step 'snapshot'=true
 
 function test_fsm(_fsm, id, tests)
    local function cmp_ac(act, exp)
       if not table_cmp(act, exp) then
-	 print("\t FAILED: Active configurations differ!")
-	 print("\t actual:   " .. tostring(act))
-	 print("\t expected: " .. tostring(exp))
+	 print("FAILED: Active configurations differ!")
+	 print("    actual:   " .. tostring(act))
+	 print("    expected: " .. tostring(exp))
 	 return false
       else
-	 print("\t OK!!!")
+	 print("OK.")
 	 return true
       end
    end
-   print("Testing", id)
+   print("TESTING", id)
    local fsm = rtfsm.init(_fsm, id)
 
    if not fsm then print("\tinit of " .. id .. " FAILED")  end
    
    for i,t in ipairs(tests) do
-      print("\t running test: " .. t.descr)
+      print("RUNNING test: " .. t.descr)
       utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
       utils.foreach(function (e) rtfsm.send_events(fsm, e) end, t.events)
       rtfsm.step(fsm)
       cmp_ac(get_act_conf(fsm), t.expect)
+      print(string.rep("-", 10))
    end
 end

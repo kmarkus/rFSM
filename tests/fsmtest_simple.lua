@@ -18,7 +18,7 @@ simple_templ = rtfsm.csta:new{
    err = printer_gen("ERR:"),
    warn = printer_gen("WARN:"),
    info = printer_gen("INFO:"),
-   dbg = printer_gen("DBG:"),
+   -- dbg = printer_gen("DBG:"),
 
    on = rtfsm.sista:new{},
    off = rtfsm.sista:new{},
