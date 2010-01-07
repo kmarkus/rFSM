@@ -123,16 +123,17 @@ function test_fsm(fsm, test)
    assert(fsm._initalized, "tests_fsm requires an initialized fsm!")
    print("TESTING:", test.id)
    
-   fsm2uml.fsm2uml(fsm, "png", test.id .. "-0-initial-state.png")
+   fsm2uml.fsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")
 
    for i,t in ipairs(test.tests) do
-      print("RUNNING test: " .. t.id)
+      print("RUNNING test: " .. t.descr)
       utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
       utils.foreach(function (e) rtfsm.send_events(fsm, e) end, t.events)
       rtfsm.step(fsm)
       retval = retval and cmp_ac(get_act_conf(fsm), t.expect)
       print(string.rep("-", 10))
-      fsm2uml.fsm2uml(fsm, "png", test.id .. "-" .. i .. "-after-" .. t.id .. ".png")
+      fsm2uml.fsm2uml(fsm, "png", test.id .. "-" .. i .. ".png", 
+		      "after: " .. t.descr .. "\nin-events: " .. tostring(t.events))
    end
    return retval
 end

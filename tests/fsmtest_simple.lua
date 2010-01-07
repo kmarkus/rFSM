@@ -34,20 +34,20 @@ local test = {
    pics = true,
    tests = {
       {
-	 id='testing_fsm_entry',
+	 descr='testing entry',
 	 preact = nil,
 	 events = nil,
 	 expect = { root={ ['root.off']='active' } }
       }, {
-	 id='testing_transition_to_on',
+	 descr='testing transition to on',
 	 events = { 'e_on' },
 	 expect = { root={ ['root.on']='active'} }
       }, {
-	 id='testing_transition_back_to_off',
+	 descr='testing transition back to off',
 	 events = { 'e_off' },
 	 expect = { root={ ['root.off']='active'} }
       }, {
-	 id='doing_nothing',
+	 descr='doing nothing',
 	 expect = { root={ ['root.off']='done'} }
       }
    }
