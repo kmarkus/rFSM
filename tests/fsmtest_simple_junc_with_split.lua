@@ -4,15 +4,14 @@
 
 package.path = package.path .. ';../?.lua'
 
-require("fsm2uml")
-require("fsm2tree")
 require("rtfsm")
+require("fsmdbg")
 require("utils")
 
 local err = print
 local id = 'junc_chain_with_split_test'
 
-junc_chain_templ = rtfsm.csta:new{
+junc_chain_split_templ = rtfsm.csta:new{
    dummyA = rtfsm.sista:new{},
    dummyB = rtfsm.sista:new{},
 
@@ -30,13 +29,26 @@ junc_chain_templ = rtfsm.csta:new{
    juncB2 = rtfsm.junc:new{},
 }
 
-jc = rtfsm.init(junc_chain_templ, id)
+test = {
+   id = 'simple_junc_split_test',
+   pics = true,
+   tests = { 
+      {
+	 descr='testing entry',
+	 preact = nil,
+	 events = nil,
+	 expect = { root={ ['root.dummyB']='done' } }
+      }
+   }
+}
+
+
+jc = rtfsm.init(junc_chain_split_templ)
 
 if not jc then
-   err(id .. " initalization failed")
+   print(id .. " initalization failed")
    os.exit(1)
 end
 
-fsm2uml.fsm2uml(jc, "png", id .. "before-uml.png")
-rtfsm.step(jc)
-fsm2uml.fsm2uml(jc, "png", id .. "after-uml.png")
+if fsmdbg.test_fsm(jc, test) then os.exit(0)
+else os.exit(1) end

@@ -119,7 +119,7 @@ function test_fsm(fsm, test)
    end
 
    local retval = true
-   assert(fsm._initalized, "tests_fsm requires an initialized fsm!")
+   assert(fsm._initalized, "ERROR: test_fsm requires an initialized fsm!")
    print("TESTING:", test.id)
 
    fsm2uml.fsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")
@@ -129,7 +129,7 @@ function test_fsm(fsm, test)
       local boiler = "test: " .. t.descr .. '\n' ..
 	 "   preact:      " .. tostring(t.preact) .. '\n' ..
 	 "   sent events: " .. tostring(t.events) .. '\n' ..
-	 "   pre ievq:    " .. tostring(fsm._intq) .. '\n'
+	 "   pre intq:    " .. tostring(fsm._intq) .. '\n'
 
       print(boiler)
 

@@ -656,6 +656,8 @@ end
 -- create table for lookups
 function init(fsm_templ, name)
 
+   assert(is_csta(fsm_templ), "invalid fsm model passed to rtfsm.init")
+
    local fsm = utils.deepcopy(fsm_templ)
 
    -- fsm._id = name or 'root'

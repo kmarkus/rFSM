@@ -5,7 +5,6 @@
 package.path = package.path .. ';../?.lua'
 
 require("rtfsm")
-require("fsm2uml")
 require("fsm2tree")
 require("fsmdbg")
 require("utils")
