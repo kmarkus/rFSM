@@ -1086,12 +1086,11 @@ function node_find_enabled(fsm, start, events)
       assert(nil, "needs review")
 
       -- tbd: consider: how bad is this? Does is mean deadlock? This
-      -- is checked earlier and is not necessary here any
-      -- more. Remove. Also it complains warn that root has #_otrs=0.
-      --      if fork._otrs == nil then
-      --	 fsm.warn("no outgoing transitions from " .. fork._fqn)
-      --	 return false
-      --      end
+      -- is checked statically and is not necessary here any
+      if fork._otrs == nil then
+	 -- fsm.warn("no outgoing transitions from " .. fork._fqn)
+	 return false
+      end
 
       for k,tr in pairs(fork._otrs) do
 	 if not is_enabled(tr, events) then
@@ -1110,11 +1109,11 @@ function node_find_enabled(fsm, start, events)
       local cur = { node=nde, nextl={} }
       local tail
 
-      -- tbd: consider: how bad is this? Does is mean deadlock?
-      -- if nde._otrs == nil then
-      --     fsm.warn("no outgoing transitions from " .. nde._fqn)
-      --     return false
-      -- end
+      -- path ends if no outgoing path. This will be warned about statically
+      if nde._otrs == nil then
+	 -- fsm.warn("no outgoing transitions from " .. nde._fqn)
+	 return false
+      end
 
       for k,tr in pairs(nde._otrs) do
 	 if is_enabled(tr, events) then
