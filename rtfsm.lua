@@ -541,6 +541,15 @@ function verify_early(fsm)
 	 ret = false
       end
 
+      if not type(t.events) == 'table' then
+	 mes[#mes+1] = "ERROR: " .. tostring(t) .." 'events' field must be a table"
+	 ret = false
+      end
+
+      if t.event then
+	 mes[#mes+1] = "WARNING: " .. tostring(t) .." 'event' field undefined, did you mean 'events'?"
+      end
+
       -- tbd event
       return ret
    end
@@ -719,7 +728,7 @@ end
 --------------------------------------------------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
-   for _,v in pairs(arg) do
+   for _,v in ipairs(arg) do
       table.insert(fsm._intq, v)
    end
 end
@@ -784,14 +793,14 @@ end
 -- tbd: where 'done' state set?
 local function run_doos(fsm)
    local has_run = false
-   for i = 1,#fsm._act_leaves do
 
+   for i = 1,#fsm._act_leaves do
       -- rotate
       local state = table.remove(fsm._act_leaves, 1)
       table.insert(fsm._act_leaves, state)
 
       -- create new coroutine
-      if state.doo and not state.doo_co then
+      if state.doo and not state._doo_co then
 	 fsm.dbg("created coroutine for " .. state._fqn .. " doo")
 	 state._doo_co = coroutine.create(state.doo)
       end
@@ -803,6 +812,9 @@ local function run_doos(fsm)
 	 if coroutine.status(state._doo_co) == 'dead' then
 	    state._doo_co = nil
 	    sta_mode(state, 'done')
+	    actleaf_rm(fsm, state)
+	    send_events(fsm, "e_" .. state._fqn .. "_done")
+	    fsm.dbg("REMOVING completed coroutine of " .. state._fqn .. " doo")
 	    -- tbd: generate completion event
 	 end
 	 break
@@ -868,7 +880,12 @@ local function exec_trans_check(fsm, tr)
    return res
 end
 
--- must deal with all possible src types
+
+-- Execute Part 1 of the transition tr, which means exiting the src
+-- state (incl. active child states) and up to but excluding the LCA
+-- of src and tgt.
+--
+-- tbd: must deal with all possible src types
 local function exec_trans_exit(fsm, tr)
 
    local lca = getLCA(tr)
@@ -887,6 +904,7 @@ local function exec_trans_exit(fsm, tr)
    fsm.dbg("TRANS EXITED", tr.src._fqn)
 end
 
+-- Execute Part 2 of the transition: the effect
 local function exec_trans_effect(fsm, tr)
    -- run effect
    if tr.effect then
@@ -894,6 +912,9 @@ local function exec_trans_effect(fsm, tr)
    end
 end
 
+-- Execute Part 3 of the transition: implicit enter all states to
+-- trans_target (excluding the already active LCA).
+--
 local function exec_trans_enter(fsm, tr)
    -- implicit enter from (but excluding) LCA to trans.tgt
    -- tbd: create walker function: foreach_[up|down](start, end, function)
@@ -961,6 +982,7 @@ end
 
 --------------------------------------------------------------------------------
 -- execute a path (compound transition) starting with pnode
+-- returns true if path was executed sucessfully
 local function exec_path(fsm, path)
    -- heads is list parallel pnodes
    local function __exec_path(heads)
@@ -998,12 +1020,12 @@ local function exec_path(fsm, path)
 
       -- execute trans. and create new next_heads table
       map(__exec_pnode_step, heads)
-      if #next_heads == 0 then return
+      if #next_heads == 0 then return true
       else return __exec_path(next_heads) end
    end
 
    fsm.dbg("EXEC_PATH:", path2str(path))
-   __exec_path{path}
+   return __exec_path{path}
 end
 
 --------------------------------------------------------------------------------
@@ -1022,7 +1044,10 @@ local function is_enabled(tr, events)
    end
    -- guard condition?
    if tr.guard and not tr.guard(tr, events) then return false
-   else return true end
+   else
+      
+      return true
+   end
 end
 
 --------------------------------------------------------------------------------
@@ -1119,7 +1144,7 @@ local function fsm_find_enabled(fsm, events)
    local cur = fsm
    local path
    while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
-      fsm.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'")
+      fsm.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'", tostring(events))
       path = node_find_enabled(fsm, cur, events)
       if path then break end
       cur = cur._act_child
