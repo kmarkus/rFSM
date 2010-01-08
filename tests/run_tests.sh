@@ -5,5 +5,6 @@ TEST=`echo fsmtest_*`
 rm -f *.png
 
 for t in $TEST; do
+    echo -e "\n\n\n********************************************************************************"
     lua $t
 done

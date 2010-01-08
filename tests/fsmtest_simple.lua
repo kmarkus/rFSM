@@ -22,8 +22,8 @@ simple_templ = rtfsm.csta:new{
    on = rtfsm.sista:new{},
    off = rtfsm.sista:new{},
 
-   rtfsm.trans:new{ src='off', tgt='on', event='e_on' },
-   rtfsm.trans:new{ src='on', tgt='off', event='e_off' },
+   rtfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
+   rtfsm.trans:new{ src='on', tgt='off', events={ 'e_off' } },
    rtfsm.trans:new{ src='initial', tgt='off' }
 }
 

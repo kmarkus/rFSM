@@ -523,7 +523,6 @@ function verify_early(fsm)
    local function check_cplx(s, parent)
       if s.doo then
 	 mes[#mes+1] = "WARNING: " .. s .. " 'doo' function in csta will never run"
-	 ret = false
       else
 	 return true
       end
@@ -681,7 +680,12 @@ function init(fsm_templ, name)
 
    -- verify (early)
    local ret, errs = verify_early(fsm)
-   if not ret then fsm.err(table.concat(errs, '\n')) return false end
+
+   -- don't fail on warnings
+   if #errs > 0 then
+      fsm.err(table.concat(errs, '\n'))
+      if not ret then return false end
+   end
 
    if not resolve_trans(fsm) then
       fsm.err("ERROR: failed to resolve transitions of fsm " .. fsm._id)
@@ -1045,7 +1049,7 @@ local function is_enabled(tr, events)
    -- guard condition?
    if tr.guard and not tr.guard(tr, events) then return false
    else
-      
+
       return true
    end
 end
@@ -1084,10 +1088,10 @@ function node_find_enabled(fsm, start, events)
       -- tbd: consider: how bad is this? Does is mean deadlock? This
       -- is checked earlier and is not necessary here any
       -- more. Remove. Also it complains warn that root has #_otrs=0.
-      if fork._otrs == nil then
-	 fsm.warn("no outgoing transitions from " .. fork._fqn)
-	 return false
-      end
+      --      if fork._otrs == nil then
+      --	 fsm.warn("no outgoing transitions from " .. fork._fqn)
+      --	 return false
+      --      end
 
       for k,tr in pairs(fork._otrs) do
 	 if not is_enabled(tr, events) then
@@ -1107,10 +1111,10 @@ function node_find_enabled(fsm, start, events)
       local tail
 
       -- tbd: consider: how bad is this? Does is mean deadlock?
-      if nde._otrs == nil then
-	 fsm.warn("no outgoing transitions from " .. nde._fqn)
-	 return false
-      end
+      -- if nde._otrs == nil then
+      --     fsm.warn("no outgoing transitions from " .. nde._fqn)
+      --     return false
+      -- end
 
       for k,tr in pairs(nde._otrs) do
 	 if is_enabled(tr, events) then
