@@ -1237,6 +1237,8 @@ function step(fsm)
       if run_doos(fsm) then idling = false end
    end
 
+   if fsm.drop_events then fsm.drop_events(events) end
+
    -- nothing to do - run an idle function or exit
    if idling then
       if fsm._idle then fsm._idle(fsm)
@@ -1245,8 +1247,6 @@ function step(fsm)
 	 return
       end
    end
-
-   if fsm.drop_events then fsm.drop_events(events) end
 
    -- tail call
    return step(fsm)
