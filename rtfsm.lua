@@ -1239,6 +1239,9 @@ function step(fsm)
 
    if fsm.drop_events then fsm.drop_events(events) end
 
+   -- low level control hook
+   if fsm._ctl_hook then fsm._ctl_hook(fsm) end
+
    -- nothing to do - run an idle function or exit
    if idling then
       if fsm._idle then fsm._idle(fsm)

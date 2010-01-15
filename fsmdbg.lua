@@ -17,9 +17,10 @@ require('std')
 require("rtfsm")
 require("fsm2uml")
 require("utils")
+require("ansicolors")
 
-local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml
-   = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml
+local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml, ansicolors
+   = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml, ansicolors
 
 module("fsmdbg")
 
@@ -108,12 +109,13 @@ end
 function test_fsm(fsm, test)
    local function cmp_ac(act, exp)
       if not table_cmp(act, exp) then
-	 print("FAILED: Active configurations differ!")
-	 print("    actual:   " .. tostring(act))
-	 print("    expected: " .. tostring(exp))
+	 print(ansicolors.red .. "FAILED: Active configurations differ!")
+	 print(ansicolors.red .. "    actual:   " .. tostring(act))
+	 print(ansicolors.red .. "    expected: " .. tostring(exp) .. ansicolors.reset)
 	 return false
       else
-	 print("OK.")
+	 print(ansicolors.blue .. ansicolors.bright .. 'OK.' .. ansicolors.reset)
+	 print(ansicolors.red('hello from the Red world!'))
 	 return true
       end
    end
@@ -145,3 +147,5 @@ function test_fsm(fsm, test)
    end
    return retval
 end
+
+print(ansicolors.red "argh")
