@@ -20,7 +20,7 @@ end
 local function safe_doo()
    for i = 1,3 do
       print("waiting in safe mode:", i)
-      os.execute("sleep 1")
+      os.execute("sleep 0.3")
       coroutine.yield()
    end
 end
@@ -34,7 +34,7 @@ csta_tmpl = rtfsm.csta:new {
    operational = rtfsm.csta:new{
       approaching = rtfsm.sista:new{ entry=puts("entering approaching state"), exit=puts("exiting approaching state") },
       in_contact = rtfsm.sista:new{ entry=puts("contact established"), exit=puts("contact lost") },
-      
+
       rtfsm.trans:new{ src='initial', tgt='approaching' },
       rtfsm.trans:new{ src='approaching', tgt='in_contact', events={ 'e_contact_made' } },
       rtfsm.trans:new{ src='in_contact', tgt='approaching', events={ 'e_contact_lost' } },
@@ -63,9 +63,18 @@ local test = {
 	 descr='testing transition to operational',
 	 events = { 'e_range_clear' },
 	 expect = { root={ ['operational'] = { ['root.operational.approaching']='done'} } }
+      }, {
+	 descr='testing transition to in_contact',
+	 events = { 'e_contact_made' },
+	 expect = { root={ ['operational'] = { ['root.operational.in_contact']='done'} } }
+      }, {
+	 descr='testing transition to safe',
+	 events = { 'e_close_object' },
+	 expect = { root={ ['root.safe'] = 'done'} },
       }
    }
 }
+
 
 fsm = rtfsm.init(csta_tmpl, "composite_nested_tests")
 
