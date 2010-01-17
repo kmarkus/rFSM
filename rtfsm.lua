@@ -847,8 +847,18 @@ local function enter_state(fsm, state)
 end
 
 --------------------------------------------------------------------------------
--- exit a state (and nothing else)
+-- exit a state (incl all substates)
 local function exit_state(fsm, state)
+
+   -- if complex, then exit child states first
+   if is_csta(state) and state._act_child then
+      exit_state(fsm, state._act_child)
+   elseif is_psta(state) then
+      for name,cstate in pairs(state) do
+	 exit_state(fsm, cstate)
+      end
+   end
+
    -- save this for possible history entry
    if sta_mode(state) == 'active' then
       state._parent.last_active = state
@@ -998,7 +1008,7 @@ local function exec_path(fsm, path)
 	 -- fsm.dbg("exec_pnode ", pn.node._fqn)
 	 if pn.nextl == false then
 	    return
-	 elseif is_sista(pn.node) then
+	 elseif is_sta(pn.node) then
 	    local seg = pn.nextl[1]
 	    exec_trans(fsm, seg.trans)
 	    next_heads[#next_heads+1] = seg.next
