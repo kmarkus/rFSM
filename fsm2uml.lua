@@ -201,7 +201,8 @@ end
 
 -- new transition
 -- src and target are only fully qualified strings!
-local function new_tr(gh, src, tgt, label)
+local function new_tr(gh, src, tgt, events)
+   local label
 
    param.dbg("creating transition from " .. src .. " -> " .. tgt)
 
@@ -235,7 +236,7 @@ local function new_tr(gh, src, tgt, label)
    -- if thtype == "subgraph" then
    --    gv.setv(eh, "lhead", "cluster_" .. tgt)
    -- end
-
+   if events then label = table.concat(events, ', ') end
    if label then gv.setv(eh, "label", " " .. label .. " ") end
 end
 
@@ -254,7 +255,7 @@ local function proc_trans(gh, t, parent)
    if t.tgt == 'internal' then
       return true
    else
-      new_tr(gh, t.src._fqn, t.tgt._fqn, t.event)
+      new_tr(gh, t.src._fqn, t.tgt._fqn, t.events)
    end
 end
 
