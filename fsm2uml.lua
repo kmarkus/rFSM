@@ -104,8 +104,13 @@ local function new_conn(gh, conn)
    set_ndprops(nh)
 
    if rtfsm.is_junc(conn) then
-      gv.setv(nh, "shape", "circle")
-      gv.setv(nh, "height", "0.4")
+      if conn._id == 'initial' then
+	 gv.setv(nh, "shape", "point")
+	 gv.setv(nh, "height", "0.1")
+      else
+	 gv.setv(nh, "shape", "circle")
+	 gv.setv(nh, "height", "0.4")
+      end
    elseif rtfsm.is_join(conn) then
       gv.setv(nh, "shape", "Mdiamond")
       gv.setv(nh, "height", "0.3")
