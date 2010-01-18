@@ -638,17 +638,8 @@ end
 --         2) true: print with default
 --         3) false: disable
 local function setup_printers(fsm)
-   -- printers
-   local function __null_func()
-      return
-   end
-   local function stderr(...)
-      io.stderr:write(unpack(arg))
-      io.stderr:write("\n")
-   end
-   local function stdout(...)
-      print(unpack(arg))
-   end
+
+   local function __null_func() return end
 
    local function setup_printer(def, p)
       if fsm[p] == false then
@@ -660,7 +651,8 @@ local function setup_printers(fsm)
 	 fsm[p] = def
       end
    end
-   utils.foreach(setup_printer, { err=stderr, warn=stderr, info=stdout, dbg=__null_func } )
+   utils.foreach(setup_printer, { err=utils.stderr, warn=utils.stderr,
+				  info=utils.stdout, dbg=__null_func } )
 end
 
 --------------------------------------------------------------------------------

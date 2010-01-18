@@ -1,7 +1,7 @@
 -- useful functions
 
-local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string =
-   type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string
+local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack =
+   type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack
 
 module('utils')
 
@@ -63,6 +63,16 @@ function rpad(str, len, char)
    if char == nil then char = ' ' end
    return str .. string.rep(char, len - #str)
 end
+
+function stderr(...)
+   io.stderr:write(unpack(arg))
+   io.stderr:write("\n")
+end
+
+function stdout(...)
+   print(unpack(arg))
+end
+
 
 -- from: http://lua-users.org/wiki/SplitJoin
 -- Compatibility: Lua-5.1
