@@ -9,10 +9,12 @@ require ('luarocks.loader')
 require('std')
 
 -- save references
+
 local param, pairs, ipairs, print, tostring, table, string, type,
-loadstring, assert, coroutine, setmetatable, getmetatable, utils =
-param, pairs, ipairs, print, tostring, table, string, type,
-loadstring, assert, coroutine, setmetatable, getmetatable, utils
+loadstring, assert, coroutine, setmetatable, getmetatable, utils, io,
+unpack = param, pairs, ipairs, print, tostring, table, string, type,
+loadstring, assert, coroutine, setmetatable, getmetatable, utils, io,
+unpack
 
 module("rtfsm")
 
@@ -631,18 +633,34 @@ end
 
 --------------------------------------------------------------------------------
 -- set log/printing functions to reasonable defaults
+-- levels(default): err(true), warn(true), info(true), dbg(false)
+-- values: 1) function that takes variable args
+--         2) true: print with default
+--         3) false: disable
 local function setup_printers(fsm)
-   local function setup_printer(p)
-      local function __null_func() return end
-      if fsm[p] == nil or fsm[p] == false then
+   -- printers
+   local function __null_func()
+      return
+   end
+   local function stderr(...)
+      io.stderr:write(unpack(arg))
+      io.stderr:write("\n")
+   end
+   local function stdout(...)
+      print(unpack(arg))
+   end
+
+   local function setup_printer(def, p)
+      if fsm[p] == false then
 	 fsm[p] = __null_func
-      elseif fsm[p] == true then fsm[p] = print
+      elseif fsm[p] == nil or fsm[p] == true then
+	 fsm[p] = def
       elseif type(fsm[p]) ~= 'function' then
 	 print("unknown printer: " .. tostring(p))
-	 fsm[p] = print
+	 fsm[p] = def
       end
    end
-   utils.foreach(setup_printer, { "err", "warn", "info", "dbg" } )
+   utils.foreach(setup_printer, { err=stderr, warn=stderr, info=stdout, dbg=__null_func } )
 end
 
 --------------------------------------------------------------------------------
