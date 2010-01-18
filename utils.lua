@@ -164,7 +164,7 @@ end
 
 function foreach(f, tab)
    if not tab then return end
-   for i,v in pairs(tab) do f(v) end
+   for i,v in pairs(tab) do f(v,i) end
 end
 
 function foldr(func, val, tab)
