@@ -644,15 +644,17 @@ local function setup_printers(fsm)
    local function setup_printer(def, p)
       if fsm[p] == false then
 	 fsm[p] = __null_func
-      elseif fsm[p] == nil or fsm[p] == true then
+      elseif fsm[p] == nil then
 	 fsm[p] = def
+      elseif fsm[p] == true then
+	 fsm[p] = utils.stdout
       elseif type(fsm[p]) ~= 'function' then
 	 print("unknown printer: " .. tostring(p))
 	 fsm[p] = def
       end
    end
    utils.foreach(setup_printer, { err=utils.stderr, warn=utils.stderr,
-				  info=utils.stdout, dbg=__null_func } )
+				  info=utils.stdout, dbg=utils.stdout } )
 end
 
 --------------------------------------------------------------------------------
@@ -821,7 +823,7 @@ local function run_doos(fsm)
 
       -- corountine still active, can be resumed
       if state._doo_co and  coroutine.status(state._doo_co) == 'suspended' then
-	 coroutine.resume(state._doo_co)
+	 coroutine.resume(state._doo_co, fsm, state, 'doo')
 	 has_run = true
 	 if coroutine.status(state._doo_co) == 'dead' then
 	    state._doo_co = nil
@@ -845,7 +847,7 @@ end
 local function enter_state(fsm, state)
    state._mode = 'active'
 
-   if state.entry then state.entry(state, 'entry') end
+   if state.entry then state.entry(fsm, state, 'entry') end
    state._parent._act_child = state
 
    if is_sista(state) then
@@ -879,7 +881,7 @@ local function exit_state(fsm, state)
    sta_mode(state, 'inactive')
 
    state._parent._act_child = false
-   if state.exit then state.exit(state) end
+   if state.exit then state.exit(fsm, state, 'exit') end
 
    if is_sista(state) then actleaf_rm(fsm, state) end
 

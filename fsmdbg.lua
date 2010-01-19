@@ -109,13 +109,12 @@ end
 function test_fsm(fsm, test)
    local function cmp_ac(act, exp)
       if not table_cmp(act, exp) then
-	 print(ansicolors.red .. "FAILED: Active configurations differ!")
-	 print(ansicolors.red .. "    actual:   " .. tostring(act))
-	 print(ansicolors.red .. "    expected: " .. tostring(exp) .. ansicolors.reset)
+	 print(ansicolors.red("FAILED: Active configurations differ!"))
+	 print(ansicolors.red("    actual:   ") .. tostring(act))
+	 print(ansicolors.red("    expected: ") .. tostring(exp))
 	 return false
       else
 	 print(ansicolors.blue .. ansicolors.bright .. 'OK.' .. ansicolors.reset)
-	 print(ansicolors.red('hello from the Red world!'))
 	 return true
       end
    end
@@ -147,5 +146,3 @@ function test_fsm(fsm, test)
    end
    return retval
 end
-
-print(ansicolors.red "argh")
