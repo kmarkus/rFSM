@@ -1070,11 +1070,9 @@ local function is_enabled(tr, events)
    local function is_triggered(tr_ev, evq)
       for _,v in ipairs(evq) do
 	 if is_member(tr_ev, v) then
-	    print("is_triggered match:", evq)
 	    return true
 	 end
       end
-      print("is_triggered no match!")
       return false
    end
 
@@ -1088,7 +1086,6 @@ local function is_enabled(tr, events)
 
    local ret = tr.guard(tr, events)
 
-   print("is_enabled guard: ", ret)
    return ret
 end
 
