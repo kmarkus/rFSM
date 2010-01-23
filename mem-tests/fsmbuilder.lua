@@ -11,14 +11,13 @@ end
 -- create a flat fsm with num_chained states connected.  progs is a
 -- table with optional entry, doo, exit functions used for checking
 -- garbage collection after state transitions
-
 function flat_chain_fsm(num_states, progs)
    assert(num_states >= 2, "num_states must be > 2")
    local progs = progs or {}
    local event_list = { "e_trigger" }
 
    local fsm_tmpl = rtfsm.csta:new{ entry=printer_gen("entering root"),
-				    err=print, warn=true, info=false, dbg=false }
+				    info=false, dbg=false }
 
    fsm_tmpl['s' .. 1] = rtfsm.sista:new{ entry=progs.entry, doo=progs.doo, exit=progs.exit }
 
@@ -42,8 +41,7 @@ function composite_fsm(num_states, depth, progs)
       if depth == 0 then
 	 return rtfsm.sista:new{entry=progs.entry, doo=progs.doo, exit=progs.exit }
       else
-	 return rtfsm.csta:new{ entry=progs.entry, exit=progs.exit,
-				[name .. 'x'] = comp_state(name..'x', depth-1, progs),
+	 return rtfsm.csta:new{ [name .. 'x'] = comp_state(name..'x', depth-1, progs),
 			        rtfsm.trans:new{ src='initial', tgt=name .. 'x' } }
       end
    end
@@ -53,7 +51,7 @@ function composite_fsm(num_states, depth, progs)
    local event_list = { "e_trigger" }
 
    local fsm_tmpl = rtfsm.csta:new{ entry=printer_gen("entering root"),
-				    err=print, warn=true, info=false, dbg=false }
+				    warn=false, info=false, dbg=false }
 
    fsm_tmpl['s1'] = comp_state('s1', depth, progs)
 
@@ -82,7 +80,7 @@ function rand_fsm(num_states, num_trans)
 
    local fsm_tmpl = rtfsm.csta:new{ entry=printer_gen("entering root"),
 				    doo=printer_gen("inside doo"),
-				    err=print, warn=false, info=false }
+				    warn=false, info=false }
 
    -- generate states
    for i = 1,num_states do

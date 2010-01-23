@@ -1,9 +1,5 @@
 -- test the static memory usage behavior of a fsm
 
-package.path = package.path .. ';../?.lua'
-package.path = package.path .. ';/home/mk/prog/lua/modules/?.lua'
-package.cpath = package.cpath .. ';/home/mk/prog/lua/modules/?.so;'
-
 require("rtfsm")
 require("time")
 require("luagc")

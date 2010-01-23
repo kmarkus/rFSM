@@ -5,8 +5,8 @@
 require ('utils')
 
 -- tbdel for release!!
-require ('luarocks.loader')
-require('std')
+--require ('luarocks.loader')
+--require('std')
 
 -- save references
 
