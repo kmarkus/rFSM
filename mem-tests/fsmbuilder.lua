@@ -36,6 +36,41 @@ function flat_chain_fsm(num_states, progs)
    return fsm_tmpl
 end
 
+-- same as above but <depth> substates which will be entered
+function composite_fsm(num_states, depth, progs)
+   local function comp_state(name, depth, progs)
+      if depth == 0 then
+	 return rtfsm.sista:new{entry=progs.entry, doo=progs.doo, exit=progs.exit }
+      else
+	 return rtfsm.csta:new{ entry=progs.entry, exit=progs.exit,
+				[name .. 'x'] = comp_state(name..'x', depth-1, progs),
+			        rtfsm.trans:new{ src='initial', tgt=name .. 'x' } }
+      end
+   end
+
+   assert(num_states >= 2, "num_states must be > 2")
+   local progs = progs or {}
+   local event_list = { "e_trigger" }
+
+   local fsm_tmpl = rtfsm.csta:new{ entry=printer_gen("entering root"),
+				    err=print, warn=true, info=false, dbg=false }
+
+   fsm_tmpl['s1'] = comp_state('s1', depth, progs)
+
+   for i=2,num_states do
+      fsm_tmpl['s' .. i] = comp_state('s'..i, depth, progs)
+      fsm_tmpl[#fsm_tmpl+1] = rtfsm.trans:new{ src='s' .. i-1, tgt='s' .. i, events=event_list }
+   end
+
+   -- wrap
+   fsm_tmpl[#fsm_tmpl+1] = rtfsm.trans:new{ src='s' .. num_states, tgt='s1', events=event_list }
+
+   -- create initial
+   fsm_tmpl[#fsm_tmpl+1] = rtfsm.trans:new{ src='initial', tgt='s1' }
+
+   return fsm_tmpl
+end
+
 --
 -- construct a flat, random fsm with num_states and num_transitions
 --
