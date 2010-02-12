@@ -163,6 +163,15 @@ end
 -- check if a table key is metadata (for now starts with a '_')
 function is_meta(key) return string.sub(key, 1, 1) == '_' end
 
+-- check if src is connected to tgt by a transition
+local function is_connected(src, tgt)
+   assert(src._otrs, "ERR, is_connected: no ._otrs table found")
+   for _,t in pairs(src._otrs) do
+      if t.tgt._fqn == tgt._fqn then return true end
+   end
+   return false
+end
+
 -- set or get state mode
 local function sta_mode(s, m)
    assert(is_sta(s), "can't set_mode on non state type")
@@ -298,10 +307,9 @@ local function add_defconn(fsm)
 	 fsm.info("INFO: created undeclared fork " .. psta.initial._fqn)
 
 	 -- add all non-existing transitions from initial-fork to all
-	 -- toplevel csta children. But as transitions are not
-	 -- resolved yet this would mean having to resolve paths
-	 -- manually. Therefore postpone until transitions are
-	 -- resolved.
+	 -- toplevel csta children. But as otrs are not built yet this
+	 -- means having to resolve paths manually. Therefore postpone
+	 -- until transitions are resolved.
       end
       if not psta.final then
 	 assert(fsm_merge(fsm, psta, join:new{}, 'final'))
@@ -332,16 +340,6 @@ local function add_defconn(fsm)
 end
 
 ----------------------------------------
--- helper: check if src is connected to tgt by a transition
-local function is_connected(src, tgt)
-   assert(src._otrs, "ERR, is_connected: no ._otrs table found")
-   for _,t in pairs(src._otrs) do
-      if t.tgt._fqn == tgt._fqn then return true end
-   end
-   return false
-end
-
-----------------------------------------
 -- add transitions from parallel-state-initial-fork-connector to all
 -- toplevel composite states (regions)
 -- only after resolving transitons
@@ -353,15 +351,15 @@ local function add_psta_trans(fsm)
       -- tbd: replace this my a mapfsm with maxdepth param
       local reg = utils.filter(
 	 function (r,k)
-	    if not is_meta(k) and is_cplx(e) and not is_connected(psta.initial, e) then
+	    if not is_meta(k) and is_cplx(r) and not is_connected(psta.initial, r) then
 	       return true
 	    end
 	    return false
 	 end, psta)
 
       utils.map(function (r)
-		   fsm.dbg("\t adding transition " .. psta.initial._fqn .. " -> " .. r.fqn)
-		   return fsm_merge(fsm, psta, trans:new{ src=psta.initial, tgt=r } )
+		   fsm.dbg("\t adding transition " .. psta.initial._fqn .. " -> " .. r.initial._fqn)
+		   return fsm_merge(fsm, psta, trans:new{ src=psta.initial, tgt=r.initial } )
 		end, reg)
    end
 
@@ -371,7 +369,7 @@ local function add_psta_trans(fsm)
       -- tbd: replace this my a mapfsm with maxdepth param
       local reg = utils.filter(
 	 function (r,k)
-	    if not is_meta(k) and is_cplx(e) and not is_connected(e, psta.final) then
+	    if not is_meta(k) and is_cplx(r) and not is_connected(r, psta.final) then
 	       return true
 	    end
 	    return false
@@ -390,10 +388,13 @@ local function add_psta_trans(fsm)
 end
 
 ----------------------------------------
--- assign transitions to source node field ._otrs
+-- build a table for each node of all outgoing transitions in node._otrs
 local function add_otrs(fsm)
+   mapfsm(function (nd)
+	     if nd._otrs == nil then nd._otrs={} end
+	  end, fsm, is_node)
+
    mapfsm(function (tr, p)
-	     if tr.src._otrs == nil then tr.src._otrs={} end
 	     table.insert(tr.src._otrs, tr)
 	  end, fsm, is_trans)
 end
@@ -425,7 +426,7 @@ local function __resolve_path(fsm, state_str, parent)
       end
    elseif string.sub(state_str, 1, 1) == '.' then
       -- leading dot, relative target
-      fsm.err("ERROR: invalid relative transition (leading dot): " .. state_str)
+      fsm.err("ERROR: relative transitions (leading dot) not yet supported: " .. state_str)
    else
       -- absolute target, this is a fqn!
       state = index_tree(fsm, utils.split(state_str, "[\\.]"), mes)
@@ -549,12 +550,12 @@ function verify_early(fsm)
       local ret = true
       -- all nodes have a parent which is a node
       if not p then
-	 fsm.err("ERROR: parent of " .. s.fqn .. " is nil")
+	 fsm.err("ERROR: parent of " .. s._fqn .. " is nil")
 	 ret = false
       end
 
       if not is_node(p) then
-	 fsm.err("ERROR: parent of " .. s.fqn .. " is not a node but of type " .. p:type())
+	 fsm.err("ERROR: parent of " .. s._fqn .. " is not a node but of type " .. p:type())
 	 ret = false
       end
 
@@ -775,14 +776,16 @@ function init(fsm_templ, name)
       return false
    end
 
-   -- add missing parallel transitions
-   if not add_psta_trans(fsm) then return false end
-
    -- verify (late)
    local ret, errs = verify_late(fsm)
    if not ret then fsm.err(table.concat(errs, '\n')) return false end
 
+   -- add outgoing transition table
    add_otrs(fsm)
+
+   -- add missing parallel transitions
+   if not add_psta_trans(fsm) then return false end
+
    check_no_otrs(fsm)
    fsm._act_leaves = {}
 

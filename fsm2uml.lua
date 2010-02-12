@@ -223,7 +223,10 @@ local function new_tr(gh, src, tgt, events)
    else realsh = sh end
 
    -- assert(shtype ~= "subgraph")
-   assert(thtype ~= "subgraph")
+
+   -- the following must not happen because transitions *always* end
+   -- on a connector or sista.
+   assert(thtype ~= "subgraph", "tgt should be a subgraph but isn't: " .. tgt)
 
    -- if thtype == "subgraph" then realth = gv.findnode(th, tgt .. "_dummy")
    -- else realth = th end

@@ -192,7 +192,7 @@ function AND(a, b) return a and b end
 -- and which takes table
 function andt(...)
    local res = true
-   for _,v in pairs(arg) do
+   for _,t in ipairs(arg) do
       res = res and foldr(AND, true, t)
    end
    return res
