@@ -160,6 +160,8 @@ function fsmobj_tochar(obj)
    return string.upper(string.sub(obj:type(), 1, 1))
 end
 
+-- check if a table key is metadata (for now starts with a '_')
+function is_meta(key) return string.sub(key, 1, 1) == '_' end
 
 -- set or get state mode
 local function sta_mode(s, m)
@@ -178,7 +180,7 @@ function mapfsm(func, fsm, pred)
    local function __mapfsm(states)
       map(function (s, k)
 	     -- ugly: ignore entries starting with '_'
-	     if string.sub(k, 1, 1) ~= '_' then
+	     if not is_meta(k) then
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
@@ -207,29 +209,44 @@ end
 --------------------------------------------------------------------------------
 -- helper function for dynamically modifying fsm
 -- add obj with id under parent
-function fsm_merge(parent, id, obj)
-   local mes = nil
+function fsm_merge(fsm, parent, obj, id)
+
+   -- do some checking
+   local mes = {}
    if not is_cplx(parent) then
-      mes = "parent " .. parent._fqn .. " of " .. id .. " not a complex state"
+      mes[#mes+1] = "parent " .. parent._fqn .. " of " .. id .. " not a complex state"
    end
-   if parent[id] ~= nil then
-      mes = "parent " .. parent._fqn .. " already contains a sub element " .. id
+   if id ~= nil and parent[id] ~= nil then
+      mes[#mes+1] = "parent " .. parent._fqn .. " already contains a sub element " .. id
    end
 
-   if mes then
-      fsm.err("ERROR: merge failed: ", mes)
+   if not is_trans(obj) and id == nil then
+      mes[#mes+1] = "requested to merge node object without id"
+   end
+
+   if is_trans(obj) and not is_node(obj.src) and not is_node(obj.tgt) then
+      mes[#mes+1] = "trans src or tgt is not a node: " .. tostring(obj)
+   end
+
+   if #mes > 0 then
+      fsm.err("ERROR: merge failed: ", table.concat(mes, '\n\t'))
       return false
    end
 
-   -- simple types
+   -- merge the object
    if is_sista(obj) or is_conn(obj) then
       parent[id] = obj
       obj._parent = parent
       obj._id = id
       obj._fqn = parent._fqn ..'.' .. id
+   elseif is_trans(obj) then
+      parent[#parent+1] = obj
+      obj.src._otrs[#obj.src._otrs+1] = obj
    else
       fsm.err("ERROR: merging of " .. obj:type() .. " objects not implemented (" .. id .. ")")
+      return false
    end
+
    return true
 end
 
@@ -273,27 +290,19 @@ local function add_defconn(fsm)
    -- and add transitions to all initial composite states
    local function __add_psta_defconn(psta, parent, id)
       if not psta.initial then
-	 assert(fsm_merge(psta, 'initial', fork:new{}))
-	 fsm.info("INFO: created undeclared fork " .. psta._fqn .. ".initial")
-	 -- add transitions. tbd: add only those which do not exist yet!
-	 for k,v in pairs(psta) do
-	    if is_cplx(v) then
-	       psta[#psta+1] = trans:new{ src="initial", tgt=v._id }
-	       fsm.info("\t added transition initial->" .. v._id )
-	    end
+	 assert(fsm_merge(fsm, psta, fork:new{}, 'initial'))
+	 fsm.info("INFO: created undeclared fork " .. psta.initial._fqn)
 
-	 end
+	 -- add all non-existing transitions from initial-fork to all
+	 -- toplevel csta children. But as transitions are not
+	 -- resolved yet this would mean having to resolve paths
+	 -- manually. Therefore postpone until transitions are
+	 -- resolved.
       end
       if not psta.final then
-	 assert(fsm_merge(psta, 'final', join:new{}))
-	 fsm.info("INFO: created undeclared join " .. psta._fqn .. ".initial")
-	 -- add transitions. tbd: add only those which do not exist yet!
-	 for k,v in pairs(psta) do
-	    if is_cplx(v) then
-	       psta[#psta+1] = trans:new{ src=v._id, tgt='final' }
-	       fsm.info("\t added transition " .. v._id ..  "->final" )
-	    end
-	 end
+	 assert(fsm_merge(fsm, psta, join:new{}, 'final'))
+	 fsm.info("INFO: created undeclared join " .. psta.final._fqn)
+	 -- add transition later: see above comment.
       end
    end
 
@@ -302,11 +311,11 @@ local function add_defconn(fsm)
    local function __add_trans_defconn(tr, p)
       if is_csta(p) then
 	 if tr.src == 'initial' and p.initial == nil then
-	    fsm_merge(p, 'initial', junc:new{})
+	    fsm_merge(fsm, p, junc:new{}, 'initial')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
 	 end
 	 if tr.tgt == 'final' and p.final == nil then
-	    fsm_merge(p, 'final', junc:new{})
+	    fsm_merge(fsm, p, junc:new{}, 'final')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".final")
 	 end
       elseif is_psta(p) then
@@ -316,6 +325,64 @@ local function add_defconn(fsm)
 
    mapfsm(__add_psta_defconn, fsm, is_psta)
    mapfsm(__add_trans_defconn, fsm, is_trans)
+end
+
+--------------------------------------------------------------------------------
+-- helper: check if src is connected to tgt by a transition
+local function is_connected(src, tgt)
+   assert(src._otrs, "ERR, is_connected: no ._otrs table found")
+   for _,t in pairs(src._otrs) do
+      if t.tgt._fqn == tgt._fqn then return true end
+   end
+   return false
+end
+
+--------------------------------------------------------------------------------
+-- add transitions from parallel-state-initial-fork-connector to all
+-- toplevel composite states (regions)
+-- only after resolving transitons
+local function add_psta_trans(fsm)
+
+   -- transitions from initial (fork) to regions
+   local function __add_psta_itrans(psta, parent, id)
+      -- determine list of regions which are not connected by initial
+      -- tbd: replace this my a mapfsm with maxdepth param
+      local reg = utils.filter(
+	 function (r,k)
+	    if not is_meta(k) and is_cplx(e) and not is_connected(psta.initial, e) then
+	       return true
+	    end
+	    return false
+	 end, psta)
+
+      utils.map(function (r)
+		   fsm.dbg("\t adding transition " .. psta.initial._fqn .. " -> " .. r.fqn)
+		   return fsm_merge(fsm, psta, trans:new{ src=psta.initial, tgt=r } )
+		end, reg)
+   end
+
+   -- transitions from regions to final (join)
+   local function __add_psta_ftrans(psta, parent, id)
+      -- determine list of regions which are not connected to final fork
+      -- tbd: replace this my a mapfsm with maxdepth param
+      local reg = utils.filter(
+	 function (r,k)
+	    if not is_meta(k) and is_cplx(e) and not is_connected(e, psta.final) then
+	       return true
+	    end
+	    return false
+	 end, psta)
+
+      utils.map(function (r)
+		 fsm.dbg("\t adding transition " .. r._fqn .. " -> " .. psta.final._fqn)
+		 return fsm_merge(fsm, psta, trans:new{ src=r, tgt=psta.final } )
+	      end, reg)
+   end
+
+   fsm.info("INFO: creating undeclared parallel state transitions")
+
+   return utils.andt(mapfsm(__add_psta_itrans, fsm, is_psta),
+		     mapfsm(__add_psta_ftrans, fsm, is_psta))
 end
 
 --------------------------------------------------------------------------------
@@ -703,6 +770,9 @@ function init(fsm_templ, name)
       fsm.err("ERROR: failed to resolve transitions of fsm " .. fsm._id)
       return false
    end
+
+   -- add missing parallel transitions
+   if not add_psta_trans(fsm) then return false end
 
    -- verify (late)
    local ret, errs = verify_late(fsm)
