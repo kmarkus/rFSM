@@ -22,10 +22,10 @@ local function test_doo()
 end
 
 csta_tmpl = rtfsm.csta:new{
-   err = printer_gen("ERR:"),
-   warn = printer_gen("WARN:"),
-   info = printer_gen("INFO:"),
-   dbg = printer_gen("DBG:"),
+   err = printer_gen(""),
+   warn = printer_gen(""),
+   info = printer_gen(""),
+   dbg = printer_gen(""),
 
    on = rtfsm.sista:new{ doo=test_doo },
    off = rtfsm.sista:new{},
