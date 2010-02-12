@@ -1190,17 +1190,16 @@ function node_find_enabled(fsm, start, events)
       local cur = { node=fork, nextl={} }
       local tail
 
-      assert(nil, "needs review")
-
       -- tbd: consider: how bad is this? Does is mean deadlock? This
       -- is checked statically and is not necessary here any
       if fork._otrs == nil then
-	 -- fsm.warn("no outgoing transitions from " .. fork._fqn)
+	 fsm.warn("no outgoing transitions from " .. fork._fqn)
 	 return false
       end
 
       for k,tr in pairs(fork._otrs) do
 	 if not is_enabled(tr, events) then
+	    fsm.err("failing to enter fork")
 	    return false
 	 end
 	 tail = __node_find_enabled(tr.tgt, events)
@@ -1218,7 +1217,7 @@ function node_find_enabled(fsm, start, events)
 
       -- path ends if no outgoing path. This will be warned about statically
       if nde._otrs == nil then
-	 -- fsm.warn("no outgoing transitions from " .. nde._fqn)
+	 --fsm.warn("no outgoing transitions from " .. nde._fqn)
 	 return false
       end
 
