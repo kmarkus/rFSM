@@ -21,9 +21,9 @@ module("rtfsm")
 local map = utils.map
 
 --------------------------------------------------------------------------------
--- Model Elements
+-- Model Elements and generic helper functions
+--------------------------------------------------------------------------------
 
---
 -- simple state
 --
 -- required: -
@@ -194,7 +194,7 @@ function mapfsm(func, fsm, pred)
    return res
 end
 
--- execute func on all states between from and to
+-- execute func on all vertical states between from and to
 -- from must be a child of to (for now)
 function map_from_to(fsm, func, from, to)
    local walker = from
@@ -206,7 +206,7 @@ function map_from_to(fsm, func, from, to)
    return res
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- helper function for dynamically modifying fsm
 -- add obj with id under parent
 function fsm_merge(fsm, parent, obj, id)
@@ -251,6 +251,10 @@ function fsm_merge(fsm, parent, obj, id)
 end
 
 --------------------------------------------------------------------------------
+-- Initialization functions for preprocessing and validating the FSM
+--------------------------------------------------------------------------------
+
+----------------------------------------
 -- construct parent links
 -- this modifies fsm
 
@@ -259,14 +263,14 @@ local function add_parent_links(fsm)
    mapfsm(function (s, p) s._parent = p end, fsm, is_node)
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- add id fields
 local function add_ids(fsm)
    mapfsm(function (s,p,n) s._id = n end, fsm, is_node)
 end
 
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- add fully qualified names (fqn) to node types
 -- depends on parent links beeing available
 local function add_fqns(fsm)
@@ -281,7 +285,7 @@ local function add_fqns(fsm)
    mapfsm(__add_fqn, fsm, is_node)
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- be nice: add default connectors so that the user doesn't not have
 -- to do this boring job
 local function add_defconn(fsm)
@@ -327,7 +331,7 @@ local function add_defconn(fsm)
    mapfsm(__add_trans_defconn, fsm, is_trans)
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- helper: check if src is connected to tgt by a transition
 local function is_connected(src, tgt)
    assert(src._otrs, "ERR, is_connected: no ._otrs table found")
@@ -337,7 +341,7 @@ local function is_connected(src, tgt)
    return false
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- add transitions from parallel-state-initial-fork-connector to all
 -- toplevel composite states (regions)
 -- only after resolving transitons
@@ -385,7 +389,7 @@ local function add_psta_trans(fsm)
 		     mapfsm(__add_psta_ftrans, fsm, is_psta))
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- assign transitions to source node field ._otrs
 local function add_otrs(fsm)
    mapfsm(function (tr, p)
@@ -394,7 +398,7 @@ local function add_otrs(fsm)
 	  end, fsm, is_trans)
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- resolve path function
 -- turn string state into the real thing
 local function __resolve_path(fsm, state_str, parent)
@@ -429,7 +433,7 @@ local function __resolve_path(fsm, state_str, parent)
    return state, mes
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- resolve transition src and target strings into references of the real states
 --    depends on fully qualified names
 local function resolve_trans(fsm)
@@ -533,7 +537,7 @@ end
 
 
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- perform some early validation (before transitions are resolved)
 -- test should bark loudly about problems and return false if
 -- initialization is to fail
@@ -666,7 +670,7 @@ function verify_early(fsm)
    return res, mes
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- late checks
 -- must run after transitions are resolved
 function verify_late(fsm)
@@ -698,7 +702,7 @@ function check_no_otrs(fsm)
    return utils.andt(mapfsm(__check_no_otrs, fsm, is_node))
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- set log/printing functions to reasonable defaults
 -- levels(default): err(true), warn(true), info(true), dbg(false)
 -- values: 1) function that takes variable args
@@ -724,7 +728,7 @@ local function setup_printers(fsm)
 				  info=utils.stdout, dbg=utils.stdout } )
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- create a state -> outgoing transition lookup cache
 -- move to otrs field in state
 -- local function st2otr_cache(fsm)
@@ -737,7 +741,7 @@ end
 
 --    return function(srcfqn) return cache[srcfqn] end
 -- end
---------------------------------------------------------------------------------
+----------------------------------------
 -- initialize fsm
 -- create parent links
 -- create table for lookups
@@ -806,12 +810,10 @@ end
 
 
 --------------------------------------------------------------------------------
---
 -- Operational Functions
---
 --------------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
    for _,v in ipairs(arg) do
@@ -844,7 +846,7 @@ local function getPParent(fsm, node)
 end
 
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- merge all external and internal events into list
 local function getallev(fsm)
    local extq = fsm.getevents()
@@ -871,7 +873,7 @@ local function actleaf_rm(fsm, lf)
    end
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- run one doo functions of an active state and place it at the end of
 -- the active queue
 -- active_leaf states might not have a doo function, so check
@@ -912,7 +914,7 @@ local function run_doos(fsm)
 end
 
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- enter a state (and nothing else)
 local function enter_state(fsm, state)
    state._mode = 'active'
@@ -928,7 +930,7 @@ local function enter_state(fsm, state)
    fsm.dbg("ENTERED\t", state._fqn)
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- exit a state (incl all substates)
 local function exit_state(fsm, state)
 
@@ -959,7 +961,7 @@ local function exit_state(fsm, state)
 end
 
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- simple transition consists of three parts:
 --  1. exec up to LCA
 --  2. run effect
@@ -1038,7 +1040,7 @@ local function exec_trans(fsm, tr)
 end
 
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- pretty print path
 -- path = pnode.next[1]->pnode.next[1]->pnode
 --                        .next[1]->pnode.next[1] = true
@@ -1076,7 +1078,7 @@ local function conflict_resolve(fsm, pnode)
    return pnode.nextl[1]
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- execute a path (compound transition) starting with pnode
 -- returns true if path was executed sucessfully
 local function exec_path(fsm, path)
@@ -1124,7 +1126,7 @@ local function exec_path(fsm, path)
    return __exec_path{path}
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- check if transition is triggered by events and guard is true
 -- events is a table of entities which support '=='
 --
@@ -1161,7 +1163,7 @@ local function is_enabled(tr, events)
    return ret
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- returns a path starting from node which is enabled by events
 -- tbd: describe exactly what a transition looks like
 --
@@ -1246,7 +1248,7 @@ function node_find_enabled(fsm, start, events)
    -- 		  .. start._fqn .. ", type" .. start:type()) end
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- walk down the active tree and call find_path for all active states
 -- tbd: deal with orthogonal regions?
 local function fsm_find_enabled(fsm, events)
@@ -1261,7 +1263,7 @@ local function fsm_find_enabled(fsm, events)
    return path
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- attempt to transition the fsm
 local function transition(fsm, events)
    -- conflict resolution could be more sophisticated
@@ -1277,7 +1279,7 @@ local function transition(fsm, events)
    else return exec_path(fsm, path) end
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- enter fsm for the first time
 local function enter_fsm(fsm, events)
    fsm._mode = 'active'
@@ -1292,7 +1294,7 @@ local function enter_fsm(fsm, events)
    return true
 end
 
---------------------------------------------------------------------------------
+----------------------------------------
 -- 0. any events? If not then run doo's of active states
 -- 1. find valid transitions
 --    1.1. get list of events
