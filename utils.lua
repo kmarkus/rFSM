@@ -190,8 +190,12 @@ end
 function AND(a, b) return a and b end
 
 -- and which takes table
-function andt(t)
-   return foldr(AND, true, t)
+function andt(...)
+   local res = true
+   for _,v in pairs(arg) do
+      res = res and foldr(AND, true, t)
+   end
+   return res
 end
 
 function eval(str)
