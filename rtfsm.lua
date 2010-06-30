@@ -183,17 +183,21 @@ local function sta_mode(s, m)
 end
 
 -- apply func to all fsm elements for which pred returns true
-function mapfsm(func, fsm, pred)
+-- depth is maxdepth to enter (nil
+function mapfsm(func, fsm, pred, depth)
    local res = {}
+   local depth = depth or -1
 
    local function __mapfsm(states)
       map(function (s, k)
+	     if depth == 0 then return end
 	     -- ugly: ignore entries starting with '_'
 	     if not is_meta(k) then
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
 		if is_cplx(s) then
+		   depth = depth - 1
 		   __mapfsm(s)
 		end
 	     end
@@ -218,6 +222,8 @@ end
 ----------------------------------------
 -- helper function for dynamically modifying fsm
 -- add obj with id under parent
+-- tbd: should reuse the initalization functions like add_otrs...
+-- whereever possible!
 function fsm_merge(fsm, parent, obj, id)
 
    -- do some checking
@@ -248,15 +254,39 @@ function fsm_merge(fsm, parent, obj, id)
       obj._parent = parent
       obj._id = id
       obj._fqn = parent._fqn ..'.' .. id
+      -- tbd: update otrs?
    elseif is_trans(obj) then
       parent[#parent+1] = obj
       obj.src._otrs[#obj.src._otrs+1] = obj
+      if is_join(obj.tgt) then
+	 obj.tgt._itrs[#obj.tgt._itrs+1] = obj
+      end
    else
       fsm.err("ERROR: merging of " .. obj:type() .. " objects not implemented (" .. id .. ")")
       return false
    end
 
    return true
+end
+
+-- convert a (sub) statemachine to string
+-- tbd: only used for active leaves, so pretty useless...
+function fsm_tostring(fsm, ind)
+   local ind = ind or 0
+   local res = {}
+
+   function __fsm_tostring(tab, res, ind)
+      for name,state in pairs(tab) do
+	 if not is_meta(name) and is_sta(state) then
+	    res[#res+1] = string.rep('\t', ind) .. state._id
+	    if is_cplx(state) then
+	       __fsm_tostring(state, res, ind+1)
+	    end
+	 end
+      end
+   end
+   __fsm_tostring(fsm, res, ind)
+   return table.concat(res, ',')
 end
 
 --------------------------------------------------------------------------------
@@ -330,8 +360,6 @@ local function add_defconn(fsm)
 	    fsm_merge(fsm, p, junc:new{}, 'final')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".final")
 	 end
-      elseif is_psta(p) then
-	 -- tbd: create fork and join
       end
    end
 
@@ -396,6 +424,20 @@ local function add_otrs(fsm)
 
    mapfsm(function (tr, p)
 	     table.insert(tr.src._otrs, tr)
+	  end, fsm, is_trans)
+end
+
+----------------------------------------
+-- build a table for each join of all incoming transitions in node._itrs
+local function add_itrs(fsm)
+   mapfsm(function (jn)
+	     if jn._itrs == nil then jn._itrs={} end
+	  end, fsm, is_join)
+
+   mapfsm(function (tr, p)
+	     if is_join(tr.tgt) then
+		table.insert(tr.tgt._itrs, tr)
+	     end
 	  end, fsm, is_trans)
 end
 
@@ -783,6 +825,9 @@ function init(fsm_templ, name)
    -- add outgoing transition table
    add_otrs(fsm)
 
+   -- add incoming transition table for joins
+   add_itrs(fsm)
+
    -- add missing parallel transitions
    if not add_psta_trans(fsm) then return false end
 
@@ -864,14 +909,14 @@ end
 
 local function actleaf_add(fsm, lf)
    table.insert(fsm._act_leaves, lf)
-   fsm.dbg("ACT_LEAVES", " added: " .. lf._fqn)
+   fsm.dbg("ACT_LEAVES", " added: " .. lf._fqn .. ", actl=" .. fsm_tostring(fsm._act_leaves))
 end
 
 local function actleaf_rm(fsm, lf)
    for i=1,#fsm._act_leaves do
       if fsm._act_leaves[i] == lf then
 	 table.remove(fsm._act_leaves, i)
-	 fsm.dbg("ACT_LEAVES", " removed: " .. lf._fqn)
+	 fsm.dbg("ACT_LEAVES", " removed: " .. lf._fqn .. ", actl=" .. fsm_tostring(fsm._act_leaves))
       end
    end
 end
@@ -920,6 +965,9 @@ end
 ----------------------------------------
 -- enter a state (and nothing else)
 local function enter_state(fsm, state)
+
+   if not is_sta(state) then return end
+
    state._mode = 'active'
 
    if state.entry then state.entry(fsm, state, 'entry') end
@@ -1093,7 +1141,30 @@ local function exec_path(fsm, path)
       -- pnode to next_heads
       local function __exec_pnode_step(pn)
 	 -- fsm.dbg("exec_pnode ", pn.node._fqn)
-	 if pn.nextl == false then
+	 if is_join(pn.node) then
+	    fsm.dbg("exec_pnode_step join " .. pn.node._fqn)
+	    -- we are passing through the join (pn.nextl ~= false).
+	    -- This is only the case if this we are exiting the
+	    -- last active region of the psta.  node_find_enable must
+	    -- detect this and find a full path instead if stopping at
+	    -- the join. If we are passing through and thus exiting
+	    -- the psta we must reset the join.
+	    if pn.nextl == false then -- decrement a join
+	       if not pn.node._join_cnt then
+		  pn.node._join_cnt = #pn.node._itrs - 1
+	       else
+		  pn.node._join_cnt = pn.node._join_cnt - 1
+	       end
+	       fsm.dbg("exec_pnode_step: join- jnt_cnt dec (" .. pn.node._join_cnt .. ")")
+	    else
+	       assert(pn.node._join_cnt == 1)
+	       local seg = pn.nextl[1]
+	       exec_trans(fsm, seg.trans)
+	       next_heads[#next_heads+1] = seg.next
+	       pn.node._join_cnt = nil
+	       fsm.dbg("exec_pnode_step: join, passing through")
+	    end
+	 elseif pn.nextl == false then
 	    return
 	 elseif is_sta(pn.node) then
 	    local seg = pn.nextl[1]
@@ -1112,8 +1183,6 @@ local function exec_path(fsm, path)
 	       exec_trans_enter(fsm, seg.trans)
 	       next_heads[#next_heads+1] = seg.next
 	    end
-	 elseif is_join(pn.node) then
-	    fsm.err("tbd exec_pnode_step join")
 	 else
 	    fsm.err("ERR (exec_path)", "invalid type of head pnode: " .. pn.node._fqn)
 	 end
@@ -1184,7 +1253,13 @@ function node_find_enabled(fsm, start, events)
 
       if is_junc(start) then return __find_disj_path(start, events)
       elseif is_fork(start) then return __find_conj_path(start, events)
-      elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
+      elseif is_join(start) then
+	 if start._join_cnt == 1 then
+	    return __find_disj_path(start, events)
+	 else
+	    return { node=start, nextl=false }
+	 end
+      elseif is_sta(start) then return { node=start, nextl=false }
       else fsm.err("ERROR: node_find_path invalid starting node"
 		     .. start._fqn .. ", type" .. start:type()) end
    end
@@ -1258,7 +1333,7 @@ local function fsm_find_enabled(fsm, events)
    local cur = fsm
    local path
    while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
-      fsm.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'", tostring(events))
+      fsm.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'", events)
       path = node_find_enabled(fsm, cur, events)
       if path then break end
       cur = cur._act_child
@@ -1322,9 +1397,8 @@ function step(fsm)
       idling = false
    elseif #events > 0 then
       -- received events, attempt to transition
-      if transition(fsm, events) then
-	 idling = false
-      end
+      transition(fsm, events)
+      idling = false
    else
       -- no events, run do functions
       if run_doos(fsm) then idling = false end

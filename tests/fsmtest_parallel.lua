@@ -15,7 +15,7 @@ end
 
 local function test_doo(text)
    return function ()
-	     for i = 1,5 do
+	     for i = 1,3 do
 		print(text, i)
 		os.execute("sleep 1")
 		coroutine.yield()
@@ -65,4 +65,6 @@ fsm = rtfsm.init(parallel_tpl, "parallel_test")
 
 fsm2uml.fsm2uml(fsm, "png", "parallel.png")
 
+rtfsm.step(fsm)
+print("step 2")
 rtfsm.step(fsm)
