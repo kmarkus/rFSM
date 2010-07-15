@@ -7,7 +7,7 @@ package.path = package.path .. ';../?.lua'
 require("fsm2uml")
 require("fsm2tree")
 require("rtfsm")
-require("fsmdbg")
+require("fsmtesting")
 require("utils")
 
 local err = print
@@ -45,6 +45,6 @@ if not jc then
    os.exit(1)
 end
 
-if fsmdbg.test_fsm(jc, test) then os.exit(0)
+if fsmtesting.test_fsm(jc, test) then os.exit(0)
 else os.exit(1) end
 

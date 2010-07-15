@@ -6,7 +6,7 @@ package.path = package.path .. ';../?.lua'
 
 require("rtfsm")
 require("fsm2uml")
-require("fsmdbg")
+require("fsmtesting")
 require("utils")
 
 local function printer_gen(s)

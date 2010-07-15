@@ -951,7 +951,6 @@ local function run_doos(fsm)
 	    actleaf_rm(fsm, state)
 	    send_events(fsm, "e_" .. state._fqn .. "_done")
 	    fsm.dbg("REMOVING completed coroutine of " .. state._fqn .. " doo")
-	    -- tbd: generate completion event
 	 end
 	 break
       end

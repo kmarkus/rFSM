@@ -22,7 +22,7 @@ require("ansicolors")
 local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml, ansicolors
    = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml, ansicolors
 
-module("fsmdbg")
+module("fsmtesting")
 
 --
 -- activate a node and all parent

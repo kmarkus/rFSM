@@ -6,7 +6,7 @@ package.path = package.path .. ';../?.lua'
 
 require("rtfsm")
 require("fsm2tree")
-require("fsmdbg")
+require("fsmtesting")
 require("utils")
 
 local function printer_gen(s)
@@ -55,5 +55,5 @@ local test = {
 
 fsm = rtfsm.init(csta_tmpl, "composite_tests")
 
-if fsmdbg.test_fsm(fsm, test) then os.exit(0)
+if fsmtesting.test_fsm(fsm, test) then os.exit(0)
 else os.exit(1) end
