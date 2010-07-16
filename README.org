@@ -1,13 +1,9 @@
 
-OVERVIEW
-=========
-
-
-EXAMPLE
-========
-
-API
-====
+* The rFSM Statecharts
+** Introduction
+   A simple example
+** API
+*** Basic API
 
 rtfsm.sista:new{}
 rtfsm.csta:new{}
@@ -17,33 +13,28 @@ rtfsm.join:new{}
 rtfsm.fork:new{}
 rtfsm.trans:new{}
 
+*** Hooks
 
-PARAMETERS
-===========
+** More examples
+*** Measuring transition latencies
+** Using rFSM with RTT
+** Using rFSM with ROS
+** Extensions
+*** fsm2uml
+*** fsmdbg
 
-toplevel
----------
+    Important: who wakes the rFSM when it hibernates? Various possibilites:
 
-Optional:
+      - RTT triggers =updateHook()= after receiving a variable on a
+        DataPort, which in turn can be used to call the fsm's =step()=
+        function.
 
-'get_events()'
-	function which returns a table of events
+      - For debug purposes you can insert a sleep in the _idle_hook
 
-'drop_events(table)'
-	function which is called with a table of events which will be
-	dropped
-
-
-'err'
-'warn'
-'info'
-
-	print(...) like functions which take a variable amount of
-	string parameters. default will be printing to stderr(err,
-	warn) and stdout (info).
+      - 
 
 
-INTERNALS
-==========
 
-
+*** fsmtesting
+** Internals
+** 
