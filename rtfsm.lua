@@ -988,6 +988,7 @@ local function exit_state(fsm, state)
    if is_csta(state) and state._act_child then
       exit_state(fsm, state._act_child)
    elseif is_psta(state) then
+      --tbd: replace this by mapfsm with depth=1
       for name,cstate in pairs(state) do
 	 exit_state(fsm, cstate)
       end

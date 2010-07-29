@@ -78,7 +78,7 @@ local function new_gra(name, caption)
    gv.setv(gh, "labelloc", "t")
    gv.setv(gh, "label", name .. '\n' .. caption)
    gv.setv(gh, "remincross", "true")
-   gv.setv(gh, "splines", "polyline")
+   gv.setv(gh, "splines", "true")
    gv.setv(gh, "rankdir", param.rankdir or "TD")
 
    -- layout clusters locally before integrating

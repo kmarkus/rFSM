@@ -21,6 +21,7 @@ function append(car, ...)
 end
 
 function tab2str( tbl )
+   assert(type(tbl) == 'table')
    local function val_to_str ( v )
       if "string" == type( v ) then
 	 v = string.gsub( v, "\n", "\\n" )
