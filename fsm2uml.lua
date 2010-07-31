@@ -2,10 +2,10 @@
 
 require("gv")
 require("utils")
-require("rtfsm")
+require("rfsm")
 
-local pairs, ipairs, print, table, type, assert, gv, io, utils, rtfsm
-   = pairs, ipairs, print, table, type, assert, gv, io, utils, rtfsm
+local pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
+   = pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
 
 module("fsm2uml")
 
@@ -93,7 +93,7 @@ local function new_conn(gh, conn)
    local ph, type = get_shandle(gh, conn._parent._fqn)
    assert(ph)
    assert(type ~= "simple", "Parent not of type simple")
-   assert(rtfsm.is_conn(conn), "Obj not a connector")
+   assert(rfsm.is_conn(conn), "Obj not a connector")
 
    if gv.findnode(ph, conn._fqn) then
       param.err("graph " .. conn._parent._fqn .. "already has a node " .. conn._fqn)
@@ -103,7 +103,7 @@ local function new_conn(gh, conn)
    local nh = gv.node(ph, conn._fqn)
    set_ndprops(nh)
 
-   if rtfsm.is_junc(conn) then
+   if rfsm.is_junc(conn) then
       if conn._id == 'initial' then
 	 gv.setv(nh, "shape", "point")
 	 gv.setv(nh, "height", "0.1")
@@ -111,10 +111,10 @@ local function new_conn(gh, conn)
 	 gv.setv(nh, "shape", "circle")
 	 gv.setv(nh, "height", "0.4")
       end
-   elseif rtfsm.is_join(conn) then
+   elseif rfsm.is_join(conn) then
       gv.setv(nh, "shape", "Mdiamond")
       gv.setv(nh, "height", "0.3")
-   elseif rtfsm.is_fork(conn) then
+   elseif rfsm.is_fork(conn) then
       gv.setv(nh, "shape", "Mcircle")
       gv.setv(nh, "height", "0.4")
    else param.err("ERROR: unknown conn type")  end
@@ -250,10 +250,10 @@ end
 
 
 local function proc_node(gh, node)
-   if rtfsm.is_csta(node) then new_csta(gh, node)
-   elseif rtfsm.is_psta(node) then new_csta(gh, node, "(parallel node)")
-   elseif rtfsm.is_sista(node) then new_sista(gh, node)
-   elseif rtfsm.is_conn(node) then new_conn(gh, node)
+   if rfsm.is_csta(node) then new_csta(gh, node)
+   elseif rfsm.is_psta(node) then new_csta(gh, node, "(parallel node)")
+   elseif rfsm.is_sista(node) then new_sista(gh, node)
+   elseif rfsm.is_conn(node) then new_conn(gh, node)
    else
       param.err("unknown node type: " .. node:type() .. ", name=" .. node._fqn)
    end
@@ -272,8 +272,8 @@ end
 --
 local function fsm2gh(root, caption)
    gh = new_gra(root._id, caption)
-   rtfsm.mapfsm(function (s) proc_node(gh, s) end, root, rtfsm.is_node)
-   rtfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rtfsm.is_trans)
+   rfsm.mapfsm(function (s) proc_node(gh, s) end, root, rfsm.is_node)
+   rfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rfsm.is_trans)
    return gh
 end
 

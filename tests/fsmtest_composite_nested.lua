@@ -4,7 +4,7 @@
 
 package.path = package.path .. ';../?.lua'
 
-require("rtfsm")
+require("rfsm")
 require("fsm2tree")
 require("fsmtesting")
 require("utils")
@@ -25,28 +25,28 @@ local function safe_doo()
    end
 end
 
-csta_tmpl = rtfsm.csta:new {
+csta_tmpl = rfsm.csta:new {
    err = printer_gen("ERR:"),
    warn = printer_gen("WARN:"),
    info = printer_gen("INFO:"),
    dbg = printer_gen("DBG:"),
 
-   operational = rtfsm.csta:new{
-      approaching = rtfsm.sista:new{ entry=puts("entering approaching state"), exit=puts("exiting approaching state") },
-      in_contact = rtfsm.sista:new{ entry=puts("contact established"), exit=puts("contact lost") },
+   operational = rfsm.csta:new{
+      approaching = rfsm.sista:new{ entry=puts("entering approaching state"), exit=puts("exiting approaching state") },
+      in_contact = rfsm.sista:new{ entry=puts("contact established"), exit=puts("contact lost") },
 
-      rtfsm.trans:new{ src='initial', tgt='approaching' },
-      rtfsm.trans:new{ src='approaching', tgt='in_contact', events={ 'e_contact_made' } },
-      rtfsm.trans:new{ src='in_contact', tgt='approaching', events={ 'e_contact_lost' } },
+      rfsm.trans:new{ src='initial', tgt='approaching' },
+      rfsm.trans:new{ src='approaching', tgt='in_contact', events={ 'e_contact_made' } },
+      rfsm.trans:new{ src='in_contact', tgt='approaching', events={ 'e_contact_lost' } },
    },
 
-   safe = rtfsm.sista:new{ entry=puts("entering safe mode"),
+   safe = rfsm.sista:new{ entry=puts("entering safe mode"),
 			   doo=safe_doo,
 			   exit=puts("exiting safe mode") },
 
-   rtfsm.trans:new{ src='initial', tgt='safe' },
-   rtfsm.trans:new{ src='safe', tgt='operational', events={ 'e_range_clear' } },
-   rtfsm.trans:new{ src='operational', tgt='safe', events={ 'e_close_object' } },
+   rfsm.trans:new{ src='initial', tgt='safe' },
+   rfsm.trans:new{ src='safe', tgt='operational', events={ 'e_range_clear' } },
+   rfsm.trans:new{ src='operational', tgt='safe', events={ 'e_close_object' } },
 }
 
 
@@ -76,7 +76,7 @@ local test = {
 }
 
 
-fsm = rtfsm.init(csta_tmpl, "composite_nested_tests")
+fsm = rfsm.init(csta_tmpl, "composite_nested_tests")
 
 if fsmtesting.test_fsm(fsm, test) then os.exit(0)
 else os.exit(1) end

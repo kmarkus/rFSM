@@ -1,6 +1,6 @@
 -- test the static memory usage behavior of a fsm
 
-require("rtfsm")
+require("rfsm")
 require("time")
 require("luagc")
 --require("fsm2uml")
@@ -24,7 +24,7 @@ local progs = {
 }
 
 -- create fsm
-local fsm = rtfsm.init(fsmbuilder.composite_fsm(num_states, state_depth, progs), arg[0])
+local fsm = rfsm.init(fsmbuilder.composite_fsm(num_states, state_depth, progs), arg[0])
 assert(fsm, "fsm init failed")
 -- fsm2uml.fsm2uml(fsm, "png", "fsm_dyn_hier_test-uml.png")
 
@@ -35,8 +35,8 @@ luagc.full()
 -- print("starting...")
 
 for i=1,num_steps do
-   rtfsm.step(fsm)
-   rtfsm.send_events(fsm, "e_trigger")
+   rfsm.step(fsm)
+   rfsm.send_events(fsm, "e_trigger")
    rtposix.nanosleep("REALTIME", "rel", 0, 10000)
 end
 

@@ -1,6 +1,6 @@
 -- test the static memory usage behavior of a fsm
 
-require("rtfsm")
+require("rfsm")
 require("time")
 require("luagc")
 require("fsm2uml")
@@ -17,7 +17,7 @@ function test_fsm_size(n)
    utils.stderr(string.rep('-', 80))
    utils.stderr("test_fsm_size: num_states=" .. n .. ", num_trans=" .. n*2)
    --print("before init: ", luagc.gcstat_tostring(luagc.timed_gc("collect")))
-   local fsm = rtfsm.init(fsmbuilder.rand_fsm(n, n*2), "fsm_" .. n .. n*2)
+   local fsm = rfsm.init(fsmbuilder.rand_fsm(n, n*2), "fsm_" .. n .. n*2)
    luagc.full()
    utils.stdout(n .. ',', luagc.mem_usage())
    

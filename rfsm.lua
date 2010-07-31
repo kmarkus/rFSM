@@ -5,8 +5,8 @@
 require ('utils')
 
 -- tbdel for release!!
---require ('luarocks.loader')
---require('std')
+require ('luarocks.loader')
+require('std')
 
 -- save references
 
@@ -16,7 +16,7 @@ unpack = param, pairs, ipairs, print, tostring, table, string, type,
 loadstring, assert, coroutine, setmetatable, getmetatable, utils, io,
 unpack
 
-module("rtfsm")
+module("rfsm")
 
 local map = utils.map
 
@@ -790,7 +790,7 @@ end
 -- create table for lookups
 function init(fsm_templ, name)
 
-   assert(is_csta(fsm_templ), "invalid fsm model passed to rtfsm.init")
+   assert(is_csta(fsm_templ), "invalid fsm model passed to rfsm.init")
 
    local fsm = utils.deepcopy(fsm_templ)
 

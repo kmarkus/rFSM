@@ -4,7 +4,7 @@
 
 package.path = package.path .. ';../?.lua'
 
-require("rtfsm")
+require("rfsm")
 require("fsm2tree")
 require("fsmtesting")
 require("utils")
@@ -13,18 +13,18 @@ local function printer_gen(s)
    return function (...) print(s, unpack(arg)) end
 end
 
-simple_templ = rtfsm.csta:new{
+simple_templ = rfsm.csta:new{
    err = printer_gen("ERR:"),
    warn = printer_gen("WARN:"),
    info = printer_gen("INFO:"),
    dbg = printer_gen("DBG:"),
 
-   on = rtfsm.sista:new{},
-   off = rtfsm.sista:new{},
+   on = rfsm.sista:new{},
+   off = rfsm.sista:new{},
 
-   rtfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
-   rtfsm.trans:new{ src='on', tgt='off', events={ 'e_off' } },
-   rtfsm.trans:new{ src='initial', tgt='off' }
+   rfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
+   rfsm.trans:new{ src='on', tgt='off', events={ 'e_off' } },
+   rfsm.trans:new{ src='initial', tgt='off' }
 }
 
 
@@ -52,7 +52,7 @@ local test = {
    }
 }
 
-fsm = rtfsm.init(simple_templ, "simple_test")
+fsm = rfsm.init(simple_templ, "simple_test")
 
 if fsmtesting.test_fsm(fsm, test) then os.exit(0)
 else os.exit(1) end

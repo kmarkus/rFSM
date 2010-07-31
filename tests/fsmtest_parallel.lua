@@ -4,7 +4,7 @@
 
 package.path = package.path .. ';../?.lua'
 
-require("rtfsm")
+require("rfsm")
 require("fsm2uml")
 require("fsmtesting")
 require("utils")
@@ -23,48 +23,48 @@ local function test_doo(text)
 	  end
 end
 
-parallel_tpl = rtfsm.csta:new{
+parallel_tpl = rfsm.csta:new{
    dbg = printer_gen("DBG:"),
 
    -- a parallel state: all composite states within are executed in parallel
-   homing = rtfsm.psta:new{ 
+   homing = rfsm.psta:new{ 
 
       -- homing axis1 composite state
-      ax0_csta = rtfsm.csta:new {
+      ax0_csta = rfsm.csta:new {
 	 entry=function() print "entering ax0 csta" end,
 	 exit=function() print "exiting ax0 csta" end,
-	 ax0 = rtfsm.sista:new{ doo=test_doo("homing axis0") },
-	 rtfsm.trans:new { src='initial', tgt='ax0' },
-	 rtfsm.trans:new { src='ax0', tgt='final' },
+	 ax0 = rfsm.sista:new{ doo=test_doo("homing axis0") },
+	 rfsm.trans:new { src='initial', tgt='ax0' },
+	 rfsm.trans:new { src='ax0', tgt='final' },
       },
 
       -- homing axis1 composite state
-      ax1_csta = rtfsm.csta:new {
+      ax1_csta = rfsm.csta:new {
 	 entry=function() print "entering ax1 csta" end,
 	 exit=function() print "exiting ax1 csta" end,
-	 ax1 = rtfsm.sista:new{ doo=test_doo("homing axis1") },
-	 rtfsm.trans:new { src='initial', tgt='ax1' },
-	 rtfsm.trans:new { src='ax1', tgt='final' },
+	 ax1 = rfsm.sista:new{ doo=test_doo("homing axis1") },
+	 rfsm.trans:new { src='initial', tgt='ax1' },
+	 rfsm.trans:new { src='ax1', tgt='final' },
       },
 
       -- homing axis2 composite state
-      ax2_csta = rtfsm.csta:new {
+      ax2_csta = rfsm.csta:new {
 	 entry=function() print "entering ax2 csta" end,
 	 exit=function() print "exiting ax2 csta" end,
-	 ax2 = rtfsm.sista:new{ doo=test_doo("homing axis2") },
-	 rtfsm.trans:new { src='initial', tgt='ax2' },
-	 rtfsm.trans:new { src='ax2', tgt='final' },
+	 ax2 = rfsm.sista:new{ doo=test_doo("homing axis2") },
+	 rfsm.trans:new { src='initial', tgt='ax2' },
+	 rfsm.trans:new { src='ax2', tgt='final' },
       }
    },
 
-   rtfsm.trans:new{ src='initial', tgt='homing' },
-   rtfsm.trans:new{ src='homing', tgt='final' }
+   rfsm.trans:new{ src='initial', tgt='homing' },
+   rfsm.trans:new{ src='homing', tgt='final' }
 }
 
-fsm = rtfsm.init(parallel_tpl, "parallel_test")
+fsm = rfsm.init(parallel_tpl, "parallel_test")
 
 fsm2uml.fsm2uml(fsm, "png", "parallel.png")
 
-rtfsm.step(fsm)
+rfsm.step(fsm)
 print("step 2")
-rtfsm.step(fsm)
+rfsm.step(fsm)

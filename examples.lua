@@ -1,19 +1,19 @@
 --
--- RTFSM examples
+-- RFSM examples
 --
 
 require("fsm2uml")
 require("fsm2tree")
-require("rtfsm")
+require("rfsm")
 require("utils")
 
-local sista = rtfsm.sista
-local csta = rtfsm.csta
-local psta = rtfsm.psta
-local trans = rtfsm.trans
-local junc = rtfsm.junc
-local join = rtfsm.join
-local fork = rtfsm.fork
+local sista = rfsm.sista
+local csta = rfsm.csta
+local psta = rfsm.psta
+local trans = rfsm.trans
+local junc = rfsm.junc
+local join = rfsm.join
+local fork = rfsm.fork
 
 local ex = {}
 
@@ -129,7 +129,7 @@ os.execute("rm -f *.png")
 local function do_all(_fsm, name)
    print(string.rep('-', 80))
    print("Processing FSM '" .. name .. "' ...")
-   local fsm = rtfsm.init(_fsm, name)
+   local fsm = rfsm.init(_fsm, name)
    if not fsm then
       print("FAILED")
       return false

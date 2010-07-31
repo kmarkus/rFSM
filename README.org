@@ -5,13 +5,13 @@
 ** API
 *** Basic API
 
-rtfsm.sista:new{}
-rtfsm.csta:new{}
-rtfsm.psta:new{}
-rtfsm.junc:new{}
-rtfsm.join:new{}
-rtfsm.fork:new{}
-rtfsm.trans:new{}
+rfsm.sista:new{}
+rfsm.csta:new{}
+rfsm.psta:new{}
+rfsm.junc:new{}
+rfsm.join:new{}
+rfsm.fork:new{}
+rfsm.trans:new{}
 
 *** Hooks
 

@@ -14,13 +14,13 @@
 require ('luarocks.loader')
 require('std')
 
-require("rtfsm")
+require("rfsm")
 require("fsm2uml")
 require("utils")
 require("ansicolors")
 
-local pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml, ansicolors
-   = pairs, ipairs, print, table, type, assert, io, utils, rtfsm, tostring, string, fsm2uml, ansicolors
+local pairs, ipairs, print, table, type, assert, io, utils, rfsm, tostring, string, fsm2uml, ansicolors
+   = pairs, ipairs, print, table, type, assert, io, utils, rfsm, tostring, string, fsm2uml, ansicolors
 
 module("fsmtesting")
 
@@ -51,11 +51,11 @@ function get_act_conf(fsm)
 	 return { [s._fqn]=s._mode }
       end
 
-      if rtfsm.is_psta(s) then
+      if rfsm.is_psta(s) then
 	 res[s._id] = map(__walk_act_path, s._act_child)
-      elseif rtfsm.is_csta(s) then
+      elseif rfsm.is_csta(s) then
 	 res[s._id] = __walk_act_path(s._act_child)
-      elseif rtfsm.is_sista(s) then
+      elseif rfsm.is_sista(s) then
 	 return { [s._fqn]=s._mode }
       else
 	 local mes="ERROR: active non state type found, fqn=" .. s.fqn .. ", type=" .. s:type()
@@ -135,9 +135,9 @@ function test_fsm(fsm, test)
       print(boiler)
 
       utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
-      utils.foreach(function (e) rtfsm.send_events(fsm, e) end, t.events)
+      utils.foreach(function (e) rfsm.send_events(fsm, e) end, t.events)
 
-      rtfsm.step(fsm)
+      rfsm.step(fsm)
 
       ret = cmp_ac(get_act_conf(fsm), t.expect)
       print(string.rep("-", 80))

@@ -6,21 +6,21 @@ package.path = package.path .. ';../?.lua'
 
 require("fsm2uml")
 require("fsm2tree")
-require("rtfsm")
+require("rfsm")
 require("fsmtesting")
 require("utils")
 
 local err = print
 local id = 'junc_chain_test'
 
-junc_test_templ = rtfsm.csta:new{
-   dummy = rtfsm.sista:new{},
-   junc1 = rtfsm.junc:new{},
-   junc2 = rtfsm.junc:new{},
+junc_test_templ = rfsm.csta:new{
+   dummy = rfsm.sista:new{},
+   junc1 = rfsm.junc:new{},
+   junc2 = rfsm.junc:new{},
 
-   rtfsm.trans:new{ src='initial', tgt='junc1' },
-   rtfsm.trans:new{ src='junc1', tgt='junc2' },
-   rtfsm.trans:new{ src='junc2', tgt='dummy' }
+   rfsm.trans:new{ src='initial', tgt='junc1' },
+   rfsm.trans:new{ src='junc1', tgt='junc2' },
+   rfsm.trans:new{ src='junc2', tgt='dummy' }
 }
 
 
@@ -38,7 +38,7 @@ test = {
 }
 
 
-jc = rtfsm.init(junc_test_templ)
+jc = rfsm.init(junc_test_templ)
 
 if not jc then
    err(id .. " initalization failed")
