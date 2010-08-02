@@ -21,7 +21,7 @@ function append(car, ...)
 end
 
 function tab2str( tbl )
-   assert(type(tbl) == 'table')
+
    local function val_to_str ( v )
       if "string" == type( v ) then
 	 v = string.gsub( v, "\n", "\\n" )
@@ -41,6 +41,8 @@ function tab2str( tbl )
 	 return "[" .. val_to_str( k ) .. "]"
       end
    end
+
+   if type(tbl) ~= 'table' then return tostring(tbl) end
 
    local result, done = {}, {}
    for k, v in ipairs( tbl ) do
