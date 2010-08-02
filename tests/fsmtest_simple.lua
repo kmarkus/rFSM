@@ -9,16 +9,8 @@ require("fsm2tree")
 require("fsmtesting")
 require("utils")
 
-local function printer_gen(s)
-   return function (...) print(s, unpack(arg)) end
-end
-
 simple_templ = rfsm.csta:new{
-   err = printer_gen("ERR:"),
-   warn = printer_gen("WARN:"),
-   info = printer_gen("INFO:"),
-   dbg = printer_gen("DBG:"),
-
+   dbg = false,
    on = rfsm.sista:new{},
    off = rfsm.sista:new{},
 

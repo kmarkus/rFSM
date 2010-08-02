@@ -6,26 +6,36 @@
 -- against actually executed trajectory
 --
 
---
--- activate all states including leaf but without running any programs
---
-
-
-require ('luarocks.loader')
-require('std')
+--require ('luarocks.loader')
+--require('std')
 
 require("rfsm")
 require("fsm2uml")
 require("utils")
 require("ansicolors")
 
-local pairs, ipairs, print, table, type, assert, io, utils, rfsm, tostring, string, fsm2uml, ansicolors
-   = pairs, ipairs, print, table, type, assert, io, utils, rfsm, tostring, string, fsm2uml, ansicolors
+local pairs, ipairs, print, table, type, assert, io, utils, rfsm,
+   tostring, string, fsm2uml, ansicolors, unpack = pairs, ipairs,
+   print, table, type, assert, io, utils, rfsm, tostring, string,
+   fsm2uml, ansicolors, unpack
+
+local tab2str = utils.tab2str
 
 module("fsmtesting")
 
+local verbose = false
+
+-- output
+local function stdout(...)
+   if verbose then
+      utils.stdout(unpack(arg))
+   end
+end
+
+local stderr = utils.stderr
+
 --
--- activate a node and all parent
+-- activate all states including leaf but without running any programs
 --
 function activate_node(fsm, node)
    assert(is_sta(node), "can only set states types active!")
@@ -106,41 +116,50 @@ end
 --  id = 'test_id', no whitespace, will be used as name for pics
 --  pics = true|false, generate fsm2uml snapshots for each step.
 
-function test_fsm(fsm, test)
+function test_fsm(fsm, test, verb)
+   verbose = verb or false
+
    local function cmp_ac(act, exp)
       if not table_cmp(act, exp) then
-	 print(ansicolors.red("FAILED: Active configurations differ!"))
-	 print(ansicolors.red("    actual:   ") .. tostring(act))
-	 print(ansicolors.red("    expected: ") .. tostring(exp))
+	 stderr(ansicolors.red("FAILED: Active configurations differ!"))
+	 stderr(ansicolors.red("    actual:   ") .. tostring(act))
+	 stderr(ansicolors.red("    expected: ") .. tostring(exp))
 	 return false
       else
-	 print(ansicolors.blue .. ansicolors.bright .. 'OK.' .. ansicolors.reset)
+	 stdout(ansicolors.green .. ansicolors.bright .. 'OK.' .. ansicolors.reset)
 	 return true
       end
    end
 
    local retval = true
    assert(fsm._initalized, "ERROR: test_fsm requires an initialized fsm!")
-   print("TESTING:", test.id)
+   stdout("TESTING:", test.id)
 
-   fsm2uml.fsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")
+   if test.pics then
+      fsm2uml.fsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")
+   end
 
    for i,t in ipairs(test.tests) do
       local ret
       local boiler = "test: " .. t.descr .. '\n' ..
-	 "   preact:      " .. tostring(t.preact) .. '\n' ..
-	 "   sent events: " .. tostring(t.events) .. '\n' ..
-	 "   pre intq:    " .. tostring(fsm._intq) .. '\n'
+	 "   preact:      " .. tab2str(t.preact) .. '\n' ..
+	 "   sent events: " .. tab2str(t.events) .. '\n' ..
+	 "   pre intq:    " .. tab2str(fsm._intq) .. '\n'
 
-      print(boiler)
+      stdout(boiler)
 
       utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
       utils.foreach(function (e) rfsm.send_events(fsm, e) end, t.events)
 
       rfsm.step(fsm)
 
-      ret = cmp_ac(get_act_conf(fsm), t.expect)
-      print(string.rep("-", 80))
+      if t.expect then
+	 ret = cmp_ac(get_act_conf(fsm), t.expect)
+      elseif t.expect_str then
+	 ret = check_status(get_act_conf(fsm), t.expect_str)
+      end
+
+      stdout(string.rep("-", 80))
       fsm2uml.fsm2uml(fsm, "png", test.id .. "-" .. i .. ".png", boiler)
       retval = retval and ret
    end
