@@ -847,7 +847,7 @@ function init(fsm_templ, name)
    if not fsm.drop_events then
       fsm.drop_events =
 	 function (events)
-	    if #events>0 then fsm.dbg("DROPPING: ", events) end end
+	    if #events>0 then fsm.dbg("DROPPING_EVENTS", events) end end
    end
 
    -- All OK!
@@ -877,6 +877,7 @@ local function getLCA(tr)
    local lca = tr.tgt._parent
 
    -- looks dangerous, but root should always be active:
+   -- tbd: could it be 'done' ? -- 2010-08-02
    while lca._mode ~= 'active' do
       lca = lca._parent
    end
@@ -937,7 +938,7 @@ local function run_doos(fsm)
 
       -- create new coroutine
       if state.doo and not state._doo_co then
-	 fsm.dbg("created coroutine for " .. state._fqn .. " doo")
+	 fsm.dbg("DOO", "created coroutine for " .. state._fqn .. " doo")
 	 state._doo_co = coroutine.create(state.doo)
       end
 
@@ -950,7 +951,7 @@ local function run_doos(fsm)
 	    sta_mode(state, 'done')
 	    actleaf_rm(fsm, state)
 	    send_events(fsm, "e_" .. state._fqn .. "_done")
-	    fsm.dbg("REMOVING completed coroutine of " .. state._fqn .. " doo")
+	    fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
 	 end
 	 break
       end
@@ -963,7 +964,7 @@ end
 
 ----------------------------------------
 -- enter a state (and nothing else)
-local function enter_state(fsm, state)
+local function enter_one_state(fsm, state)
 
    if not is_sta(state) then return end
 
@@ -977,7 +978,7 @@ local function enter_state(fsm, state)
       else sta_mode(state, "done") end
    end
 
-   fsm.dbg("ENTERED\t", state._fqn)
+   fsm.dbg("STATE_ENTER", state._fqn)
 end
 
 ----------------------------------------
@@ -1008,7 +1009,7 @@ local function exit_state(fsm, state)
 
    if is_sista(state) then actleaf_rm(fsm, state) end
 
-   fsm.dbg("EXIT\t", state._fqn)
+   fsm.dbg("STATE_EXIT", state._fqn)
 end
 
 
@@ -1023,7 +1024,7 @@ end
 local function exec_trans_check(fsm, tr)
    local res = true
    if tr.tgt._mode ~= 'inactive' then
-      fsm.err("ERROR: transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt._mode .. "'")
+      fsm.err("ERROR", "transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt._mode .. "'")
       res = false
    end
    return res
@@ -1041,7 +1042,7 @@ local function exec_trans_exit(fsm, tr)
 
    -- tbd: if is_cplx: exit all active children of src
 
-   -- one exit tr.src if it is a state (and not a connector!)
+   -- only exit tr.src if it is a state (and not a connector!)
    if is_sta(tr.src) then exit_state(fsm, tr.src) end
 
    --  exit all states from src.parent up to (but excluding) LCA
@@ -1050,12 +1051,13 @@ local function exec_trans_exit(fsm, tr)
       exit_state(fsm, state_walker)
       state_walker = state_walker._parent
    end
-   fsm.dbg("TRANS EXITED", tr.src._fqn)
+   fsm.dbg("TRANS_EXIT", "lca: " .. lca._fqn, tr.src._fqn .. '->' .. tr.tgt._fqn)
 end
 
 -- Execute Part 2 of the transition: the effect
 local function exec_trans_effect(fsm, tr)
    -- run effect
+   fsm.dbg("EFFECT", tostring(tr))
    if tr.effect then
       tr.effect(tr)
    end
@@ -1078,9 +1080,9 @@ local function exec_trans_enter(fsm, tr)
 
    -- now enter down_path
    while #down_path > 0 do
-      enter_state(fsm, table.remove(down_path))
+      enter_one_state(fsm, table.remove(down_path))
    end
-   fsm.dbg("TRANS ENTERED", tr.tgt._fqn)
+   fsm.dbg("TRANS_ENTER", "lca: " .. lca._fqn, tr.src._fqn .. '->' .. tr.tgt._fqn)
 end
 
 -- can't fail in any way
@@ -1106,7 +1108,7 @@ local function path2str(path, indc, indmul)
    local function __path2str(pnode, ind)
       strtab[#strtab+1] = pnode.node._fqn
       strtab[#strtab+1] = '[' .. fsmobj_tochar(pnode.node) .. ']'
-      if not pnode.nextl then strtab[#strtab+1] = "\n" return end
+      if not pnode.nextl then return end
 
       if is_fork(pnode.node) or #pnode.nextl > 1 then
 	 strtab[#strtab+1] = "\n"
@@ -1142,7 +1144,7 @@ local function exec_path(fsm, path)
       local function __exec_pnode_step(pn)
 	 -- fsm.dbg("exec_pnode ", pn.node._fqn)
 	 if is_join(pn.node) then
-	    fsm.dbg("exec_pnode_step join " .. pn.node._fqn)
+	    fsm.dbg("JOIN_PATH_NODE_STEP", pn.node._fqn)
 	    -- we are passing through the join (pn.nextl ~= false).
 	    -- This is only the case if this we are exiting the
 	    -- last active region of the psta.  node_find_enable must
@@ -1155,14 +1157,14 @@ local function exec_path(fsm, path)
 	       else
 		  pn.node._join_cnt = pn.node._join_cnt - 1
 	       end
-	       fsm.dbg("exec_pnode_step: join- jnt_cnt dec (" .. pn.node._join_cnt .. ")")
+	       fsm.dbg("JOIN_PATH_NODE_STEP", "pn.node._join_cnt: " .. pn.node._join_cnt)
 	    else
 	       assert(pn.node._join_cnt == 1)
 	       local seg = pn.nextl[1]
 	       exec_trans(fsm, seg.trans)
 	       next_heads[#next_heads+1] = seg.next
 	       pn.node._join_cnt = nil
-	       fsm.dbg("exec_pnode_step: join, passing through")
+	       fsm.dbg("JOIN_PATH_NODE_STEP", " passing through")
 	    end
 	 elseif pn.nextl == false then
 	    return
@@ -1194,7 +1196,7 @@ local function exec_path(fsm, path)
       else return __exec_path(next_heads) end
    end
 
-   fsm.dbg("EXEC_PATH:", path2str(path))
+   fsm.dbg("EXEC_PATH", path2str(path))
    return __exec_path{path}
 end
 
@@ -1333,7 +1335,7 @@ local function fsm_find_enabled(fsm, events)
    local cur = fsm
    local path
    while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
-      fsm.dbg("CHECKING:\t transitions from " .. "'" .. cur._fqn .. "'", events)
+      fsm.dbg("CHECKING", "for transitions from " .. "'" .. cur._fqn .. "'")
       path = node_find_enabled(fsm, cur, events)
       if path then break end
       cur = cur._act_child
@@ -1344,15 +1346,11 @@ end
 ----------------------------------------
 -- attempt to transition the fsm
 local function transition(fsm, events)
-   -- conflict resolution could be more sophisticated
-   -- local function select_path(paths)
-   --    fsm.warn("WARNING: conflicting paths found")
-   --    return paths[1]
-   -- end
+   fsm.dbg("TRANSITION", "searching transitions for events", events)
 
    local path = fsm_find_enabled(fsm, events)
    if not path then
-      fsm.dbg("TRANSITION:", "no enabled paths found")
+      fsm.dbg("TRANSITION", "no enabled paths found")
       return false
    else return exec_path(fsm, path) end
 end
@@ -1413,7 +1411,7 @@ function step(fsm)
    if idling then
       if fsm._idle then fsm._idle(fsm)
       else
-	 fsm.dbg("HIBERNATING:\t no doos, no events, no idle func, halting engines")
+	 fsm.dbg("HIBERNATING", "no doos, no events, no idle func, halting engines")
 	 return
       end
    end

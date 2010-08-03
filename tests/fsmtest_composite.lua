@@ -7,6 +7,7 @@ package.path = package.path .. ';../?.lua'
 require("rfsm")
 require("fsm2tree")
 require("fsmtesting")
+require("fsmpprint")
 require("utils")
 
 local function printer_gen(s)
@@ -22,10 +23,7 @@ local function test_doo()
 end
 
 csta_tmpl = rfsm.csta:new{
-   err = printer_gen(""),
-   warn = printer_gen(""),
-   info = printer_gen(""),
-   dbg = printer_gen(""),
+   dbg = fsmpprint.dbgcolor,
 
    on = rfsm.sista:new{ doo=test_doo },
    off = rfsm.sista:new{},

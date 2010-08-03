@@ -37,4 +37,3 @@ rfsm.trans:new{}
 
 *** fsmtesting
 ** Internals
-** 
