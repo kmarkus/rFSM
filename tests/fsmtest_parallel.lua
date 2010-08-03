@@ -7,11 +7,8 @@ package.path = package.path .. ';../?.lua'
 require("rfsm")
 require("fsm2uml")
 require("fsmtesting")
+require("fsmpprint")
 require("utils")
-
-local function printer_gen(s)
-   return function (...) print(s, unpack(arg)) end
-end
 
 local function test_doo(text)
    return function ()
@@ -24,7 +21,7 @@ local function test_doo(text)
 end
 
 parallel_tpl = rfsm.csta:new{
-   dbg = printer_gen("DBG:"),
+   dbg = fsmpprint.dbgcolor,
 
    -- a parallel state: all composite states within are executed in parallel
    homing = rfsm.psta:new{ 

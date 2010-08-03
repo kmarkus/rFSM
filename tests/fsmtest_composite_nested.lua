@@ -7,14 +7,11 @@ package.path = package.path .. ';../?.lua'
 require("rfsm")
 require("fsm2tree")
 require("fsmtesting")
+require("fsmpprint")
 require("utils")
 
-local function printer_gen(s)
-   return function (...) print(s, unpack(arg)) end
-end
-
 local function puts(...)
-   print(arg)
+   return function () print(unpack(arg)) end
 end
 
 local function safe_doo()
@@ -26,10 +23,10 @@ local function safe_doo()
 end
 
 csta_tmpl = rfsm.csta:new {
-   err = printer_gen("ERR:"),
-   warn = printer_gen("WARN:"),
-   info = printer_gen("INFO:"),
-   dbg = printer_gen("DBG:"),
+   -- dbg = fsmpprint.dbgcolor,
+   dbg = fsmpprint.gen_dbgcolor({["STATE_ENTER"]=true, ["STATE_EXIT"]=true,
+				 ["HIBERNATING"]=true, ["EXEC_PATH"]=true,
+				 ["EFFECT"]=true, ["DOO"]=true}),
 
    operational = rfsm.csta:new{
       approaching = rfsm.sista:new{ entry=puts("entering approaching state"), exit=puts("exiting approaching state") },
@@ -78,5 +75,5 @@ local test = {
 
 fsm = rfsm.init(csta_tmpl, "composite_nested_tests")
 
-if fsmtesting.test_fsm(fsm, test) then os.exit(0)
+if fsmtesting.test_fsm(fsm, test, true) then os.exit(0)
 else os.exit(1) end

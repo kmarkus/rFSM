@@ -271,6 +271,7 @@ end
 
 -- convert a (sub) statemachine to string
 -- tbd: only used for active leaves, so pretty useless...
+-- tbd: unused! remove!
 function fsm_tostring(fsm, ind)
    local ind = ind or 0
    local res = {}
@@ -910,14 +911,16 @@ end
 
 local function actleaf_add(fsm, lf)
    table.insert(fsm._act_leaves, lf)
-   fsm.dbg("ACT_LEAVES", " added: " .. lf._fqn .. ", actl=" .. fsm_tostring(fsm._act_leaves))
+   fsm.dbg("ACT_LEAVES", "added:", lf._fqn, ", cur:",
+	   map(function(al) return al._fqn end, fsm._act_leaves))
 end
 
 local function actleaf_rm(fsm, lf)
    for i=1,#fsm._act_leaves do
       if fsm._act_leaves[i] == lf then
 	 table.remove(fsm._act_leaves, i)
-	 fsm.dbg("ACT_LEAVES", " removed: " .. lf._fqn .. ", actl=" .. fsm_tostring(fsm._act_leaves))
+	 fsm.dbg("ACT_LEAVES", "removed:", lf._fqn, ", cur:",
+		 map(function(al) return al._fqn end, fsm._act_leaves))
       end
    end
 end

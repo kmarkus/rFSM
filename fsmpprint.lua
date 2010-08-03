@@ -19,7 +19,7 @@ function dbgcolor(...)
       return
    end
 
-   arg.n = nil -- oh why!
+   arg.n = nil -- argh !
 
    -- convert nested tables to strings
    ptab = utils.map(function (e) return utils.tab2str(e) end, arg)
@@ -43,3 +43,23 @@ function dbgcolor(...)
    end
 end
 
+-- returns a dbg color function which filters: first keeps the
+-- attributes in pos, then from the remaining removes the ones with
+-- attributes in tneg.
+--
+function gen_dbgcolor(ftab)
+
+   return function (...)
+	     local tag = arg[1]
+	     arg.n = nil
+	     if ftab[tag] == true then
+		dbgcolor(unpack(arg))
+	     elseif ftab[tag] == false then
+		return
+	     else
+		if ftab['*'] then
+		   dbgcolor(unpack(arg))
+		end
+	     end
+	  end
+end
