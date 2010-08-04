@@ -930,7 +930,6 @@ end
 -- the active queue
 -- active_leaf states might not have a doo function, so check
 -- returns true if there is at least one active doo, otherwise false
--- tbd: where 'done' state set?
 local function run_doos(fsm)
    local has_run = false
 
@@ -958,7 +957,6 @@ local function run_doos(fsm)
 	 end
 	 break
       end
-
    end
 
    return has_run
@@ -1043,19 +1041,26 @@ local function exec_trans_exit(fsm, tr)
 
    local lca = getLCA(tr)
 
-   -- tbd: if is_cplx: exit all active children of src
+   -- observation: the LCA can _never_ be a parallel state, as that
+   -- would mean transitioning between regions. The LCA can also never
+   -- be a simple state. -> It must be composite. As a consequence it
+   -- can have at most one active child.
 
-   -- only exit tr.src if it is a state (and not a connector!)
-   if is_sta(tr.src) then exit_state(fsm, tr.src) end
-
-   --  exit all states from src.parent up to (but excluding) LCA
-   local state_walker = tr.src._parent
-   while state_walker ~= lca do
-      exit_state(fsm, state_walker)
-      state_walker = state_walker._parent
+   if not is_csta(lca) then
+      fsm.err("ERROR", "exec_trans_exit: lca" .. lca._fqn .. " not a csta.")
    end
-   fsm.dbg("TRANS_EXIT", "lca: " .. lca._fqn, tr.src._fqn .. '->' .. tr.tgt._fqn)
+
+   -- LCA can have no active child when:
+   --   - initial transition
+   --   - transitions between junctions of same scope
+   if lca._act_child then
+      fsm.dbg("TRANS_EXIT", "exiting all up to LCA:" .. lca._fqn, " lca._act_child: " .. lca._act_child._fqn)
+      exit_state(fsm, lca._act_child)
+   else
+      fsm.dbg("TRANS_EXIT", "no active children of LCA:" .. lca._fqn)
+   end
 end
+
 
 -- Execute Part 2 of the transition: the effect
 local function exec_trans_effect(fsm, tr)
