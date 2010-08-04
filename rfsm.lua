@@ -873,7 +873,7 @@ end
 
 -- this function exploits the fact that the LCA is the first parent of
 -- tgt which is in state 'active'
--- tbd: sure this works for parallel states?
+-- sure this works for parallel states? yes!
 local function getLCA(tr)
    local lca = tr.tgt._parent
 

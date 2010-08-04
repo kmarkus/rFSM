@@ -29,8 +29,16 @@ csta_tmpl = rfsm.csta:new {
 				 ["EFFECT"]=true, ["DOO"]=true}),
 
    operational = rfsm.csta:new{
-      approaching = rfsm.sista:new{ entry=puts("entering approaching state"), exit=puts("exiting approaching state") },
-      in_contact = rfsm.sista:new{ entry=puts("contact established"), exit=puts("contact lost") },
+
+      approaching = rfsm.sista:new{
+	 entry=puts("entering approaching state"),
+	 exit=puts("exiting approaching state")
+      },
+
+      in_contact = rfsm.sista:new{
+	 entry=puts("contact established"),
+	 exit=puts("contact lost")
+      },
 
       rfsm.trans:new{ src='initial', tgt='approaching' },
       rfsm.trans:new{ src='approaching', tgt='in_contact', events={ 'e_contact_made' } },
@@ -38,8 +46,8 @@ csta_tmpl = rfsm.csta:new {
    },
 
    safe = rfsm.sista:new{ entry=puts("entering safe mode"),
-			   doo=safe_doo,
-			   exit=puts("exiting safe mode") },
+			  doo=safe_doo,
+			  exit=puts("exiting safe mode") },
 
    rfsm.trans:new{ src='initial', tgt='safe' },
    rfsm.trans:new{ src='safe', tgt='operational', events={ 'e_range_clear' } },
