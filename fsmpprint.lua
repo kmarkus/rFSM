@@ -12,6 +12,9 @@ local ac = ansicolors
 
 module("fsmpprint")
 
+
+local pad = 20
+
 -- colorized dbg replacement function
 function dbgcolor(...)
 
@@ -37,9 +40,9 @@ function dbgcolor(...)
    col = ctab[ptab[1]]
 
    if col ~= nil then
-      print(col .. utils.rpad(ptab[1], 18) .. ac.reset .. table.concat(ptab, ' ', 2))
+      print(col .. utils.rpad(ptab[1], pad) .. ac.reset .. table.concat(ptab, ' ', 2))
    else
-      print(utils.rpad(ptab[1], 18) .. table.concat(ptab, ' ', 2))
+      print(utils.rpad(ptab[1], pad) .. table.concat(ptab, ' ', 2))
    end
 end
 

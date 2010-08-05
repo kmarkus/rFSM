@@ -61,10 +61,10 @@ function get_act_conf(fsm)
 	 return { [s._fqn]=s._mode }
       end
 
-      if rfsm.is_psta(s) then
-	 res[s._id] = map(__walk_act_path, s._act_child)
-      elseif rfsm.is_csta(s) then
-	 res[s._id] = __walk_act_path(s._act_child)
+      if rfsm.is_cplx(s) then
+	 for ac,_ in pairs(s._actchild) do
+	    res[s._id] = __walk_act_path(ac)
+	 end
       elseif rfsm.is_sista(s) then
 	 return { [s._fqn]=s._mode }
       else
@@ -122,8 +122,8 @@ function test_fsm(fsm, test, verb)
    local function cmp_ac(act, exp)
       if not table_cmp(act, exp) then
 	 stderr(ansicolors.red("FAILED: Active configurations differ!"))
-	 stderr(ansicolors.red("    actual:   ") .. tostring(act))
-	 stderr(ansicolors.red("    expected: ") .. tostring(exp))
+	 stderr(ansicolors.red("    actual:   ") .. utils.tab2str(act))
+	 stderr(ansicolors.red("    expected: ") .. utils.tab2str(exp))
 	 return false
       else
 	 stdout(ansicolors.green .. ansicolors.bright .. 'OK.' .. ansicolors.reset)
@@ -159,9 +159,11 @@ function test_fsm(fsm, test, verb)
 	 ret = check_status(get_act_conf(fsm), t.expect_str)
       end
 
-      stdout(string.rep("-", 80))
-      fsm2uml.fsm2uml(fsm, "png", test.id .. "-" .. i .. ".png", boiler)
+      local imgfile = test.id .. "-" .. i .. ".png"
+      stdout("generating img: ", imgfile)
+      fsm2uml.fsm2uml(fsm, "png", imgfile, boiler)
       retval = retval and ret
+      stdout(string.rep("-", 80))
    end
    return retval
 end

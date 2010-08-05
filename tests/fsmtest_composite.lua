@@ -53,5 +53,5 @@ local test = {
 
 fsm = rfsm.init(csta_tmpl, "composite_tests")
 
-if fsmtesting.test_fsm(fsm, test) then os.exit(0)
+if fsmtesting.test_fsm(fsm, test, true) then os.exit(0)
 else os.exit(1) end

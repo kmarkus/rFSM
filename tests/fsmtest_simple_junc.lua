@@ -8,12 +8,16 @@ require("fsm2uml")
 require("fsm2tree")
 require("rfsm")
 require("fsmtesting")
+require("fsmpprint")
 require("utils")
 
 local err = print
 local id = 'junc_chain_test'
 
 junc_test_templ = rfsm.csta:new{
+
+   dbg = fsmpprint.dbgcolor,
+
    dummy = rfsm.sista:new{},
    junc1 = rfsm.junc:new{},
    junc2 = rfsm.junc:new{},
@@ -27,7 +31,7 @@ junc_test_templ = rfsm.csta:new{
 test = {
    id = 'simple_junc_test',
    pics = true,
-   tests = { 
+   tests = {
       {
 	 descr='testing entry',
 	 preact = nil,
@@ -45,6 +49,5 @@ if not jc then
    os.exit(1)
 end
 
-if fsmtesting.test_fsm(jc, test) then os.exit(0)
+if fsmtesting.test_fsm(jc, test, true) then os.exit(0)
 else os.exit(1) end
-
