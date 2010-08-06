@@ -854,6 +854,7 @@ end
 ----------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
+   fsm.dbg("RAISED", table.concat(arg, ", "))
    for _,v in ipairs(arg) do
       table.insert(fsm._intq, v)
    end
@@ -937,7 +938,7 @@ end
 
 local function actleaf_add(fsm, lf)
    table.insert(fsm._act_leaves, lf)
-   fsm.dbg("ACT_LEAVES", "added:", lf._fqn, ", cur:",
+   fsm.dbg("ACT_LEAF_ADD", lf._fqn, ", cur:",
 	   map(function(al) return al._fqn end, fsm._act_leaves))
 end
 
@@ -945,7 +946,7 @@ local function actleaf_rm(fsm, lf)
    for i=1,#fsm._act_leaves do
       if fsm._act_leaves[i] == lf then
 	 table.remove(fsm._act_leaves, i)
-	 fsm.dbg("ACT_LEAVES", "removed:", lf._fqn, ", cur:",
+	 fsm.dbg("ACT_LEAF_RM", lf._fqn, ", cur:",
 		 map(function(al) return al._fqn end, fsm._act_leaves))
       end
    end
@@ -1258,19 +1259,30 @@ local function exec_path(fsm, path)
 	    if pn.nextl == false then -- decrement a join
 	       if not pn.node._join_cnt then
 		  pn.node._join_cnt = #pn.node._itrs - 1
+	       elseif pn.node._join_cnt == 1 then
+ 		  send(fsm, "done@" .. pn.node._parent._fqn)
+		  pn.node._join_cnt = nil
 	       else
 		  pn.node._join_cnt = pn.node._join_cnt - 1
 	       end
 	       fsm.dbg("JOIN_PATH_NODE_STEP", "node._fqn", pn.node.fqn, ", new pn.node._join_cnt: " .. pn.node._join_cnt)
-	    else
-	       assert(pn.node._join_cnt == 1)
-	       local seg = pn.nextl[1]
-	       exec_trans(fsm, seg.trans)
-	       next_heads[#next_heads+1] = seg.next
-	       pn.node._join_cnt = nil
-	       fsm.dbg("JOIN_PATH_NODE_STEP", "node._fqn", pn.node.fqn, " join_cnt == 0, passing through")
 	    end
+	    -- else
+	    --    assert(pn.node._join_cnt == 1)
+	    --    local seg = pn.nextl[1]
+	    --    exec_trans(fsm, seg.trans)
+	    --    next_heads[#next_heads+1] = seg.next
+	    --    pn.node._join_cnt = nil
+	    --    fsm.dbg("JOIN_PATH_NODE_STEP", "node._fqn", pn.node.fqn, " join_cnt == 0, passing through")
+	    -- end
+
 	 elseif pn.nextl == false then
+	    -- if we stop on a final junction raise "done@parent"
+	    -- event. Otherwise just return (we have reached a stable
+	    -- conf)
+	    if is_junc(pn.node) and pn._id == 'final' then
+	       send(fsm, "done@" .. pn.node._parent._fqn)
+	    end
 	    return
 	 elseif is_sta(pn.node) then
 	    local seg = pn.nextl[1]
@@ -1357,14 +1369,13 @@ function node_find_enabled(fsm, start, events)
 
       assert(is_node(start), "node type expected")
 
-      if is_junc(start) then return __find_disj_path(start, events)
-      elseif is_fork(start) then return __find_conj_path(start, events)
-      elseif is_join(start) then
-	 if start._join_cnt == 1 then
-	    return __find_disj_path(start, events)
-	 else
+      if is_junc(start) then
+	 if start._id == 'final' then
 	    return { node=start, nextl=false }
 	 end
+	 return __find_disj_path(start, events)
+      elseif is_fork(start) then return __find_conj_path(start, events)
+      elseif is_join(start) then return { node=start, nextl=false }
       elseif is_sta(start) then return { node=start, nextl=false }
       else fsm.err("ERROR: node_find_path invalid starting node"
 		     .. start._fqn .. ", type" .. start:type()) end

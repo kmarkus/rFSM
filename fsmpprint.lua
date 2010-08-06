@@ -34,7 +34,8 @@ function dbgcolor(...)
       DOO = ac.blue,
       EXEC_PATH = ac.cyan,
       ERROR = ac.red .. ac.bright,
-      HIBERNATING = ac.magenta
+      HIBERNATING = ac.magenta,
+      RAISED = ac.white .. ac.bright
    }
 
    col = ctab[ptab[1]]
