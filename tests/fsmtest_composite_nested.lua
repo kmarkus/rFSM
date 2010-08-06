@@ -7,7 +7,7 @@ package.path = package.path .. ';../?.lua'
 require("rfsm")
 require("fsm2tree")
 require("fsmtesting")
-require("fsmpprint")
+require("fsmpp")
 require("utils")
 
 local function puts(...)
@@ -23,8 +23,8 @@ local function safe_doo()
 end
 
 csta_tmpl = rfsm.csta:new {
-   dbg = fsmpprint.dbgcolor,
-   -- dbg = fsmpprint.gen_dbgcolor({["STATE_ENTER"]=true, ["STATE_EXIT"]=true,
+   dbg = fsmpp.dbgcolor,
+   -- dbg = fsmpp.gen_dbgcolor({["STATE_ENTER"]=true, ["STATE_EXIT"]=true,
    -- 				 ["HIBERNATING"]=true, ["EXEC_PATH"]=true,
    -- 				 ["EFFECT"]=true, ["DOO"]=true, ["CHECKING"]=true}),
 

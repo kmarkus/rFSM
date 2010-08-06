@@ -8,10 +8,10 @@ require("rfsm")
 require("fsm2tree")
 require("fsmtesting")
 require("utils")
-require("fsmpprint")
+require("fsmpp")
 
 simple_templ = rfsm.csta:new{
-   dbg = fsmpprint.dbgcolor,
+   dbg = fsmpp.dbgcolor,
    on = rfsm.sista:new{},
    off = rfsm.sista:new{},
 
@@ -47,5 +47,8 @@ local test = {
 
 fsm = rfsm.init(simple_templ, "simple_test")
 
-if fsmtesting.test_fsm(fsm, test, true) then os.exit(0)
-else os.exit(1) end
+-- if fsmtesting.test_fsm(fsm, test, true) then os.exit(0)
+-- else os.exit(1) end
+fsmtesting.test_fsm(fsm, test, true)
+
+print(fsmpp.fsm2str(fsm))

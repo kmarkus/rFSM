@@ -259,27 +259,6 @@ function fsm_merge(fsm, parent, obj, id)
    return true
 end
 
--- convert a (sub) statemachine to string
--- tbd: only used for active leaves, so pretty useless...
--- tbd: unused! remove!
-function fsm_tostring(fsm, ind)
-   local ind = ind or 0
-   local res = {}
-
-   function __fsm_tostring(tab, res, ind)
-      for name,state in pairs(tab) do
-	 if not is_meta(name) and is_sta(state) then
-	    res[#res+1] = string.rep('\t', ind) .. state._id
-	    if is_cplx(state) then
-	       __fsm_tostring(state, res, ind+1)
-	    end
-	 end
-      end
-   end
-   __fsm_tostring(fsm, res, ind)
-   return table.concat(res, ',')
-end
-
 --------------------------------------------------------------------------------
 -- Initialization functions for preprocessing and validating the FSM
 --------------------------------------------------------------------------------
@@ -974,7 +953,7 @@ local function actchild_get(state)
 end
 
 -- set or get state mode
-local function sta_mode(s, m)
+function sta_mode(s, m)
    assert(is_sta(s), "can't set_mode on non state type")
    if m then
       assert(m=='active' or m=='inactive' or m=='done')

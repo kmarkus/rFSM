@@ -4,16 +4,60 @@
 
 require("ansicolors")
 require("utils")
+require("rfsm")
 
-local unpack, print, type = unpack, print, type
+local unpack, print, type, pairs, assert = unpack, print, type, pairs, assert
 local table = table
 local utils = utils
+local string = string
 local ac = ansicolors
+local rfsm = rfsm
 
-module("fsmpprint")
+-- some shortcuts
+local is_meta = rfsm.is_meta
+local is_sta = rfsm.is_sta
+local is_sista = rfsm.is_sista
+local is_cplx = rfsm.is_cplx
+local sta_mode = rfsm.sta_mode
+local fsmobj_tochar = rfsm.fsmobj_tochar
+
+module("fsmpp")
 
 
 local pad = 20
+
+-- pretty print fsm
+function fsm2str(fsm, ind)
+   local ind = ind or 1
+   local indstr = '    '
+   local res = {}
+
+   function __2colstr(s)
+      assert(s, "s not a state")
+      if s._mode == 'active' then
+	 if is_sista(s) then return ac.green .. ac.bright .. s._id .. ac.reset
+	 else return ac.green .. s._id .. ac.reset end
+      elseif s._mode == 'done' then return ac.yellow .. s._id .. ac.reset
+      else return ac.red .. s._id .. ac.reset end
+   end
+
+   function __fsm_tostring(tab, res, ind)
+      for name,state in pairs(tab) do
+	 if not is_meta(name) and is_sta(state) then
+	    res[#res+1] = string.rep(indstr, ind) .. __2colstr(state) .. '[' .. fsmobj_tochar(state) .. ']'
+	    if is_sista(state) then res[#res+1] = '\n' end
+	    if is_cplx(state) then
+	       res[#res+1] = '\n'
+	       __fsm_tostring(state, res, ind+1)
+	    end
+	 end
+      end
+   end
+   res[#res+1] = __2colstr(fsm) .. '\n'
+   __fsm_tostring(fsm, res, ind)
+   return table.concat(res, '')
+end
+
 
 -- colorized dbg replacement function
 function dbgcolor(...)

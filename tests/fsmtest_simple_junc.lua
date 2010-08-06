@@ -8,7 +8,7 @@ require("fsm2uml")
 require("fsm2tree")
 require("rfsm")
 require("fsmtesting")
-require("fsmpprint")
+require("fsmpp")
 require("utils")
 
 local err = print
@@ -16,7 +16,7 @@ local id = 'junc_chain_test'
 
 junc_test_templ = rfsm.csta:new{
 
-   dbg = fsmpprint.dbgcolor,
+   dbg = fsmpp.dbgcolor,
 
    dummy = rfsm.sista:new{},
    junc1 = rfsm.junc:new{},
