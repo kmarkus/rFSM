@@ -1260,12 +1260,12 @@ local function exec_path(fsm, path)
 	       if not pn.node._join_cnt then
 		  pn.node._join_cnt = #pn.node._itrs - 1
 	       elseif pn.node._join_cnt == 1 then
- 		  send(fsm, "done@" .. pn.node._parent._fqn)
+ 		  send_events(fsm, "e_done@" .. pn.node._parent._fqn)
 		  pn.node._join_cnt = nil
 	       else
 		  pn.node._join_cnt = pn.node._join_cnt - 1
 	       end
-	       fsm.dbg("JOIN_PATH_NODE_STEP", "node._fqn", pn.node.fqn, ", new pn.node._join_cnt: " .. pn.node._join_cnt)
+	       fsm.dbg("JOIN_PATH_NODE_STEP", "node._fqn", pn.node.fqn, ", new pn.node._join_cnt: " .. tostring(pn.node._join_cnt))
 	    end
 	    -- else
 	    --    assert(pn.node._join_cnt == 1)
@@ -1280,8 +1280,8 @@ local function exec_path(fsm, path)
 	    -- if we stop on a final junction raise "done@parent"
 	    -- event. Otherwise just return (we have reached a stable
 	    -- conf)
-	    if is_junc(pn.node) and pn._id == 'final' then
-	       send(fsm, "done@" .. pn.node._parent._fqn)
+	    if is_junc(pn.node) and pn.node._id == 'final' then
+	       send_events(fsm, "e_done@" .. pn.node._parent._fqn)
 	    end
 	    return
 	 elseif is_sta(pn.node) then
