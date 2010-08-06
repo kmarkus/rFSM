@@ -1205,31 +1205,6 @@ local function path2str(path, indc, indmul)
    else return ret end
 end
 
-
-local function path2str_ORIG(path, indc, indmul)
-   indc = indc or ' '
-   indmul = indmul or 2
-   local strtab = {}
-
-   local function __path2str(pnode, ind)
-      strtab[#strtab+1] = pnode.node._fqn
-      strtab[#strtab+1] = '[' .. fsmobj_tochar(pnode.node) .. ']'
-      if not pnode.nextl then return end
-
-      if is_fork(pnode.node) or #pnode.nextl > 1 then
-	 strtab[#strtab+1] = "\n"
-	 strtab[#strtab+1] = string.rep(indc, ind*indmul)
-      end
-
-      strtab[#strtab+1] = '->'
-      map(function (seg) __path2str(seg.next, ind+1) end, pnode.nextl)
-   end
-
-   __path2str(path, 0)
-   return table.concat(strtab)
-end
-
-
 -- just take first
 local function conflict_resolve(fsm, pnode)
    fsm.warn("conflicting transitions from src " .. pnode.nextl[1].trans.src._fqn .. " to")
@@ -1442,22 +1417,6 @@ function node_find_enabled(fsm, start, events)
    -- else fsm.err("ERROR: node_find_path invalid starting node"
    -- 		  .. start._fqn .. ", type" .. start:type()) end
 end
-
-----------------------------------------
--- walk down the active tree and call find_path for all active states
--- tbd: deal with orthogonal regions?
-local function fsm_find_enabled_OLD(fsm, events)
-   local cur = fsm
-   local path
-   while cur and  cur._mode ~= 'inactive' do -- => 'done' or 'active'
-      fsm.dbg("CHECKING", "for transitions from " .. "'" .. cur._fqn .. "'")
-      path = node_find_enabled(fsm, cur, events)
-      if path then break end
-      cur = cur._act_child
-   end
-   return path
-end
-
 
 ----------------------------------------
 -- walk down the active tree and call find_path for all active states.
