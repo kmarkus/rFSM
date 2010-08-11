@@ -1,4 +1,5 @@
--- useful functions
+
+
 
 local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack =
    type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack
@@ -119,21 +120,17 @@ function cons(car, cdr)
   return new_array
 end
 
--- flatten
--- from nmap listops
--- see http://nmap.org/book/man-legal.html
-function flatten(l)
-    local function flat(r, t)
-    	for i, v in ipairs(t) do
-    		if(type(v) == 'table') then
-    			flat(r, v)
-    		else
-    			table.insert(r, v)
-    		end
-    	end
-    	return r
-    end
-    return flat({}, l)
+function flatten(t)
+   function __flatten(res, t)
+      if type(t) == 'table' then
+         for k,v in ipairs(t) do __flatten(res, v) end
+      else
+         res[#res+1] = t
+      end
+      return res
+   end
+
+   return __flatten({}, t)
 end
 
 function deepcopy(object)
