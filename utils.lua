@@ -1,5 +1,6 @@
-
-
+--
+-- Useful code snips collected from the lua wiki
+--
 
 local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack =
    type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack
@@ -77,9 +78,6 @@ function stdout(...)
    print(unpack(arg))
 end
 
-
--- from: http://lua-users.org/wiki/SplitJoin
--- Compatibility: Lua-5.1
 function split(str, pat)
    local t = {}  -- NOTE: use {n = 0} in Lua-5.0
    local fpat = "(.-)" .. pat
@@ -98,8 +96,6 @@ function split(str, pat)
    end
    return t
 end
-
-
 
 function car(tab)
    return tab[1]
@@ -123,9 +119,9 @@ end
 function flatten(t)
    function __flatten(res, t)
       if type(t) == 'table' then
-         for k,v in ipairs(t) do __flatten(res, v) end
+	 for k,v in ipairs(t) do __flatten(res, v) end
       else
-         res[#res+1] = t
+	 res[#res+1] = t
       end
       return res
    end

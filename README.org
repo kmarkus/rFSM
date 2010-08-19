@@ -4,19 +4,39 @@
    A simple example
 ** API
 *** Basic API
+    - Overview
 
-rfsm.sista:new{}
-rfsm.csta:new{}
-rfsm.psta:new{}
-rfsm.junc:new{}
-rfsm.join:new{}
-rfsm.fork:new{}
-rfsm.trans:new{}
+      | function             | description                                 |
+      |----------------------+---------------------------------------------|
+      | =rfsm.sista:new{}=   | create a simple state                       |
+      | =rfsm.csta:new{}=    | create a composite state                    |
+      | =rfsm.psta:new{}=    | create a parallel state                     |
+      | =rfsm.junc:new{}=    | create a junction connector                 |
+      | =rfsm.join:new{}=    | create a join connector                     |
+      | =rfsm.fork:new{}=    | create a fork connector                     |
+      | =rfsm.trans:new{}=   | create a transition                         |
+      | =fsm rfsm.init(fsm)= | initialize a fsm and return initialized fsm |
+      | =rfsm.step(fsm)=     | attempt to transition fsm                   |
+      |                      |                                             |
 
-*** Hooks
+
+*** Hooks functions
+    - Overview
+
+      | function    | description                                        |
+      |-------------+----------------------------------------------------|
+      | =dbg=       | will be called to output debug information         |
+      | =info=      | will be called to output informational information |
+      | =warn=      | will be called to output warnings                  |
+      | =err=       | will be called to output errors                    |
+      | =getevents= | function which returns a table of events           |
+      |             |                                                    |
+
 
 ** More examples
+** Analysing rFSM Statecharts
 *** Measuring transition latencies
+
 ** Using rFSM with RTT
 ** Using rFSM with ROS
 ** Extensions

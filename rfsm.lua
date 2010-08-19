@@ -776,8 +776,7 @@ function init(fsm_templ, name)
 
    local fsm = utils.deepcopy(fsm_templ)
 
-   -- fsm._id = name or 'root'
-   fsm._id = 'root'
+   fsm._id = 'root' -- fsm._id = name or 'root'
 
    setup_printers(fsm)
 
@@ -804,11 +803,8 @@ function init(fsm_templ, name)
    local ret, errs = verify_late(fsm)
    if not ret then fsm.err(table.concat(errs, '\n')) return false end
 
-   -- add outgoing transition table
-   add_otrs(fsm)
-
-   -- add incoming transition table for joins
-   add_itrs(fsm)
+   add_otrs(fsm) -- add outgoing transition table
+   add_itrs(fsm) -- add incoming transition table for joins
 
    -- add missing parallel transitions
    if not add_psta_trans(fsm) then return false end
@@ -816,9 +812,7 @@ function init(fsm_templ, name)
    check_no_otrs(fsm)
    fsm._act_leaves = {}
 
-
-   -- internal event queue is empty
-   fsm._intq = { 'e_init_fsm' }
+   fsm._intq = { 'e_init_fsm' } -- internal event queue is empty
 
    -- getevents user hook supplied?
    -- must return a table with events
@@ -852,10 +846,9 @@ function send_events(fsm, ...)
    end
 end
 
-
--- this function exploits the fact that the LCA is the first parent of
--- tgt which is in state 'active'
--- sure this works for parallel states? yes!
+-- 1. walk up source path until root
+-- 2. walk up target path until a state is found which is part of the
+--    source path. This state is the LCA.
 local function getLCA(fsm, tr)
    -- source path lookup table
    local src_path_lt = {}
