@@ -17,9 +17,10 @@
 
 
 require('gv')
+require('rfsm')
 
-local pairs, ipairs, print, table, type, assert, gv, io
-   = pairs, ipairs, print, table, type, assert, gv, io
+local pairs, ipairs, print, table, type, assert, gv, io, rfsm
+   = pairs, ipairs, print, table, type, assert, gv, io, rfsm
 
 module("fsm2tree")
 
@@ -67,10 +68,10 @@ end
 
 -- create new graph and add root node
 local function new_graph(fsm)
-   local gh = gv.digraph("hierarchical chart: " .. fsm.id)
+   local gh = gv.digraph("hierarchical chart: " .. fsm._id)
    gv.setv(gh, "rankdir", "TD")
 
-   local nh = gv.node(gh, fsm.fqn)
+   local nh = gv.node(gh, fsm._fqn)
    set_sprops(nh)
 
    return gh
@@ -79,10 +80,10 @@ end
 -- add regular type of state
 local function add_state(gh, parent, state)
 
-   local nh = gv.node(gh, state.fqn)
+   local nh = gv.node(gh, state._fqn)
    set_sprops(nh)
 
-   local eh = gv.edge(gh, parent.fqn, state.fqn)
+   local eh = gv.edge(gh, parent._fqn, state._fqn)
    set_hier_trans_props(eh)
 
    -- if we're part of a parallel state change color of hier_trans
@@ -92,7 +93,7 @@ local function add_state(gh, parent, state)
    end
 
    if not param.show_fqn then
-      gv.setv(nh, "label", state.id)
+      gv.setv(nh, "label", state._id)
    end
 end
 
@@ -100,9 +101,9 @@ end
 local function add_ini_state(gh, tr, parent)
    local nh, eh
    if tr.src == 'initial' then
-      nh = gv.node(gh, parent.fqn .. '.initial')
+      nh = gv.node(gh, parent._fqn .. '.initial')
       set_ini_sprops(nh)
-      eh = gv.edge(gh, parent.fqn, parent.fqn .. '.initial')
+      eh = gv.edge(gh, parent._fqn, parent._fqn .. '.initial')
       set_hier_trans_props(eh)
    end
 end
@@ -111,9 +112,9 @@ end
 local function add_fini_state(gh, tr, parent)
    local nh, eh
    if tr.tgt == 'final' then
-      nh = gv.node(gh, parent.fqn .. '.final')
+      nh = gv.node(gh, parent._fqn .. '.final')
       set_fini_sprops(nh)
-      eh = gv.edge(gh, parent.fqn, parent.fqn .. '.final')
+      eh = gv.edge(gh, parent._fqn, parent._fqn .. '.final')
       set_hier_trans_props(eh)
    end
 end
@@ -123,11 +124,11 @@ end
 local function add_trans(gh, tr, parent)
    local src, tgt, eh
 
-   if tr.src == 'initial' then src = parent.fqn .. '.initial'
-   else src = tr.src.fqn end
+   if tr.src == 'initial' then src = parent._fqn .. '.initial'
+   else src = tr.src._fqn end
 
-   if tr.tgt == 'final' then tgt = parent.fqn .. '.final'
-   else tgt = tr.tgt.fqn end
+   if tr.tgt == 'final' then tgt = parent._fqn .. '.final'
+   else tgt = tr.tgt._fqn end
 
    eh = gv.edge(gh, src, tgt)
    gv.setv(eh, "constraint", "false")
@@ -138,7 +139,7 @@ end
 local function fsm2gh(fsm)
    local gh = new_graph(fsm)
    rfsm.mapfsm(function (tr, p) add_ini_state(gh, tr, p) end, fsm, rfsm.is_trans)
-   rfsm.mapfsm(function (s) add_state(gh, s.parent, s) end, fsm, rfsm.is_sta)
+   rfsm.mapfsm(function (s) add_state(gh, s._parent, s) end, fsm, rfsm.is_sta)
    rfsm.mapfsm(function (tr, p) add_fini_state(gh, tr, p) end, fsm, rfsm.is_trans)
 
    rfsm.mapfsm(function (tr, p) add_trans(gh, tr, p) end, fsm, rfsm.is_trans)
@@ -149,8 +150,8 @@ end
 -- convert fsm to
 function fsm2tree(fsm, format, outfile)
 
-   if not fsm.__initalized then
-      param.err("fsm2tree ERROR: fsm " .. fsm.id .. " uninitialized")
+   if not fsm._initalized then
+      param.err("fsm2tree ERROR: fsm " .. fsm._id .. " uninitialized")
       return false
    end
 
