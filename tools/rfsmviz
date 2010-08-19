@@ -1,0 +1,35 @@
+#!/usr/bin/env lua
+
+require("fsmpp")
+require("fsm2uml")
+require("fsm2tree")
+require("rfsm")
+
+if arg and #arg < 2 then
+   print("usage: rfsmviz [text|tree|uml|all] <fsm-model-file>")
+   os.exit(1)
+end
+
+arglt={}
+for k,v in ipairs(arg) do
+   arglt[v] = true
+end
+
+-- last
+file = arg[#arg]
+
+fsm_tpl = assert(dofile(file), "failed to open fsm file " .. file)
+assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
+fsm_tpl.info = false
+fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
+
+if arglt['tree'] or arglt['all'] then
+   print("generating fsmtree... ", fsm2tree.fsm2tree(fsm, "png", "out-tree.png")) 
+end
+if arglt['uml'] or arglt['all'] then
+   print("generating uml... ", fsm2uml.fsm2uml(fsm, "png", "out-uml.png")) 
+end
+if arglt['text'] or arglt['all'] then
+   print(fsmpp.fsm2str(fsm)) 
+end
+
