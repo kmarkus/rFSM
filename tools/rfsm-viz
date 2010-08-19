@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
-
+-- -*- lua -*-
 require("fsmpp")
 require("fsm2uml")
 require("fsm2tree")

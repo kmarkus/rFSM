@@ -1,0 +1,39 @@
+#!/usr/bin/env lua
+-- -*- lua -*-
+
+require("rfsm")
+require("fsmdbg")
+
+-- if we are called with spawn run the statemachine with debugging
+-- enable.
+if arg and arg[1] == 'spawn' then
+   local file = arg[2]
+   if not file then
+      print ("usage: rfsm-dbg spawn <fsm-spec-file>")
+      os.exit(1)
+   end
+
+   fsm_tpl = assert(dofile(file), "failed to open fsm file " .. file)
+   assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
+   fsm_tpl.info = false
+   fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
+
+   fsm._idle=function () os.execute("sleep 0.1") end
+   fsmdbg.enable(fsm)
+   rfsm.step(fsm)
+   -- does not return
+   print("stopped")
+   os.exit(1)
+else
+   if not arg or #arg ~= 1 then
+      print ("usage: rfsm-dbg <fsm-spec-file>")
+      os.exit(1)
+   else
+      -- regular start
+      cwd = os.getenv("PWD")
+      print("spawning fsm...", os.execute(cwd ..'/' .. "rfsm-dbg", "spawn " .. tostring(arg[1]) .. '&'))
+
+      c = assert(fsmdbg.cli:new("localhost"))
+      print('c:sendev("e_on")')
+   end
+end
