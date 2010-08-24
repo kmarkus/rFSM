@@ -429,7 +429,7 @@ end
 local function __resolve_path(fsm, state_str, parent)
 
    -- index tree with array tab
-   local function index_tree(tree, tab, mes)
+   local function index_tree(tree, tab)
       local res = tree
       for _, k in ipairs(tab) do
 	 res = res[k]
@@ -438,7 +438,7 @@ local function __resolve_path(fsm, state_str, parent)
 	    break
 	 end
       end
-      return res
+      return res, mes
    end
 
    local state, mes
@@ -453,7 +453,7 @@ local function __resolve_path(fsm, state_str, parent)
       fsm.err("ERROR: relative transitions (leading dot) not yet supported: " .. state_str)
    else
       -- absolute target, this is a fqn!
-      state = index_tree(fsm, utils.split(state_str, "[\\.]"), mes)
+      state, mes = index_tree(fsm, utils.split(state_str, "[\\.]"))
    end
    return state, mes
 end
