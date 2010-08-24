@@ -20,7 +20,6 @@ file = arg[#arg]
 
 fsm_tpl = assert(dofile(file), "failed to open fsm file " .. file)
 assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
-fsm_tpl.info = false
 fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
 
 if arglt['tree'] or arglt['all'] then
