@@ -97,6 +97,17 @@ function split(str, pat)
    return t
 end
 
+-- basename("aaa") -> "aaa"
+-- basename("aaa.bbb.ccc") -> "ccc"
+function basename(n)
+   if not string.find(n, '[\\.]') then
+      return n
+   else
+      local t = utils.split(n, "[\\.]")
+      return t[#t]
+   end
+end
+
 function car(tab)
    return tab[1]
 end
