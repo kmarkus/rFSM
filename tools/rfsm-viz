@@ -17,14 +17,12 @@ end
 
 -- last
 file = arg[#arg]
-
+outfile = string.gsub(file, "\.%w*$", "")
 fsm_tpl = assert(dofile(file), "failed to open fsm file " .. file)
 assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
 fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
 
-
-
--- use initialized or unitialized 
+-- use initialized or unitialized
 if arglt['noinit'] then
    src = fsm_tpl
    fsm_tpl._id = 'root'
@@ -33,12 +31,11 @@ else
 end
 
 if arglt['tree'] or arglt['all'] then
-   print("generating fsmtree... ", fsm2tree.fsm2tree(src, "png", "out-tree.png")) 
+   print("generating fsmtree... ", fsm2tree.fsm2tree(src, "png", outfile .. "-tree.png"))
 end
 if arglt['uml'] or arglt['all'] then
-   print("generating uml... ", fsm2uml.fsm2uml(src, "png", "out-uml.png")) 
+   print("generating uml... ", fsm2uml.fsm2uml(src, "png", outfile .. "-uml.png"))
 end
 if arglt['text'] or arglt['all'] then
-   print(fsmpp.fsm2str(src)) 
+   print(fsmpp.fsm2str(src))
 end
-
