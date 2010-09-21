@@ -18,9 +18,10 @@
 
 require('gv')
 require('rfsm')
+require('utils')
 
-local pairs, ipairs, print, table, type, assert, gv, io, rfsm
-   = pairs, ipairs, print, table, type, assert, gv, io, rfsm
+local pairs, ipairs, print, table, string, type, assert, gv, io, rfsm
+   = pairs, ipairs, print, table, string, type, assert, gv, io, rfsm
 
 module("fsm2tree")
 
@@ -100,7 +101,7 @@ end
 -- add initial states
 local function add_ini_state(gh, tr, parent)
    local nh, eh
-   if tr.src == 'initial' then
+   if tr.src._id == 'initial' then
       nh = gv.node(gh, parent._fqn .. '.initial')
       set_ini_sprops(nh)
       eh = gv.edge(gh, parent._fqn, parent._fqn .. '.initial')
@@ -111,7 +112,7 @@ end
 -- add  final states
 local function add_fini_state(gh, tr, parent)
    local nh, eh
-   if tr.tgt == 'final' then
+   if tr.tgt._id == 'final' then
       nh = gv.node(gh, parent._fqn .. '.final')
       set_fini_sprops(nh)
       eh = gv.edge(gh, parent._fqn, parent._fqn .. '.final')
@@ -132,7 +133,7 @@ local function add_trans(gh, tr, parent)
 
    eh = gv.edge(gh, src, tgt)
    gv.setv(eh, "constraint", "false")
-   if tr.event then gv.setv(eh, "label", tr.event) end
+   if tr.events then gv.setv(eh, "label", table.concat(tr.events, ', ')) end
    set_trans_props(eh)
 end
 
@@ -151,7 +152,7 @@ end
 function fsm2tree(fsm, format, outfile)
 
    if not fsm._initalized then
-      param.err("fsm2tree ERROR: fsm " .. fsm._id .. " uninitialized")
+      param.err("fsm2tree ERROR: fsm " .. (fsm._id or 'root') .. " uninitialized")
       return false
    end
 

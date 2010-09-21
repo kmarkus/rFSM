@@ -391,7 +391,7 @@ local function add_psta_trans(fsm)
 	      end, reg)
    end
 
-   fsm.info("INFO: creating undeclared parallel state transitions")
+   fsm.info("INFO: creating undeclared parallel state transitions...")
 
    return utils.andt(mapfsm(__add_psta_itrans, fsm, is_psta),
 		     mapfsm(__add_psta_ftrans, fsm, is_psta))
