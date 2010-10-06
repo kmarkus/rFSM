@@ -1,0 +1,25 @@
+#!/usr/bin/env lua
+-- -*- lua -*-
+require("rfsm")
+require("json")
+
+if arg and #arg ~= 1 then
+   print("usage: rfsm2json <fsm-model-file>")
+   os.exit(1)
+end
+
+arglt={}
+for k,v in ipairs(arg) do
+   arglt[v] = true
+end
+
+-- last
+file = arg[#arg]
+outfile = string.gsub(file, "\.%w*$", "")
+fsm_tpl = assert(dofile(file), "failed to open fsm file " .. file)
+assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
+fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
+
+io.output(outfile .. ".json")
+io.write(json.encode(fsm_tpl))
+os.exit(0)
