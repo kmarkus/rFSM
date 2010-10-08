@@ -4,16 +4,14 @@
    A simple example
 ** API
 *** Basic API
+
     - Overview
 
       | function             | description                                 |
       |----------------------+---------------------------------------------|
       | =rfsm.sista:new{}=   | create a simple state                       |
       | =rfsm.csta:new{}=    | create a composite state                    |
-      | =rfsm.psta:new{}=    | create a parallel state                     |
-      | =rfsm.junc:new{}=    | create a junction connector                 |
-      | =rfsm.join:new{}=    | create a join connector                     |
-      | =rfsm.fork:new{}=    | create a fork connector                     |
+      | =rfsm.conn:new{}=    | create a connector                          |
       | =rfsm.trans:new{}=   | create a transition                         |
       | =fsm rfsm.init(fsm)= | initialize a fsm and return initialized fsm |
       | =rfsm.step(fsm)=     | attempt to transition fsm                   |

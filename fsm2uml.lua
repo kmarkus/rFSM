@@ -118,7 +118,7 @@ local function new_conn(gh, conn)
    local nh = gv.node(ph, conn._fqn)
    set_ndprops(nh)
 
-   if rfsm.is_junc(conn) then
+   if rfsm.is_conn(conn) then
       if conn._id == 'initial' then
 	 gv.setv(nh, "shape", "point")
 	 gv.setv(nh, "height", "0.1")
@@ -126,12 +126,6 @@ local function new_conn(gh, conn)
 	 gv.setv(nh, "shape", "circle")
 	 gv.setv(nh, "height", "0.4")
       end
-   elseif rfsm.is_join(conn) then
-      gv.setv(nh, "shape", "Mdiamond")
-      gv.setv(nh, "height", "0.3")
-   elseif rfsm.is_fork(conn) then
-      gv.setv(nh, "shape", "Mcircle")
-      gv.setv(nh, "height", "0.4")
    else param.err("ERROR: unknown conn type")  end
 
    gv.setv(nh, "label", conn._id)
@@ -266,8 +260,7 @@ end
 
 local function proc_node(gh, node)
    if rfsm.is_csta(node) then new_csta(gh, node)
-   elseif rfsm.is_psta(node) then new_csta(gh, node, "(parallel node)")
-   elseif rfsm.is_sista(node) then new_sista(gh, node)
+      elseif rfsm.is_sista(node) then new_sista(gh, node)
    elseif rfsm.is_conn(node) then new_conn(gh, node)
    else
       param.err("unknown node type: " .. node:type() .. ", name=" .. node._fqn)

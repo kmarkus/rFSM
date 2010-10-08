@@ -78,7 +78,7 @@ function get_act_conf(fsm)
 	 return { [s._fqn]=s._mode }
       end
 
-      if rfsm.is_cplx(s) then
+      if rfsm.is_csta(s) then
 	 for ac,_ in pairs(s._actchild) do
 	    res[s._id] = __walk_act_path(ac)
 	 end

@@ -34,7 +34,7 @@ local rfsm = rfsm
 local is_meta = rfsm.is_meta
 local is_sta = rfsm.is_sta
 local is_sista = rfsm.is_sista
-local is_cplx = rfsm.is_cplx
+local is_csta = rfsm.is_csta
 local sta_mode = rfsm.sta_mode
 local fsmobj_tochar = rfsm.fsmobj_tochar
 
@@ -63,7 +63,7 @@ function fsm2str(fsm, ind)
 	 if not is_meta(name) and is_sta(state) then
 	    res[#res+1] = string.rep(indstr, ind) .. __2colstr(state) .. '[' .. fsmobj_tochar(state) .. ']'
 	    if is_sista(state) then res[#res+1] = '\n' end
-	    if is_cplx(state) then
+	    if is_csta(state) then
 	       res[#res+1] = '\n'
 	       __fsm_tostring(state, res, ind+1)
 	    end

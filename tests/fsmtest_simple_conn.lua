@@ -12,24 +12,24 @@ require("fsmpp")
 require("utils")
 
 local err = print
-local id = 'junc_chain_test'
+local id = 'conn_chain_test'
 
-junc_test_templ = rfsm.csta:new{
+conn_test_templ = rfsm.csta:new{
 
    dbg = fsmpp.dbgcolor,
 
    dummy = rfsm.sista:new{},
-   junc1 = rfsm.junc:new{},
-   junc2 = rfsm.junc:new{},
+   conn1 = rfsm.conn:new{},
+   conn2 = rfsm.conn:new{},
 
-   rfsm.trans:new{ src='initial', tgt='junc1' },
-   rfsm.trans:new{ src='junc1', tgt='junc2' },
-   rfsm.trans:new{ src='junc2', tgt='dummy' }
+   rfsm.trans:new{ src='initial', tgt='conn1' },
+   rfsm.trans:new{ src='conn1', tgt='conn2' },
+   rfsm.trans:new{ src='conn2', tgt='dummy' }
 }
 
 
 test = {
-   id = 'simple_junc_test',
+   id = 'simple_conn_test',
    pics = true,
    tests = {
       {
@@ -42,7 +42,7 @@ test = {
 }
 
 
-jc = rfsm.init(junc_test_templ)
+jc = rfsm.init(conn_test_templ)
 
 if not jc then
    err(id .. " initalization failed")

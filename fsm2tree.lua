@@ -87,12 +87,6 @@ local function add_state(gh, parent, state)
    local eh = gv.edge(gh, parent._fqn, state._fqn)
    set_hier_trans_props(eh)
 
-   -- if we're part of a parallel state change color of hier_trans
-   if parent.parallel then
-      gv.setv(eh, "color", param.and_color)
-      gv.setv(eh, "style", param.and_style)
-   end
-
    if not param.show_fqn then
       gv.setv(nh, "label", state._id)
    end

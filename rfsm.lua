@@ -32,6 +32,7 @@ unpack
 module("rfsm")
 
 local map = utils.map
+local foreach = utils.foreach
 
 --------------------------------------------------------------------------------
 -- Model Elements and generic helper functions
@@ -59,20 +60,6 @@ end
 csta = {}
 function csta:type() return 'composite' end
 function csta:new(t)
-   setmetatable(t, self)
-   self.__index = self
-   return t
-end
-
---
--- parallel state
---
--- required: --
--- optional: composite states, parallel states, connectors, join, fork
--- disallowed: simple_state
-psta = {}
-function psta:type() return 'parallel' end
-function psta:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
@@ -108,33 +95,11 @@ function trans:new(t)
 end
 
 --
--- junction
+-- connector
 --
-junc = {}
-function junc:type() return 'junction' end
-function junc:new(t)
-   setmetatable(t, self)
-   self.__index = self
-   return t
-end
-
---
--- fork
---
-fork = {}
-function fork:type() return 'fork' end
-function fork:new(t)
-   setmetatable(t, self)
-   self.__index = self
-   return t
-end
-
---
--- join
---
-join = {}
-function join:type() return 'join' end
-function join:new(t)
+conn = {}
+function conn:type() return 'connector' end
+function conn:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
@@ -156,17 +121,11 @@ end
 
 function is_sista(s) return is_fsmobj(s) and s:type() == 'simple' end
 function is_csta(s)  return is_fsmobj(s) and s:type() == 'composite' end
-function is_psta(s)  return is_fsmobj(s) and s:type() == 'parallel' end
 function is_trans(s) return is_fsmobj(s) and s:type() == 'transition' end
-function is_junc(s)  return is_fsmobj(s) and s:type() == 'junction' end
-function is_join(s)  return is_fsmobj(s) and s:type() == 'join' end
-function is_fork(s)  return is_fsmobj(s) and s:type() == 'fork' end
+function is_conn(s)  return is_fsmobj(s) and s:type() == 'connector' end
 
-function is_sta(s)   return is_sista(s) or is_csta(s) or is_psta(s) end
-function is_cplx(s)  return is_csta(s) or is_psta(s) end
+function is_sta(s)   return is_sista(s) or is_csta(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
-function is_conn(s)  return is_junc(s) or is_fork(s) or is_join(s) end
-function is_pconn(s) return is_fork(s) or is_join(s) end
 
 function fsmobj_tochar(obj)
    if not is_fsmobj(obj) then return end
@@ -199,7 +158,7 @@ function mapfsm(func, fsm, pred, depth)
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
-		if is_cplx(s) then
+		if is_csta(s) then
 		   depth = depth - 1
 		   __mapfsm(s)
 		end
@@ -231,7 +190,7 @@ function fsm_merge(fsm, parent, obj, id)
 
    -- do some checking
    local mes = {}
-   if not is_cplx(parent) then
+   if not is_csta(parent) then
       mes[#mes+1] = "parent " .. parent._fqn .. " of " .. id .. " not a complex state"
    end
    if id ~= nil and parent[id] ~= nil then
@@ -261,9 +220,6 @@ function fsm_merge(fsm, parent, obj, id)
    elseif is_trans(obj) then
       parent[#parent+1] = obj
       obj.src._otrs[#obj.src._otrs+1] = obj
-      if is_join(obj.tgt) then
-	 obj.tgt._itrs[#obj.tgt._itrs+1] = obj
-      end
    else
       fsm.err("ERROR: merging of " .. obj:type() .. " objects not implemented (" .. id .. ")")
       return false
@@ -311,90 +267,22 @@ end
 -- to do this boring job
 local function add_defconn(fsm)
 
-   -- if initial (fork) or final (join) doesn't exist then create them
-   -- and add transitions to all initial composite states
-   local function __add_psta_defconn(psta, parent, id)
-      if not psta.initial then
-	 assert(fsm_merge(fsm, psta, fork:new{}, 'initial'))
-	 fsm.info("INFO: created undeclared fork " .. psta.initial._fqn)
-
-	 -- add all non-existing transitions from initial-fork to all
-	 -- toplevel csta children. But as otrs are not built yet this
-	 -- means having to resolve paths manually. Therefore postpone
-	 -- until transitions are resolved.
-      end
-      if not psta.final then
-	 assert(fsm_merge(fsm, psta, join:new{}, 'final'))
-	 fsm.info("INFO: created undeclared join " .. psta.final._fqn)
-	 -- add transition later: see above comment.
-      end
-   end
-
    -- if transition *locally* references a non-existant initial or
    -- final connector create it
    local function __add_trans_defconn(tr, p)
       if is_csta(p) then
 	 if tr.src == 'initial' and p.initial == nil then
-	    fsm_merge(fsm, p, junc:new{}, 'initial')
+	    fsm_merge(fsm, p, conn:new{}, 'initial')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
 	 end
 	 if tr.tgt == 'final' and p.final == nil then
-	    fsm_merge(fsm, p, junc:new{}, 'final')
+	    fsm_merge(fsm, p, conn:new{}, 'final')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".final")
 	 end
       end
    end
 
-   mapfsm(__add_psta_defconn, fsm, is_psta)
    mapfsm(__add_trans_defconn, fsm, is_trans)
-end
-
-----------------------------------------
--- add transitions from parallel-state-initial-fork-connector to all
--- toplevel composite states (regions)
--- only after resolving transitons
-local function add_psta_trans(fsm)
-
-   -- transitions from initial (fork) to regions
-   local function __add_psta_itrans(psta, parent, id)
-      -- determine list of regions which are not connected by initial
-      -- tbd: replace this my a mapfsm with maxdepth param
-      local reg = utils.filter(
-	 function (r,k)
-	    if not is_meta(k) and is_cplx(r) and not is_connected(psta.initial, r) then
-	       return true
-	    end
-	    return false
-	 end, psta)
-
-      utils.map(function (r)
-		   fsm.dbg("\t adding transition " .. psta.initial._fqn .. " -> " .. r.initial._fqn)
-		   return fsm_merge(fsm, psta, trans:new{ src=psta.initial, tgt=r.initial } )
-		end, reg)
-   end
-
-   -- transitions from regions to final (join)
-   local function __add_psta_ftrans(psta, parent, id)
-      -- determine list of regions which are not connected to final fork
-      -- tbd: replace this my a mapfsm with maxdepth param
-      local reg = utils.filter(
-	 function (r,k)
-	    if not is_meta(k) and is_cplx(r) and not is_connected(r, psta.final) then
-	       return true
-	    end
-	    return false
-	 end, psta)
-
-      utils.map(function (r)
-		 fsm.dbg("\t adding transition " .. r._fqn .. " -> " .. psta.final._fqn)
-		 return fsm_merge(fsm, psta, trans:new{ src=r, tgt=psta.final } )
-	      end, reg)
-   end
-
-   fsm.info("INFO: creating undeclared parallel state transitions...")
-
-   return utils.andt(mapfsm(__add_psta_itrans, fsm, is_psta),
-		     mapfsm(__add_psta_ftrans, fsm, is_psta))
 end
 
 ----------------------------------------
@@ -406,20 +294,6 @@ local function add_otrs(fsm)
 
    mapfsm(function (tr, p)
 	     table.insert(tr.src._otrs, tr)
-	  end, fsm, is_trans)
-end
-
-----------------------------------------
--- build a table for each join of all incoming transitions in node._itrs
-local function add_itrs(fsm)
-   mapfsm(function (jn)
-	     if jn._itrs == nil then jn._itrs={} end
-	  end, fsm, is_join)
-
-   mapfsm(function (tr, p)
-	     if is_join(tr.tgt) then
-		table.insert(tr.tgt._itrs, tr)
-	     end
 	  end, fsm, is_trans)
 end
 
@@ -495,7 +369,7 @@ local function resolve_trans(fsm)
 	 return false
       else
 	 -- complex state, connect to 'initial'
-	 if is_cplx(tgt) then
+	 if is_csta(tgt) then
 	    if tgt.initial == nil then
 	       fsm.err("ERROR: transition " .. tostring(tr) ..
 		      " ends on cstate without initial connector")
@@ -516,50 +390,6 @@ local function resolve_trans(fsm)
 
    return utils.andt(mapfsm(__resolve_trans, fsm, is_trans))
 end
-
-
--- get least common parallel ancestor and orthogonal regions within
--- LCPA of of s1 and s2 (inefficient!)
--- returns lcpa, ortreg(s1) and ortreg(s2)
---
--- Only for static validation:
--- a transition to a different region within the same LCPA is invalid
-local function getLCPA(fsm, s1, s2)
-   -- returns an array
-   local function walk_up(fsm, s)
-      local up_path = {}
-      local walker = s
-      while walker ~= fsm do
-	 table.insert(up_path, 1, walker)
-	 walker = walker._parent
-      end
-      return up_path
-   end
-
-   local function max(a,b)
-      if a>b then return a else return b end
-   end
-
-   -- if we are given connectors, take the parent state otherwise
-   -- forks/joins will be understood as seperated orthogonal regions
-
-   assert(is_node(s1), "s1 not a node: ", tostring(s1))
-   assert(is_node(s2), "s2 not a node: ", tostring(s2))
-
-   local ups1 = walk_up(fsm, s1)
-   local ups2 = walk_up(fsm, s2)
-
-   -- the last identical is the LCPA, the first differing the
-   -- orthogonal regions ?!?!? GRAAA!
-   for i = 2,max(#ups1, #ups2) do
-      if ups1[i-1] == ups2[i-1] and
-	 is_psta(ups1[i-1]) and is_csta(ups1[i]) and is_csta(ups2[i]) then
-	 return ups1[i-1], ups1[i], ups2[i]
-      end
-   end
-   return false
-end
-
 
 
 ----------------------------------------
@@ -588,42 +418,19 @@ function verify_early(fsm)
 
    local function check_csta(s, p)
       local ret = true
-      if s.initial and not is_junc(s.initial) then
-	 fsm.err("ERROR: in composite " .. s.initial._fqn .. " is not of type junction but " .. s.initial:type())
+      if s.initial and not is_conn(s.initial) then
+	 fsm.err("ERROR: in composite " .. s.initial._fqn .. " is not of type connector but " .. s.initial:type())
 	 ret = false
       end
-      if s.final and not is_junc(s.final) then
-	 fsm.err("ERROR: in composite " .. s.final._fqn .. " is not of type junction but " .. s.initial:type())
+      if s.final and not is_conn(s.final) then
+	 fsm.err("ERROR: in composite " .. s.final._fqn .. " is not of type connector but " .. s.initial:type())
 	 ret = false
       end
-      return ret
-   end
-
-   -- validate parallel states
-   local function check_psta(s, p)
-      local ret = true
-      -- initial and final must be fork and join
-      if s.initial and not is_fork(s.initial) then
-	 mes[#mes+1] = "ERROR: parallel " .. s.initial._fqn .. " initial is not a fork but " .. s.initial:type()
-	 ret = false
-      end
-
-      if s.initial and not is_join(s.final) then
-	 mes[#mes+1] = "ERROR: parallel " .. s.initial._fqn .. " final is not a join but " .. s.initial:type()
-	 ret = false
-      end
-
-      -- assert that all child states are complex
-      return ret
-   end
-
-   -- validate complex states
-   local function check_cplx(s, parent)
       if s.doo then
 	 mes[#mes+1] = "WARNING: " .. s .. " 'doo' function in csta will never run"
-      else
-	 return true
       end
+
+      return ret
    end
 
    -- validate transitions
@@ -651,27 +458,6 @@ function verify_early(fsm)
       return ret
    end
 
-   -- validate parallel connectors fork and join
-   local function check_pconn(fj, p)
-      local ret = true
-      -- parent of fork/join must be a psta!
-      if not is_psta(p) then
-	 mes[#mes+1] = "ERROR: parent " .. p._fqn .. " of fork/join" .. fj._fqn .. " is not a parallel state"
-	 ret = false
-      end
-      return ret
-   end
-
-   local function check_junc(j, p)
-      -- parent of junction must be a csta!
-      local ret = true
-      if not is_csta(p) then
-	 mes[#mes+1] = "ERROR: parent " .. p._fqn .. " of junction " .. j._fqn .. "is not a composite state"
-	 ret = false
-      end
-      return ret
-   end
-
    -- root
    if not is_csta(fsm)  then
       mes[#mes+1] = "ERROR: fsm not a composite state but of type " .. fsm:type()
@@ -679,41 +465,15 @@ function verify_early(fsm)
    end
 
    if fsm.initial == nil then
-      mes[#mes+1] = "ERROR: fsm " .. fsm._id .. " without initial junction"
+      mes[#mes+1] = "ERROR: fsm " .. fsm._id .. " without initial connector"
       res = false
    end
 
    -- no side effects, order does not matter
    res = res and utils.andt(mapfsm(check_node, fsm, is_node))
-   res = res and utils.andt(mapfsm(check_cplx, fsm, is_cplx))
    res = res and utils.andt(mapfsm(check_csta, fsm, is_csta))
-   res = res and utils.andt(mapfsm(check_psta, fsm, is_psta))
    res = res and utils.andt(mapfsm(check_trans, fsm, is_trans))
-   res = res and utils.andt(mapfsm(check_pconn, fsm, is_pconn))
-   res = res and utils.andt(mapfsm(check_junc, fsm, is_junc))
 
-   return res, mes
-end
-
-----------------------------------------
--- late checks
--- must run after transitions are resolved
-function verify_late(fsm)
-   local mes, res = {}, true
-
-   local function check_trans(t, p)
-      local ret = true
-
-      local lcpa, orsrc, ortgt = getLCPA(fsm, t.src, t.tgt)
-      if lcpa and orsrc ~= ortgt then
-	 mes[#mes+1] = "ERROR: invalid transition" .. tostring(t) .." src and tgt are in different regions of parallel " .. lcpa._fqn
-	 ret = false
-      end
-
-      return ret
-   end
-
-   res = res and utils.andt(mapfsm(check_trans, fsm, is_trans))
    return res, mes
 end
 
@@ -749,8 +509,8 @@ local function setup_printers(fsm)
 	 fsm[p] = def
       end
    end
-   utils.foreach(setup_printer, { err=utils.stderr, warn=utils.stderr,
-				  info=utils.stdout, dbg=utils.stdout } )
+   foreach(setup_printer, { err=utils.stderr, warn=utils.stderr,
+			    info=utils.stdout, dbg=utils.stdout } )
 end
 
 ----------------------------------------
@@ -799,15 +559,7 @@ function init(fsm_templ, name)
       return false
    end
 
-   -- verify (late)
-   local ret, errs = verify_late(fsm)
-   if not ret then fsm.err(table.concat(errs, '\n')) return false end
-
    add_otrs(fsm) -- add outgoing transition table
-   add_itrs(fsm) -- add incoming transition table for joins
-
-   -- add missing parallel transitions
-   if not add_psta_trans(fsm) then return false end
 
    check_no_otrs(fsm)
    fsm._act_leaves = {}
@@ -895,18 +647,6 @@ local function tr_ipath(fsm, tr)
 
    return lca, up_path, down_path
 end
-
-
--- get parallel parent
-local function getPParent(fsm, node)
-   local walker = node.parent
-
-   while walker ~= fsm do
-      if is_psta(walker) then return walker end
-   end
-   return false
-end
-
 
 ----------------------------------------
 -- merge all external and internal events into list
@@ -1034,7 +774,7 @@ end
 local function exit_state(fsm, state)
 
    -- if complex exit child states first
-   if is_cplx(state) then
+   if is_csta(state) then
       for ac,_ in pairs(actchild_get(state)) do
 	 exit_state(fsm, ac)
       end
@@ -1094,7 +834,7 @@ local function __exec_trans_exit(fsm, tr, lca, up_path)
 
    -- LCA can have no active child when:
    --   - initial transition
-   --   - transitions between junctions of same scope
+   --   - transitions between connectors of same scope
 
    -- but none of these affect the other regions of the psta: these
    -- are only exited when the psta is exited itself. But in that case
@@ -1172,7 +912,7 @@ local function path2str(path, indc, indmul)
       strtab[#strtab+1] = '[' .. fsmobj_tochar(pnode.node) .. ']'
       if not pnode.nextl then return end
 
-      if is_fork(pnode.node) or #pnode.nextl > 1 then
+      if  #pnode.nextl > 1 then
 	 map(function (seg)
 		strtab[#strtab+1] = "\n" .. string.rep(indc, ind*indmul)
 		__path2str(seg.next, ind+1)
@@ -1193,7 +933,7 @@ end
 -- just take first
 local function conflict_resolve(fsm, pnode)
    fsm.warn("conflicting transitions from src " .. pnode.nextl[1].trans.src._fqn .. " to")
-   utils.foreach(function (seg) fsm.warn("\t", seg.trans.tgt._fqn) end, pnode.nextl)
+   foreach(function (seg) fsm.warn("\t", seg.trans.tgt._fqn) end, pnode.nextl)
    return pnode.nextl[1]
 end
 
@@ -1201,79 +941,42 @@ end
 -- execute a path (compound transition) starting with pnode
 -- returns true if path was executed sucessfully
 local function exec_path(fsm, path)
-   -- heads is list parallel pnodes
-   local function __exec_path(heads)
-      local next_heads = {}
+
+   -- heads is list of path nodes
+   local function __exec_path(head)
+      local next_head 
 
       -- execute outgoing transitions from path node and write next
-      -- pnode to next_heads
+      -- pnode to next_head
       local function __exec_pnode_step(pn)
 	 -- fsm.dbg("exec_pnode ", pn.node._fqn)
-	 if is_join(pn.node) then
-	    -- we are passing through the join (pn.nextl ~= false).
-	    -- This is only the case if this we are exiting the
-	    -- last active region of the psta.  node_find_enable must
-	    -- detect this and find a full path instead if stopping at
-	    -- the join. If we are passing through and thus exiting
-	    -- the psta we must reset the join.
-	    if pn.nextl == false then -- decrement a join
-	       if not pn.node._join_cnt then
-		  pn.node._join_cnt = #pn.node._itrs - 1
-	       elseif pn.node._join_cnt == 1 then
- 		  send_events(fsm, "e_done@" .. pn.node._parent._fqn)
-		  pn.node._join_cnt = nil
-	       else
-		  pn.node._join_cnt = pn.node._join_cnt - 1
-	       end
-	       fsm.dbg("JOIN_PATH_NODE_STEP", "node._fqn", pn.node.fqn, ", new pn.node._join_cnt: " .. tostring(pn.node._join_cnt))
-	    end
-	    -- else
-	    --    assert(pn.node._join_cnt == 1)
-	    --    local seg = pn.nextl[1]
-	    --    exec_trans(fsm, seg.trans)
-	    --    next_heads[#next_heads+1] = seg.next
-	    --    pn.node._join_cnt = nil
-	    --    fsm.dbg("JOIN_PATH_NODE_STEP", "node._fqn", pn.node.fqn, " join_cnt == 0, passing through")
-	    -- end
-
-	 elseif pn.nextl == false then
-	    -- if we stop on a final junction raise "done@parent"
-	    -- event. Otherwise just return (we have reached a stable
-	    -- conf)
-	    if is_junc(pn.node) and pn.node._id == 'final' then
-	       send_events(fsm, "e_done@" .. pn.node._parent._fqn)
-	    end
+	 local seg
+	 if pn.nextl == false then
+	    -- We have reached a stable configuration!
 	    return
-	 elseif is_sta(pn.node) then
-	    local seg = pn.nextl[1]
+	 elseif is_sta(pn.node) then 
+	    -- todo: why not check for conflicts here? because they
+	    -- are currently not possible...
+	    seg = pn.nextl[1]
 	    exec_trans(fsm, seg.trans)
-	    next_heads[#next_heads+1] = seg.next
-	 elseif is_junc(pn.node) then -- step a junction
-	    local seg
+	    next_head = seg.next
+	 elseif is_conn(pn.node) then -- step a connector
 	    if #pn.nextl > 1 then seg = conflict_resolve(fsm, pn)
 	    else seg = pn.nextl[1] end
 	    exec_trans(fsm, seg.trans)
-	    next_heads[#next_heads+1] = seg.next
-	 elseif is_fork(pn.node) then -- step a fork
-	    exec_trans_exit(fsm, pn.nextl[1].trans) -- exit src only once
-	    for _,seg in ipairs(pn.nextl) do
-	       exec_trans_effect(fsm, seg.trans)
-	       exec_trans_enter(fsm, seg.trans)
-	       next_heads[#next_heads+1] = seg.next
-	    end
+	    next_head = seg.next
 	 else
 	    fsm.err("ERR (exec_path)", "invalid type of head pnode: " .. pn.node._fqn)
 	 end
       end
 
-      -- execute trans. and create new next_heads table
-      map(__exec_pnode_step, heads)
-      if #next_heads == 0 then return true
-      else return __exec_path(next_heads) end
+      __exec_pnode_step(head)
+      if next_head == nil then return true end
+      return __exec_path(next_head)
    end
 
    fsm.dbg("EXEC_PATH", path2str(path))
-   return __exec_path{path}
+   return __exec_path(path)
 end
 
 ----------------------------------------
@@ -1329,42 +1032,10 @@ function node_find_enabled(fsm, start, events)
 
       assert(is_node(start), "node type expected")
 
-      if is_junc(start) then
-	 if start._id == 'final' then
-	    return { node=start, nextl=false }
-	 end
-	 return __find_disj_path(start, events)
-      elseif is_fork(start) then return __find_conj_path(start, events)
-      elseif is_join(start) then return { node=start, nextl=false }
+      if is_conn(start) then return __find_disj_path(start, events)
       elseif is_sta(start) then return { node=start, nextl=false }
       else fsm.err("ERROR: node_find_path invalid starting node"
-		     .. start._fqn .. ", type" .. start:type()) end
-   end
-
-   -- find conjunct path (src is fork), only valid of _all_ outgoing
-   -- transitions return valid paths
-   function __find_conj_path(fork, events)
-      local cur = { node=fork, nextl={} }
-      local tail
-
-      -- tbd: consider: how bad is this? Does is mean deadlock? This
-      -- is checked statically and is not necessary here any
-      if fork._otrs == nil then
-	 fsm.warn("no outgoing transitions from " .. fork._fqn)
-	 return false
-      end
-
-      for k,tr in pairs(fork._otrs) do
-	 if not is_enabled(tr, events) then
-	    fsm.err("failing to enter fork")
-	    return false
-	 end
-	 tail = __node_find_enabled(tr.tgt, events)
-	 -- if *any* path fails we return false
-	 if not tail then return false
-	 else table.insert(cur.nextl, { trans=tr, next=tail }) end
-      end
-      return cur
+		   .. start._fqn .. ", type" .. start:type()) end
    end
 
    -- find disjunct path, returns at least one valid path
@@ -1381,7 +1052,7 @@ function node_find_enabled(fsm, start, events)
       for k,tr in pairs(nde._otrs) do
 	 if is_enabled(tr, events) then
 	    tail = __node_find_enabled(tr.tgt, events)
-	    if tail then table.insert(cur.nextl, {trans=tr, next=tail}) end
+	    if tail then cur.nextl[#cur.nextl+1] = {trans=tr, next=tail} end
 	 end
       end
 
@@ -1393,23 +1064,11 @@ function node_find_enabled(fsm, start, events)
 
    assert(is_node(start), "node type expected")
 
-   if is_fork(start) then return __find_conj_path(start, events)
-   else return __find_disj_path(start, events) end
-
-   -- if is_junc(start) then return __find_disj_path(start, events)
-   -- elseif is_fork(start) then return __find_conj_path(start, events)
-   -- elseif is_sta(start) or is_join(start) then return { node=start, nextl=false }
-   -- else fsm.err("ERROR: node_find_path invalid starting node"
-   -- 		  .. start._fqn .. ", type" .. start:type()) end
+   return __find_disj_path(start, events)
 end
 
 ----------------------------------------
 -- walk down the active tree and call find_path for all active states.
--- Take care of correct handling of parallel states.
---
--- todo: one issue: we just return the first path found altough there
--- could be more with equal priority (emanating from a parallel
--- sibling at the same depth)
 local function fsm_find_enabled(fsm, events)
    local depth = 0
 
