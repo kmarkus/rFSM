@@ -562,7 +562,7 @@ function init(fsm_templ, name)
    add_otrs(fsm) -- add outgoing transition table
 
    check_no_otrs(fsm)
-   fsm._act_leaves = {}
+   fsm._act_leaf = false
 
    fsm._intq = { 'e_init_fsm' } -- internal event queue is empty
 
@@ -661,22 +661,6 @@ local function getallev(fsm)
    return res
 end
 
-local function actleaf_add(fsm, lf)
-   table.insert(fsm._act_leaves, lf)
-   fsm.dbg("ACT_LEAF_ADD", lf._fqn, ", cur:",
-	   map(function(al) return al._fqn end, fsm._act_leaves))
-end
-
-local function actleaf_rm(fsm, lf)
-   for i=1,#fsm._act_leaves do
-      if fsm._act_leaves[i] == lf then
-	 table.remove(fsm._act_leaves, i)
-	 fsm.dbg("ACT_LEAF_RM", lf._fqn, ", cur:",
-		 map(function(al) return al._fqn end, fsm._act_leaves))
-      end
-   end
-end
-
 ----------------------------------------
 -- actchild handling
 local function actchild_add(parent, child)
@@ -722,10 +706,8 @@ end
 local function run_doos(fsm)
    local has_run = false
 
-   for i = 1,#fsm._act_leaves do
-      -- rotate
-      local state = table.remove(fsm._act_leaves, 1)
-      table.insert(fsm._act_leaves, state)
+   if fsm._act_leaf then
+      local state = fsm._act_leaf
 
       -- create new coroutine
       if state.doo and not state._doo_co then
@@ -740,14 +722,12 @@ local function run_doos(fsm)
 	 if coroutine.status(state._doo_co) == 'dead' then
 	    state._doo_co = nil
 	    sta_mode(state, 'done')
-	    actleaf_rm(fsm, state)
+	    fsm._act_leaf = false
 	    send_events(fsm, "e_done@" .. state._fqn)
 	    fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
 	 end
-	 break
       end
    end
-
    return has_run
 end
 
@@ -762,7 +742,7 @@ local function enter_one_state(fsm, state)
    if state.entry then state.entry(fsm, state, 'entry') end
 
    if is_sista(state) then
-      if state.doo then actleaf_add(fsm, state)
+      if state.doo then fsm._act_leaf = state
       else sta_mode(state, "done") end
    end
 
@@ -790,7 +770,7 @@ local function exit_state(fsm, state)
 
       sta_mode(state, 'inactive')
       if state.exit then state.exit(fsm, state, 'exit') end
-      if is_sista(state) then actleaf_rm(fsm, state) end
+      if is_sista(state) then fsm._act_leaf = false end
    end
 
    fsm.dbg("STATE_EXIT", state._fqn)
