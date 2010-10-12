@@ -3,41 +3,42 @@
 ** Introduction
    A simple example
 ** API
-*** Basic API
+*** Model entities
 
-    - Overview
+    | Function             | description                                 |
+    |----------------------+---------------------------------------------|
+    | =rfsm.sista:new{}=   | create a simple state                       |
+    | =rfsm.csta:new{}=    | create a composite state                    |
+    | =rfsm.conn:new{}=    | create a connector                          |
+    | =rfsm.trans:new{}=   | create a transition                         |
+    | =fsm rfsm.init(fsm)= | initialize a fsm and return initialized fsm |
 
-      | function             | description                                 |
-      |----------------------+---------------------------------------------|
-      | =rfsm.sista:new{}=   | create a simple state                       |
-      | =rfsm.csta:new{}=    | create a composite state                    |
-      | =rfsm.conn:new{}=    | create a connector                          |
-      | =rfsm.trans:new{}=   | create a transition                         |
-      | =fsm rfsm.init(fsm)= | initialize a fsm and return initialized fsm |
-      | =rfsm.step(fsm)=     | attempt to transition fsm                   |
-      |                      |                                             |
+*** Operational API
 
+    | Function         | description                    |
+    |------------------+--------------------------------|
+    | =rfsm.step(fsm)= | attempt to transition FSM once |
+    | =rfsm.run(fsm)=  | run FSM until it goes idle     |
+
+    todo Explain!
 
 *** Hooks functions
-    - Overview
 
-      | function    | description                                        |
-      |-------------+----------------------------------------------------|
-      | =dbg=       | will be called to output debug information         |
-      | =info=      | will be called to output informational information |
-      | =warn=      | will be called to output warnings                  |
-      | =err=       | will be called to output errors                    |
-      | =getevents= | function which returns a table of events           |
-      |             |                                                    |
+    | function     | description                                        |
+    |--------------+----------------------------------------------------|
+    | =dbg=        | will be called to output debug information         |
+    | =info=       | will be called to output informational information |
+    | =warn=       | will be called to output warnings                  |
+    | =err=        | will be called to output errors                    |
+    | =getevents=  | function which returns a table of events           |
+    | =dropevents= |                                                    |
 
-
-** More examples
 ** Analysing rFSM Statecharts
 *** Measuring transition latencies
 
 ** Using rFSM with RTT
-** Using rFSM with ROS
-** Extensions
+
+** Tools
 *** fsm2uml
 *** fsmdbg
 
@@ -54,3 +55,4 @@
 *** fsmpp
 *** fsmtesting
 ** Internals
+   
