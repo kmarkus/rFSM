@@ -25,9 +25,9 @@ require ('utils')
 
 local param, pairs, ipairs, print, tostring, table, string, type,
 loadstring, assert, coroutine, setmetatable, getmetatable, utils, io,
-unpack = param, pairs, ipairs, print, tostring, table, string, type,
+unpack, error = param, pairs, ipairs, print, tostring, table, string, type,
 loadstring, assert, coroutine, setmetatable, getmetatable, utils, io,
-unpack
+unpack, error
 
 module("rfsm")
 
@@ -717,14 +717,18 @@ local function run_doos(fsm)
 
       -- corountine still active, can be resumed
       if state._doo_co and  coroutine.status(state._doo_co) == 'suspended' then
-	 coroutine.resume(state._doo_co, fsm, state, 'doo')
-	 has_run = true
-	 if coroutine.status(state._doo_co) == 'dead' then
-	    state._doo_co = nil
-	    sta_mode(state, 'done')
-	    fsm._act_leaf = false
-	    send_events(fsm, "e_done@" .. state._fqn)
-	    fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
+	 local res, errmsg = coroutine.resume(state._doo_co, fsm, state, 'doo')
+	 if not res then
+	    error("doo program of state '" .. state._fqn .. "' failed:\n" ..  errmsg)
+	 else
+	    has_run = true
+	    if coroutine.status(state._doo_co) == 'dead' then
+	       state._doo_co = nil
+	       sta_mode(state, 'done')
+	       fsm._act_leaf = false
+	       send_events(fsm, "e_done@" .. state._fqn)
+	       fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
+	    end
 	 end
       end
    end
