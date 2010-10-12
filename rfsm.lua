@@ -743,7 +743,10 @@ local function enter_one_state(fsm, state)
 
    if is_sista(state) then
       if state.doo then fsm._act_leaf = state
-      else sta_mode(state, "done") end
+      else
+	 sta_mode(state, "done")
+	 send_events(fsm, "e_done@" .. state._fqn)
+      end
    end
 
    fsm.dbg("STATE_ENTER", state._fqn)
