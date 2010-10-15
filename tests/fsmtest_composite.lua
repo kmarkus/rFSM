@@ -14,12 +14,15 @@ local function test_doo()
    for i = 1,5 do
       print("doo:", i)
       os.execute("sleep 0.1")
+      if i ==4 then table.concat(nil) end
       coroutine.yield()
    end
 end
 
 csta_tmpl = rfsm.csta:new{
    dbg = fsmpp.dbgcolor,
+   warn = fsmpp.dbgcolor,
+   err = fsmpp.dbgcolor,
 
    on = rfsm.sista:new{ doo=test_doo },
    off = rfsm.sista:new{},

@@ -740,7 +740,8 @@ local function run_doos(fsm)
       if state._doo_co and  coroutine.status(state._doo_co) == 'suspended' then
 	 local cr_stat, cr_ret = coroutine.resume(state._doo_co, fsm, state, 'doo')
 	 if not cr_stat then
-	    error("doo program of state '" .. state._fqn .. "' failed:\n" ..  cr_ret)
+	    fsm.err("DOO", "doo program of state '" .. state._fqn .. "' failed:")
+	    error(cr_ret, 0)
 	 else
 	    doo_idle = cr_ret or doo_idle -- this allows to provide a default, see above.
 	    if coroutine.status(state._doo_co) == 'dead' then
