@@ -99,6 +99,12 @@ function trans:__tostring()
    return "T={ src='" .. src .. "', tgt='" .. tgt .. "', event='" .. tostring(self.event) .. "' }"
 end
 
+-- alias
+simple_state = sista
+composite_state = csta
+connector = conn
+transition = trans
+
 --
 -- connector
 --

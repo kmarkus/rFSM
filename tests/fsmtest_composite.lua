@@ -14,22 +14,21 @@ local function test_doo()
    for i = 1,5 do
       print("doo:", i)
       os.execute("sleep 0.1")
-      if i ==4 then table.concat(nil) end
       coroutine.yield()
    end
 end
 
-csta_tmpl = rfsm.csta:new{
+csta_tmpl = rfsm.composite_state:new{
    dbg = fsmpp.dbgcolor,
    warn = fsmpp.dbgcolor,
    err = fsmpp.dbgcolor,
 
-   on = rfsm.sista:new{ doo=test_doo },
-   off = rfsm.sista:new{},
+   on = rfsm.simple_state:new{ doo=test_doo },
+   off = rfsm.simple_state:new{},
 
-   rfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
-   rfsm.trans:new{ src='on', tgt='off', events={ 'e_off' } },
-   rfsm.trans:new{ src='initial', tgt='off' }
+   rfsm.transition:new{ src='off', tgt='on', events={ 'e_on' } },
+   rfsm.transition:new{ src='on', tgt='off', events={ 'e_off' } },
+   rfsm.transition:new{ src='initial', tgt='off' }
 }
 
 
