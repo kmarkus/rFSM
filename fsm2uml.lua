@@ -287,7 +287,7 @@ end
 
 function fsm2uml(root, format, outfile, caption)
 
-   if not root._initalized then
+   if not root._initialized then
       param.err("fsm2uml ERROR: fsm " .. root._id .. " uninitialized")
       return false
    end

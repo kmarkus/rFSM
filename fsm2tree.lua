@@ -145,7 +145,7 @@ end
 -- convert fsm to
 function fsm2tree(fsm, format, outfile)
 
-   if not fsm._initalized then
+   if not fsm._initialized then
       param.err("fsm2tree ERROR: fsm " .. (fsm._id or 'root') .. " uninitialized")
       return false
    end

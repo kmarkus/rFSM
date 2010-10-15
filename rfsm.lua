@@ -133,6 +133,11 @@ function is_conn(s)  return is_fsmobj(s) and s:type() == 'connector' end
 function is_sta(s)   return is_sista(s) or is_csta(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
 
+-- check for valid and initalized 'root'
+function is_root(s)
+   return is_csta(s) and s._id == 'root' and s._initialized
+end
+
 -- type->char, e.g. 'Composite'-> 'C'
 function fsmobj_tochar(obj)
    if not is_fsmobj(obj) then return end
@@ -587,7 +592,7 @@ function init(fsm_templ, name)
    end
 
    -- All OK!
-   fsm._initalized = true
+   fsm._initialized = true
    return fsm
 end
 
@@ -600,6 +605,7 @@ end
 ----------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
+   if not is_root(fsm) then fsm.err("ERROR", fsm._name, "send_events: invalid fsm") end
    fsm.dbg("RAISED", table.concat(arg, ", "))
    for _,v in ipairs(arg) do
       table.insert(fsm._intq, v)
@@ -1139,6 +1145,8 @@ end
 --	     - doo_idle and #events == 0
 --
 function step(fsm, n)
+   if not is_root(fsm) then fsm.err("ERROR", fsm._name, "step: invalid fsm") end
+
    local idle = true
    local n = n or 1
 
@@ -1191,5 +1199,6 @@ function step(fsm, n)
 end
 
 function run(fsm)
+   if not is_root(fsm) then fsm.err("ERROR", fsm._name, "run: invalid fsm") end
    return step(fsm, math.huge)
 end

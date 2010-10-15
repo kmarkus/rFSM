@@ -149,7 +149,7 @@ function test_fsm(fsm, test, verb)
    end
 
    local retval = true
-   assert(fsm._initalized, "ERROR: test_fsm requires an initialized fsm!")
+   assert(fsm._initialized, "ERROR: test_fsm requires an initialized fsm!")
    stdout("TESTING:", test.id)
 
    if test.pics then
