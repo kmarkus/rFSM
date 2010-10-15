@@ -168,7 +168,7 @@ function test_fsm(fsm, test, verb)
       utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
       utils.foreach(function (e) rfsm.send_events(fsm, e) end, t.events)
 
-      rfsm.step(fsm)
+      rfsm.run(fsm)
 
       if t.expect then
 	 ret = cmp_ac(get_act_conf(fsm), t.expect)

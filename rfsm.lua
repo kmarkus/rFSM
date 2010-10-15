@@ -1,5 +1,5 @@
 --
--- This file is part of rFSM.
+ -- This file is part of rFSM.
 --
 -- rFSM is free software: you can redistribute it and/or modify it
 -- under the terms of the GNU General Public License as published by
@@ -17,17 +17,23 @@
 
 require ('utils')
 
--- tbdel for release!!
--- require ('luarocks.loader')
--- require('std')
-
--- save references
-
-local param, pairs, ipairs, print, tostring, table, string, type,
-loadstring, assert, coroutine, setmetatable, getmetatable, utils, io,
-unpack, error = param, pairs, ipairs, print, tostring, table, string, type,
-loadstring, assert, coroutine, setmetatable, getmetatable, utils, io,
-unpack, error
+local table = table
+local io = io
+local math = math
+local coroutine = coroutine
+local pairs = pairs
+local ipairs = ipairs
+local print = print
+local tostring = tostring
+local string = string
+local type = type
+local loadstring = loadstring
+local assert = assert
+local setmetatable = setmetatable
+local getmetatable = getmetatable
+local unpack = unpack
+local error = error
+local utils = utils
 
 module("rfsm")
 
@@ -69,6 +75,11 @@ end
 -- transition
 --
 trans = {}
+function trans:new(t)
+   setmetatable(t, self)
+   self.__index = self
+   return t
+end
 
 function trans:type() return 'transition' end
 
@@ -86,12 +97,6 @@ function trans:__tostring()
       else tgt = self.tgt._fqn end
    end
    return "T={ src='" .. src .. "', tgt='" .. tgt .. "', event='" .. tostring(self.event) .. "' }"
-end
-
-function trans:new(t)
-   setmetatable(t, self)
-   self.__index = self
-   return t
 end
 
 --
@@ -119,6 +124,7 @@ function is_fsmobj(s)
    end
 end
 
+-- type predicates
 function is_sista(s) return is_fsmobj(s) and s:type() == 'simple' end
 function is_csta(s)  return is_fsmobj(s) and s:type() == 'composite' end
 function is_trans(s) return is_fsmobj(s) and s:type() == 'transition' end
@@ -127,6 +133,7 @@ function is_conn(s)  return is_fsmobj(s) and s:type() == 'connector' end
 function is_sta(s)   return is_sista(s) or is_csta(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
 
+-- type->char, e.g. 'Composite'-> 'C'
 function fsmobj_tochar(obj)
    if not is_fsmobj(obj) then return end
    return string.upper(string.sub(obj:type(), 1, 1))
@@ -564,7 +571,8 @@ function init(fsm_templ, name)
    check_no_otrs(fsm)
    fsm._act_leaf = false
 
-   fsm._intq = { 'e_init_fsm' } -- internal event queue is empty
+   fsm._intq = { 'e_init_fsm' }
+   fsm._curq = {}
 
    -- getevents user hook supplied?
    -- must return a table with events
@@ -574,7 +582,7 @@ function init(fsm_templ, name)
 
    if not fsm.drop_events then
       fsm.drop_events =
-	 function (events)
+	 function (fsm, events)
 	    if #events>0 then fsm.dbg("DROPPING_EVENTS", events) end end
    end
 
@@ -649,16 +657,20 @@ local function tr_ipath(fsm, tr)
 end
 
 ----------------------------------------
--- merge all external and internal events into list
-local function getallev(fsm)
+-- check for new external events and merge them into the internal
+-- queue. return the number of events in the queue.
+local function check_events(fsm)
    local extq = fsm.getevents()
-   local res = fsm._intq
-   fsm._intq = {}
+   local intq = fsm._intq
+   for _,v in ipairs(extq) do table.insert(intq, v) end
+   return #intq
+end
 
-   for _,v in ipairs(extq) do
-      table.insert(res, v)
-   end
-   return res
+local function get_events(fsm)
+   check_events(fsm)
+   local ret = fsm._intq
+   fsm._intq = {}
+   return ret
 end
 
 ----------------------------------------
@@ -704,9 +716,12 @@ end
 -- active_leaf states might not have a doo function, so check
 -- returns true if there is at least one active doo, otherwise false
 local function run_doos(fsm)
-   local has_run = false
+   local doo_done = false
+   local doo_idle = false  -- fsm.doo_idle_def -- default for doo_idle???
 
-   if fsm._act_leaf then
+   if not fsm._act_leaf then
+      return true
+   else
       local state = fsm._act_leaf
 
       -- create new coroutine
@@ -717,12 +732,13 @@ local function run_doos(fsm)
 
       -- corountine still active, can be resumed
       if state._doo_co and  coroutine.status(state._doo_co) == 'suspended' then
-	 local res, errmsg = coroutine.resume(state._doo_co, fsm, state, 'doo')
-	 if not res then
-	    error("doo program of state '" .. state._fqn .. "' failed:\n" ..  errmsg)
+	 local cr_stat, cr_ret = coroutine.resume(state._doo_co, fsm, state, 'doo')
+	 if not cr_stat then
+	    error("doo program of state '" .. state._fqn .. "' failed:\n" ..  cr_ret)
 	 else
-	    has_run = true
+	    doo_idle = cr_ret or doo_idle -- this allows to provide a default, see above.
 	    if coroutine.status(state._doo_co) == 'dead' then
+	       doo_done = true
 	       state._doo_co = nil
 	       sta_mode(state, 'done')
 	       fsm._act_leaf = false
@@ -732,7 +748,7 @@ local function run_doos(fsm)
 	 end
       end
    end
-   return has_run
+   return doo_done, doo_idle
 end
 
 ----------------------------------------
@@ -931,7 +947,7 @@ local function exec_path(fsm, path)
 
    -- heads is list of path nodes
    local function __exec_path(head)
-      local next_head 
+      local next_head
 
       -- execute outgoing transitions from path node and write next
       -- pnode to next_head
@@ -941,7 +957,7 @@ local function exec_path(fsm, path)
 	 if pn.nextl == false then
 	    -- We have reached a stable configuration!
 	    return
-	 elseif is_sta(pn.node) then 
+	 elseif is_sta(pn.node) then
 	    -- todo: why not check for conflicts here? because they
 	    -- are currently not possible...
 	    seg = pn.nextl[1]
@@ -1115,44 +1131,65 @@ end
 -- 2. execute the transition
 --    2.1 find transition trajectory
 --    2.2 execute it
-function step(fsm)
-   local idling = true
+--
+-- conditions to return from this function:
+-- 	- n==0
+--	  if n > 0 and
+--           - doo_completed and #events == 0 or
+--	     - doo_idle and #events == 0
+--
+function step(fsm, n)
+   local idle = true
+   local n = n or 1
 
-   local events = getallev(fsm)
+   local curq = get_events(fsm) -- return table with all current events
 
-   -- entering fsm for the first time
-   --
-   -- it is impossible to exit it again, as there exist no transition
-   -- targets outside of the FSM
+   -- entering fsm for the first time: it is impossible to exit it
+   -- again, as there exist no transition targets outside of the
+   -- FSM. What about root self transition?
    if fsm._mode ~= 'active' then
-      if not enter_fsm(fsm, events) then
+      if not enter_fsm(fsm, curq) then
 	 fsm.err("ERROR: failed to enter fsm root " .. fsm._id .. ", no valid path from root.initial")
 	 return false
       end
-      idling = false
-   elseif #events > 0 then
+      if fsm.drop_events then fsm.drop_events(fsm, curq) end
+      idle = false
+   elseif #curq > 0 then
       -- received events, attempt to transition
-      transition(fsm, events)
-      idling = false
+      transition(fsm, curq)
+      if fsm.drop_events then fsm.drop_events(fsm, curq) end
+      idle = false
    else
-      -- no events, run do functions
-      if run_doos(fsm) then idling = false end
+      -- no events, run doo
+      local doo_done, doo_idle = run_doos(fsm)
+      if doo_done then idle = true
+      elseif doo_idle then
+	 -- if doo is idle we still check for events (which might have
+	 -- been generated by the doo itself) and if available try to
+	 -- transition:
+	 if check_events(fsm) > 0 then idle = false else idle = true end
+      else idle = false end -- do not idle
    end
 
-   if fsm.drop_events then fsm.drop_events(events) end
-
-   -- low level control hook
+   -- low level control hook: better ._step_hook
    if fsm._ctl_hook then fsm._ctl_hook(fsm) end
 
-   -- nothing to do - run an idle function or exit
-   if idling then
-      if fsm._idle then fsm._idle(fsm)
-      else
-	 fsm.dbg("HIBERNATING", "no doos, no events, no idle func, halting engines")
-	 return
+   n = n - 1
+   if n < 1 then return idle
+   else
+      if idle then
+	 if fsm._idle then fsm._idle(fsm); idle = false  -- call idle hook
+	 else
+	    fsm.dbg("HIBERNATING", "no doos, no events, no idle func, halting engines")
+	    return true -- we are idle
+	 end
       end
    end
-
+   print("restepping")
    -- tail call
-   return step(fsm)
+   return step(fsm, n)
+end
+
+function run(fsm)
+   return step(fsm, math.huge)
 end

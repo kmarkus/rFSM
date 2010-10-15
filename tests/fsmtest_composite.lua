@@ -10,14 +10,10 @@ require("fsmtesting")
 require("fsmpp")
 require("utils")
 
-local function printer_gen(s)
-   return function (...) print(s, unpack(arg)) end
-end
-
 local function test_doo()
    for i = 1,5 do
       print("doo:", i)
-      os.execute("sleep 1")
+      os.execute("sleep 0.1")
       coroutine.yield()
    end
 end
