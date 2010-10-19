@@ -65,16 +65,6 @@ local function stderr(...)
    utils.stderr(unpack(arg))
 end
 
---
--- activate all states including leaf but without running any programs
---
--- function activate_node(fsm, node)
---    assert(rfsm.is_sista(node), "can only set simple_states types active!")
---    rfsm.map_from_to(fsm, function (fsm, s)
--- 			    set_sta_mode(s, 'active')
--- 			 end, node, fsm)
--- end
-
 function activate_sista(fsm, node, mode)
    assert(is_sista(node), "can only set simple_states types active!")
    rfsm.map_from_to(fsm, function (fsm, s) set_sta_mode(s, 'active') end, node, fsm)
@@ -86,36 +76,6 @@ function reset(fsm)
    assert(nil, "tbd: implement reset func!")
 end
 
---
--- return a table describing the active configuration
---
--- function __get_act_conf(fsm)
-
---    local function __walk_act_path(s)
---       local res = {}
---       -- 'done' or 'inactive' are always the end of the active conf
---       if s._mode ~= 'active' then
--- 	 return { [s._fqn]=s._mode }
---       end
-
---       if rfsm.is_csta(s) then
--- 	 for ac,_ in pairs(s._actchild) do
--- 	    res[s._id] = __walk_act_path(ac)
--- 	 end
---       elseif rfsm.is_sista(s) then
--- 	 return { [s._fqn]=s._mode }
---       else
--- 	 local mes="ERROR: active non state type found, fqn=" .. s.fqn .. ", type=" .. s:type()
--- 	 param.err(mes)
--- 	 return mes
---       end
-
---       return res
---    end
-
---    return __walk_act_path(fsm)
--- end
-
 function get_act_leaf(fsm)
    local c = rfsm.actchild_get(fsm)
    if c == nil then
@@ -125,8 +85,6 @@ function get_act_leaf(fsm)
    if is_sista(c) then return c end
    return get_act_leaf(c)
 end
-
-
 
 -- nano fsm test framework.
 -- a test always includes

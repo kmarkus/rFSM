@@ -532,19 +532,6 @@ local function setup_printers(fsm)
 end
 
 ----------------------------------------
--- create a state -> outgoing transition lookup cache
--- move to otrs field in state
--- local function st2otr_cache(fsm)
---    local cache = {}
-
---    map_trans(function (tr, parent)
--- 		if not cache[tr.src] then cache[tr.src] = {} end
--- 		table.insert(cache[tr.src], tr)
--- 	     end, fsm)
-
---    return function(srcfqn) return cache[srcfqn] end
--- end
-----------------------------------------
 -- initialize fsm
 -- create parent links
 -- create table for lookups
@@ -1040,29 +1027,13 @@ end
 
 function node_find_enabled(fsm, start, events)
 
-   -- -- forward declarations
-   -- local __find_disj_path
-
-   -- -- internal dispatcher
-   -- local function __node_find_enabled(start, events)
-
-   --    assert(is_node(start), "node type expected")
-
-   --    if is_conn(start) then return __find_disj_path(start, events)
-   --    elseif is_sta(start) then return { node=start, nextl=false }
-   --    else fsm.err("ERROR: node_find_path invalid starting node"
-   -- 		   .. start._fqn .. ", type" .. start:type()) end
-   -- end
-
-   -- find disjunct path, returns at least one valid path
+   -- find a path starting from node
    function __find_path(nde, events)
       local cur = { node=nde, nextl={} }
 
-      -- path ends if no outgoing path. This will be warned about statically
-      if nde._otrs == nil then
-	 --fsm.warn("no outgoing transitions from " .. nde._fqn)
-	 return false
-      end
+      -- path ends if no outgoing path. The static validation should
+      -- have raised a warning earlier.
+      if nde._otrs == nil then return false end
 
       -- check all outgoing transitions from nde
       for k,tr in pairs(nde._otrs) do
@@ -1084,7 +1055,6 @@ function node_find_enabled(fsm, start, events)
    end
 
    assert(is_node(start), "node type expected")
-
    return __find_path(start, events)
 end
 
