@@ -76,6 +76,17 @@ function fsm2str(fsm, ind)
 end
 
 
+local ctab = {
+   STATE_ENTER = ac.green,
+   STATE_EXIT = ac.red,
+   EFFECT = ac.yellow,
+   DOO = ac.blue,
+   EXEC_PATH = ac.cyan,
+   ERROR = ac.red .. ac.bright,
+   HIBERNATING = ac.magenta,
+   RAISED = ac.white .. ac.bright
+}
+
 -- colorized dbg replacement function
 function dbgcolor(...)
 
@@ -88,17 +99,6 @@ function dbgcolor(...)
    -- convert nested tables to strings
    ptab = utils.map(function (e) return utils.tab2str(e) end, arg)
 
-   local ctab = {
-      STATE_ENTER = ac.green,
-      STATE_EXIT = ac.red,
-      EFFECT = ac.yellow,
-      DOO = ac.blue,
-      EXEC_PATH = ac.cyan,
-      ERROR = ac.red .. ac.bright,
-      HIBERNATING = ac.magenta,
-      RAISED = ac.white .. ac.bright
-   }
-
    col = ctab[ptab[1]]
 
    if col ~= nil then
@@ -108,11 +108,8 @@ function dbgcolor(...)
    end
 end
 
--- returns a dbg color function which filters: first keeps the
--- attributes in pos, then from the remaining removes the ones with
--- attributes in tneg.
---
-function gen_dbgcolor(ftab)
+-- generate a dbgcolor function
+function gen_dbgcolor(ftab, defshow)
 
    return function (...)
 	     local tag = arg[1]
