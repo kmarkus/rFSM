@@ -23,7 +23,7 @@ local function safe_doo()
 end
 
 csta_tmpl = rfsm.csta:new {
-   dbg = fsmpp.dbgcolor,
+   dbg = false, --fsmpp.dbgcolor,
    -- dbg = fsmpp.gen_dbgcolor({["STATE_ENTER"]=true, ["STATE_EXIT"]=true,
    -- 				 ["HIBERNATING"]=true, ["EXEC_PATH"]=true,
    -- 				 ["EFFECT"]=true, ["DOO"]=true, ["CHECKING"]=true}),
@@ -63,19 +63,19 @@ local test = {
 	 descr='testing entry',
 	 preact = nil,
 	 events = nil,
-	 expect = { root={ ['root.safe']='done' } }
+	 expect = { leaf='root.safe', mode='done' },
       }, {
 	 descr='testing transition to operational',
 	 events = { 'e_range_clear' },
-	 expect = { root={ ['operational'] = { ['root.operational.approaching']='done'} } }
+	 expect = { leaf='root.operational.approaching', mode='done'},
       }, {
 	 descr='testing transition to in_contact',
 	 events = { 'e_contact_made' },
-	 expect = { root={ ['operational'] = { ['root.operational.in_contact']='done'} } }
+	 expect = { leaf='root.operational.in_contact', mode='done'},
       }, {
 	 descr='testing transition to safe',
 	 events = { 'e_close_object' },
-	 expect = { root={ ['root.safe'] = 'done'} },
+	 expect = { leaf='root.safe', mode = 'done'},
       }
    }
 }
@@ -83,5 +83,4 @@ local test = {
 
 fsm = rfsm.init(csta_tmpl, "composite_nested_tests")
 
-if fsmtesting.test_fsm(fsm, test, true) then os.exit(0)
-else os.exit(1) end
+fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, false))

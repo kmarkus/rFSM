@@ -31,12 +31,26 @@ require("fsm2uml")
 require("utils")
 require("ansicolors")
 
-local pairs, ipairs, print, table, type, assert, io, utils, rfsm,
-   tostring, string, fsm2uml, ansicolors, unpack = pairs, ipairs,
-   print, table, type, assert, io, utils, rfsm, tostring, string,
-   fsm2uml, ansicolors, unpack
+local table = table
+local io = io
+local utils = utils
+local rfsm = rfsm
+local string = string
+local fsm2uml = fsm2uml
+local ac = ansicolors
+
+local pairs = pairs
+local ipairs = ipairs
+local print = print
+local type = type
+local assert = assert
+local tostring = tostring
+local unpack = unpack
 
 local tab2str = utils.tab2str
+local sista = rfsm.sista
+local is_sista = rfsm.is_sista
+local csta = sista
 
 module("fsmtesting")
 
@@ -44,21 +58,27 @@ local verbose = false
 
 -- output
 local function stdout(...)
-   if verbose then
-      utils.stdout(unpack(arg))
-   end
+   if verbose then utils.stdout(unpack(arg)) end
 end
 
-local stderr = utils.stderr
+local function stderr(...)
+   utils.stderr(unpack(arg))
+end
 
 --
 -- activate all states including leaf but without running any programs
 --
-function activate_node(fsm, node)
-   assert(is_sta(node), "can only set states types active!")
-   map_from_to(fsm, function (fsm, s)
-		       sta_mode(s, 'active')
-		    end, node, fsm)
+-- function activate_node(fsm, node)
+--    assert(rfsm.is_sista(node), "can only set simple_states types active!")
+--    rfsm.map_from_to(fsm, function (fsm, s)
+-- 			    set_sta_mode(s, 'active')
+-- 			 end, node, fsm)
+-- end
+
+function activate_sista(fsm, node, mode)
+   assert(is_sista(node), "can only set simple_states types active!")
+   rfsm.map_from_to(fsm, function (fsm, s) set_sta_mode(s, 'active') end, node, fsm)
+   set_sta_mode(node, mode)
 end
 
 
@@ -69,56 +89,41 @@ end
 --
 -- return a table describing the active configuration
 --
-function get_act_conf(fsm)
+-- function __get_act_conf(fsm)
 
-   local function __walk_act_path(s)
-      local res = {}
-      -- 'done' or 'inactive' are always the end of the active conf
-      if s._mode ~= 'active' then
-	 return { [s._fqn]=s._mode }
-      end
+--    local function __walk_act_path(s)
+--       local res = {}
+--       -- 'done' or 'inactive' are always the end of the active conf
+--       if s._mode ~= 'active' then
+-- 	 return { [s._fqn]=s._mode }
+--       end
 
-      if rfsm.is_csta(s) then
-	 for ac,_ in pairs(s._actchild) do
-	    res[s._id] = __walk_act_path(ac)
-	 end
-      elseif rfsm.is_sista(s) then
-	 return { [s._fqn]=s._mode }
-      else
-	 local mes="ERROR: active non state type found, fqn=" .. s.fqn .. ", type=" .. s:type()
-	 param.err(mes)
-	 return mes
-      end
+--       if rfsm.is_csta(s) then
+-- 	 for ac,_ in pairs(s._actchild) do
+-- 	    res[s._id] = __walk_act_path(ac)
+-- 	 end
+--       elseif rfsm.is_sista(s) then
+-- 	 return { [s._fqn]=s._mode }
+--       else
+-- 	 local mes="ERROR: active non state type found, fqn=" .. s.fqn .. ", type=" .. s:type()
+-- 	 param.err(mes)
+-- 	 return mes
+--       end
 
-      return res
+--       return res
+--    end
+
+--    return __walk_act_path(fsm)
+-- end
+
+function get_act_leaf(fsm)
+   local c = rfsm.actchild_get(fsm)
+   if c == nil then
+      error("get_act_leaf: no active child!")
+      return false
    end
-
-   return __walk_act_path(fsm)
-end
-
--- compare two tables
-function table_cmp(t1, t2)
-   local function __cmp(t1, t2)
-      -- t1 _and_ t2 are not tables
-      if not (type(t1) == 'table' and type(t2) == 'table') then
-	 if t1 == t2 then return true
-	 else return false end
-      elseif type(t1) == 'table' and type(t2) == 'table' then
-	 if #t1 ~= #t2 then return false
-	 else
-	    -- iterate over all keys and compare against k's keys
-	    for k,v in pairs(t1) do
-	       if not __cmp(t1[k], t2[k]) then
-		  return false
-	       end
-	    end
-	    return true
-	 end
-      else -- t1 and t2 are not of the same type
-	 return false
-      end
-   end
-   return __cmp(t1,t2) and __cmp(t2,t1)
+   if is_sista(c) then return c end
+   return get_act_leaf(c)
 end
 
 
@@ -136,19 +141,6 @@ end
 function test_fsm(fsm, test, verb)
    verbose = verb or false
 
-   local function cmp_ac(act, exp)
-      if not table_cmp(act, exp) then
-	 stderr(ansicolors.red("FAILED: Active configurations differ!"))
-	 stderr(ansicolors.red("    actual:   ") .. utils.tab2str(act))
-	 stderr(ansicolors.red("    expected: ") .. utils.tab2str(exp))
-	 return false
-      else
-	 stdout(ansicolors.green .. ansicolors.bright .. 'OK.' .. ansicolors.reset)
-	 return true
-      end
-   end
-
-   local retval = true
    assert(fsm._initialized, "ERROR: test_fsm requires an initialized fsm!")
    stdout("TESTING:", test.id)
 
@@ -165,22 +157,46 @@ function test_fsm(fsm, test, verb)
 
       stdout(boiler)
 
-      utils.foreach(function (n) activate_node(fsm, n) end, t.preact)
+      if t.preact then activate_sista(fsm, t.fqn, t.mode) end
       utils.foreach(function (e) rfsm.send_events(fsm, e) end, t.events)
 
       rfsm.run(fsm)
 
       if t.expect then
-	 ret = cmp_ac(get_act_conf(fsm), t.expect)
-      elseif t.expect_str then
-	 ret = check_status(get_act_conf(fsm), t.expect_str)
+	 local c = get_act_leaf(fsm)
+	 local fqn = c._fqn
+	 local mode = rfsm.get_sta_mode(c)
+
+	 if fqn == t.expect.leaf and mode == t.expect.mode then
+	    stdout(ac.green .. ac.bright .. 'OK.' .. ac.reset)
+	    t.result = true
+	 else
+	    stderr(ac.red("Test: " .. t.descr .. " FAILED: Active configurations differ!"))
+	    stderr(ac.red("    actual:         ") .. fqn .. "=" .. mode)
+	    stderr(ac.red("    expected:       ") .. t.expect.leaf .. "=" .. t.expect.mode)
+	    t.result = false
+	 end
       end
 
       local imgfile = test.id .. "-" .. i .. ".png"
       stdout("generating img: ", imgfile)
       fsm2uml.fsm2uml(fsm, "png", imgfile, boiler)
-      retval = retval and ret
       stdout(string.rep("-", 80))
    end
-   return retval
+   return test
+end
+
+function print_stats(test)
+   local succ, fail = 0, 0
+   for i = 1,#test.tests do
+      if test.tests[i].result then succ = succ + 1
+      else fail = fail + 1 end
+   end
+   local color
+   if fail == 0 then color = ac.green
+   elseif succ > 0 then color = ac.yellow
+   else color = ac.red end
+
+   utils.stdout(color("Test: '" .. test.id .. "'. " .. #test.tests .. " tests. " ..
+		      succ .. " succeeded, " .. fail .. " failed."))
 end

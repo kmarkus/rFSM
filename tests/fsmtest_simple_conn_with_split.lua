@@ -12,16 +12,17 @@ local err = print
 local id = 'conn_chain_with_split_test'
 
 conn_chain_split_templ = rfsm.csta:new{
+   dbg = false,
    dummyA = rfsm.sista:new{},
    dummyB = rfsm.sista:new{},
 
    rfsm.trans:new{ src='initial', tgt='connA1' },
    rfsm.trans:new{ src='connA1', tgt='connA2' },
-   rfsm.trans:new{ src='connA2', tgt='dummyA', guard=function () return false end  },
+   rfsm.trans:new{ src='connA2', tgt='dummyA' },
 
    rfsm.trans:new{ src='initial', tgt='connB1' },
    rfsm.trans:new{ src='connB1', tgt='connB2'},
-   rfsm.trans:new{ src='connB2', tgt='dummyB' },
+   rfsm.trans:new{ src='connB2', tgt='dummyB', guard=function () return false end  },
 
    connA1 = rfsm.conn:new{},
    connA2 = rfsm.conn:new{},
@@ -37,11 +38,10 @@ test = {
 	 descr='testing entry',
 	 preact = nil,
 	 events = nil,
-	 expect = { root={ ['root.dummyB']='done' } }
+	 expect = { leaf='root.dummyA', mode='done' },
       }
    }
 }
-
 
 jc = rfsm.init(conn_chain_split_templ)
 
@@ -50,5 +50,4 @@ if not jc then
    os.exit(1)
 end
 
-if fsmtesting.test_fsm(jc, test) then os.exit(0)
-else os.exit(1) end
+fsmtesting.print_stats(fsmtesting.test_fsm(jc, test))

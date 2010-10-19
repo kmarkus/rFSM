@@ -16,7 +16,7 @@ local id = 'conn_chain_test'
 
 conn_test_templ = rfsm.csta:new{
 
-   dbg = fsmpp.dbgcolor,
+   dbg = false, -- fsmpp.dbgcolor,
 
    dummy = rfsm.sista:new{},
    conn1 = rfsm.conn:new{},
@@ -36,7 +36,7 @@ test = {
 	 descr='testing entry',
 	 preact = nil,
 	 events = nil,
-	 expect = { root={ ['root.dummy']='done' } }
+	 expect = { leaf='root.dummy', mode='done' },
       }
    }
 }
@@ -49,5 +49,4 @@ if not jc then
    os.exit(1)
 end
 
-if fsmtesting.test_fsm(jc, test, true) then os.exit(0)
-else os.exit(1) end
+fsmtesting.print_stats(fsmtesting.test_fsm(jc, test, false))

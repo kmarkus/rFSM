@@ -688,36 +688,38 @@ end
 ----------------------------------------
 -- actchild handling
 local function actchild_add(parent, child)
-   if parent._actchild == nil then
-      parent._actchild = { [child] = true }
-   else
-      parent._actchild[child] = true
+   if parent._actchild ~= nil then
+      error("actchild_add: error adding " .. child._fqn .. ", parent " .. parent._fqn .. " already has an active child " .. child._fqn)
    end
+   parent._actchild = child
 end
 
 local function actchild_rm(parent, child)
-   if parent._actchild ~= nil then
-      parent._actchild[child] = nil
+   if parent._actchild ~= child then
+      error("actchild_rm: error " .. child._fqn .. " not a child of parent " ..
+	    parent._fqn .. " (actchild=)" .. parent._actchild)
    end
+   parent._actchild = nil
 end
 
-local function actchild_get(state)
-   if not state._actchild then return {}
-   else return state._actchild end
-end
+-- return actchild, can be nil!
+function actchild_get(state) return state._actchild end
 
--- set or get state mode
-function sta_mode(s, m)
+-- get state mode
+function get_sta_mode(s) return s._mode end
+
+-- set state mode
+function set_sta_mode(s, m)
    assert(is_sta(s), "can't set_mode on non state type")
-   if m then
-      assert(m=='active' or m=='inactive' or m=='done')
-      s._mode = m
-      if m=='inactive' then actchild_rm(s._parent, s)
-      elseif m=='active' then actchild_add(s._parent, s)
-      else
-	 -- in 'done' it should be active already
-	 assert(s._parent._actchild[s], "sta_mode: ERROR: 'done' but not actchild of parent")
-      end
+
+   if is_sista(s) then assert(m=='active' or m=='inactive' or m=='done')
+   else assert(m=='active' or m=='inactive') end -- must be a csta
+
+   s._mode = m
+   if m=='inactive' then actchild_rm(s._parent, s)
+   elseif m=='active' then actchild_add(s._parent, s)
+   else -- in 'done' it should be active already
+      assert(s._parent._actchild == s, "set_sta_mode: ERROR: 'done' but not actchild of parent")
    end
    return s._mode
 end
@@ -753,7 +755,7 @@ local function run_doos(fsm)
 	    if coroutine.status(state._doo_co) == 'dead' then
 	       doo_done = true
 	       state._doo_co = nil
-	       sta_mode(state, 'done')
+	       set_sta_mode(state, 'done')
 	       fsm._act_leaf = false
 	       send_events(fsm, "e_done@" .. state._fqn)
 	       fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
@@ -770,14 +772,14 @@ local function enter_one_state(fsm, state)
 
    if not is_sta(state) then return end
 
-   sta_mode(state, 'active')
+   set_sta_mode(state, 'active')
 
    if state.entry then state.entry(fsm, state, 'entry') end
 
    if is_sista(state) then
       if state.doo then fsm._act_leaf = state
       else
-	 sta_mode(state, "done")
+	 set_sta_mode(state, "done")
 	 send_events(fsm, "e_done@" .. state._fqn)
       end
    end
@@ -789,23 +791,17 @@ end
 -- exit a state (incl all substates)
 local function exit_state(fsm, state)
 
-   -- if complex exit child states first
-   if is_csta(state) then
-      for ac,_ in pairs(actchild_get(state)) do
-	 exit_state(fsm, ac)
-      end
-   end
+   -- if composite exit child states first
+   if is_csta(state) then exit_state(fsm, actchild_get(state)) end
 
    if is_sta(state) then
       -- save this for possible history entry
-      if sta_mode(state) == 'active' then
-	 state._parent._last_active = state
-      else
-	 state._parent._last_active = false
-      end
+      state._parent._last_active = { child=state, mode=get_sta_mode(state) }
 
-      sta_mode(state, 'inactive')
+      set_sta_mode(state, 'inactive')
       if state.exit then state.exit(fsm, state, 'exit') end
+
+      -- don't cleanup coroutine, could be used later
       if is_sista(state) then fsm._act_leaf = false end
    end
 
@@ -926,6 +922,7 @@ local function path2str(path, indc, indmul)
    local function __path2str(pnode, ind)
       strtab[#strtab+1] = pnode.node._fqn
       strtab[#strtab+1] = '[' .. fsmobj_tochar(pnode.node) .. ']'
+
       if not pnode.nextl then return end
 
       if  #pnode.nextl > 1 then
@@ -1026,9 +1023,7 @@ local function is_enabled(tr, events)
 
    -- guard condition?
    if not tr.guard then return true end
-
    local ret = tr.guard(tr, events)
-
    return ret
 end
 
@@ -1038,26 +1033,30 @@ end
 --
 -- tbd: this function can be simplified a lot by merging the two
 -- __find functions and including the __node function inside
+--
+-- a path always starts from a node_descriptor which is defined by a
+-- table { node=stateX, nextl=...}. The nextl field is a table of
+-- tables which specify transition segments: { trans=transZ next=next_node_desc }
+
 function node_find_enabled(fsm, start, events)
 
-   -- forward declarations
-   local __find_conj_path, __find_disj_path
+   -- -- forward declarations
+   -- local __find_disj_path
 
-   -- internal dispatcher
-   local function __node_find_enabled(start, events)
+   -- -- internal dispatcher
+   -- local function __node_find_enabled(start, events)
 
-      assert(is_node(start), "node type expected")
+   --    assert(is_node(start), "node type expected")
 
-      if is_conn(start) then return __find_disj_path(start, events)
-      elseif is_sta(start) then return { node=start, nextl=false }
-      else fsm.err("ERROR: node_find_path invalid starting node"
-		   .. start._fqn .. ", type" .. start:type()) end
-   end
+   --    if is_conn(start) then return __find_disj_path(start, events)
+   --    elseif is_sta(start) then return { node=start, nextl=false }
+   --    else fsm.err("ERROR: node_find_path invalid starting node"
+   -- 		   .. start._fqn .. ", type" .. start:type()) end
+   -- end
 
    -- find disjunct path, returns at least one valid path
-   function __find_disj_path(nde, events)
+   function __find_path(nde, events)
       local cur = { node=nde, nextl={} }
-      local tail
 
       -- path ends if no outgoing path. This will be warned about statically
       if nde._otrs == nil then
@@ -1065,22 +1064,28 @@ function node_find_enabled(fsm, start, events)
 	 return false
       end
 
+      -- check all outgoing transitions from nde
       for k,tr in pairs(nde._otrs) do
-	 if is_enabled(tr, events) then
-	    tail = __node_find_enabled(tr.tgt, events)
-	    if tail then cur.nextl[#cur.nextl+1] = {trans=tr, next=tail} end
+ 	 if is_enabled(tr, events) then
+	    -- find continuation
+	    local tgt = tr.tgt
+	    local tail
+	    if is_sista(tgt) then tail = { node=tgt, nextl=false }
+	    elseif is_conn(tgt) then tail = __find_path(tgt, events)
+	    else fsm.err("ERROR: node_find_path invalid starting node"
+			 .. start._fqn .. ", type" .. start:type()) end
+ 	    if tail then cur.nextl[#cur.nextl+1] = {trans=tr, next=tail} end
 	 end
       end
 
-      if #cur.nextl == 0 then
-	 return false
-      end
+      -- no paths found
+      if #cur.nextl == 0 then return false end
       return cur
    end
 
    assert(is_node(start), "node type expected")
 
-   return __find_disj_path(start, events)
+   return __find_path(start, events)
 end
 
 ----------------------------------------
@@ -1089,23 +1094,17 @@ local function fsm_find_enabled(fsm, events)
    local depth = 0
 
    -- states is table of active states at a certain depth
-   local function __find_enabled(states)
-      local next={}
-
-      for i,s in ipairs(states) do
-	 fsm.dbg("CHECKING", "depth:", depth, "for transitions from " .. s._fqn)
-	 path = node_find_enabled(fsm, s, events)
-	 if path then return path end
-	 for ac,_ in pairs(actchild_get(s)) do
-	    next[#next+1] = ac
-	 end
-      end
+   local function __find_enabled(state)
+      fsm.dbg("CHECKING", "depth:", depth, "for transitions from " .. state._fqn)
+      path = node_find_enabled(fsm, state, events)
+      if path then return path end
+      local next = actchild_get(state)
+      if not next then return end
       depth = depth + 1
-      if #next == 0 then return
-      else return __find_enabled(next) end
+      return __find_enabled(next)
    end
 
-   return __find_enabled{ fsm }
+   return __find_enabled(fsm)
 end
 
 
@@ -1200,7 +1199,6 @@ function step(fsm, n)
 	 end
       end
    end
-   print("restepping")
    -- tail call
    return step(fsm, n)
 end

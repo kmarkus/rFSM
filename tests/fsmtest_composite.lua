@@ -19,7 +19,7 @@ local function test_doo()
 end
 
 csta_tmpl = rfsm.composite_state:new{
-   dbg = fsmpp.dbgcolor,
+   dbg = false, -- fsmpp.dbgcolor,
    warn = fsmpp.dbgcolor,
    err = fsmpp.dbgcolor,
 
@@ -40,16 +40,16 @@ local test = {
 	 descr='testing entry',
 	 preact = nil,
 	 events = nil,
-	 expect = { root={ ['root.off']='done' } }
+	 expect = { leaf='root.off', mode='done' },
       }, {
 	 descr='testing transition to on',
 	 events = { 'e_on' },
-	 expect = { root={ ['root.on']='done'} }
+	 expect = { leaf='root.on', mode='done'},
       }
    }
 }
 
 fsm = rfsm.init(csta_tmpl, "composite_tests")
 
-if fsmtesting.test_fsm(fsm, test, true) then os.exit(0)
-else os.exit(1) end
+fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, false))
+
