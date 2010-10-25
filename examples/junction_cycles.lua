@@ -5,10 +5,10 @@
 
 
 return rfsm.csta:new {
-   rfsm.trans:new{ src='initial', tgt='junc1' },
-   rfsm.trans:new{ src='junc1', tgt='junc2' },
-   rfsm.trans:new{ src='junc2', tgt='junc1' },
-   junc1 = rfsm.junc:new{},
-   junc2 = rfsm.junc:new{}
+   rfsm.trans:new{ src='initial', tgt='conn1' },
+   rfsm.trans:new{ src='conn1', tgt='conn2' },
+   rfsm.trans:new{ src='conn2', tgt='conn1' },
+   conn1 = rfsm.conn:new{},
+   conn2 = rfsm.conn:new{}
 }
 

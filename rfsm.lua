@@ -535,13 +535,13 @@ end
 -- initialize fsm
 -- create parent links
 -- create table for lookups
-function init(fsm_templ, name)
+function init(fsm_templ)
 
    assert(is_csta(fsm_templ), "invalid fsm model passed to rfsm.init")
 
    local fsm = utils.deepcopy(fsm_templ)
 
-   fsm._id = 'root' -- fsm._id = name or 'root'
+   fsm._id = 'root'
 
    setup_printers(fsm)
 
@@ -598,7 +598,7 @@ end
 ----------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
-   if not is_root(fsm) then fsm.err("ERROR", fsm._name, "send_events: invalid fsm") end
+   if not is_root(fsm) then fsm.err("ERROR send_events: invalid fsm") end
    fsm.dbg("RAISED", table.concat(arg, ", "))
    for _,v in ipairs(arg) do
       table.insert(fsm._intq, v)
@@ -1121,7 +1121,7 @@ end
 --	     - doo_idle and #events == 0
 --
 function step(fsm, n)
-   if not is_root(fsm) then fsm.err("ERROR", fsm._name, "step: invalid fsm") end
+   if not is_root(fsm) then fsm.err("ERROR step: invalid fsm") end
 
    local idle = true
    local n = n or 1
@@ -1173,6 +1173,6 @@ function step(fsm, n)
 end
 
 function run(fsm)
-   if not is_root(fsm) then fsm.err("ERROR", fsm._name, "run: invalid fsm") end
+   if not is_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
    return step(fsm, math.huge)
 end

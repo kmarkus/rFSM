@@ -13,7 +13,8 @@ local function safe_doo()
 end
 
 return rfsm.csta:new {
-   dbg = fsmpp.dbgcolor,
+
+   dbg = false,
 
    operational = rfsm.csta:new{
 

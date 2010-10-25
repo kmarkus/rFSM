@@ -88,11 +88,14 @@ local ctab = {
 }
 
 -- colorized dbg replacement function
-function dbgcolor(...)
+function dbgcolor(name, ...)
+   local str = ""
 
    if not type(arg) == 'table' then
       return
    end
+
+   if name then str = ac.cyan .. ac.bright .. name .. ":" .. ac.reset .. '\t' end
 
    arg.n = nil -- argh !
 
@@ -102,10 +105,20 @@ function dbgcolor(...)
    col = ctab[ptab[1]]
 
    if col ~= nil then
-      print(col .. utils.rpad(ptab[1], pad) .. ac.reset .. table.concat(ptab, ' ', 2))
+      str = str.. col .. utils.rpad(ptab[1], pad) .. ac.reset .. table.concat(ptab, ' ', 2)
    else
-      print(utils.rpad(ptab[1], pad) .. table.concat(ptab, ' ', 2))
+      str = str .. utils.rpad(ptab[1], pad) .. table.concat(ptab, ' ', 2)
    end
+   print(str)
+end
+
+-- generate a debugcolor printer function which prints the name
+function gen_dbgcolor2(name)
+   name = name or "<unnamed SM>"
+   return function (...)
+	     arg.n=nil
+	     dbgcolor(name, unpack(arg))
+	  end
 end
 
 -- generate a dbgcolor function
