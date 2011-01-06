@@ -322,6 +322,9 @@ local function __resolve_path(fsm, state_str, parent)
 
    -- index tree with array tab
    local function index_tree(tree, tab)
+      if tab[1] == 'root' or tab[1] == fsm._id then
+	 return index_tree(tree, utils.cdr(tab))
+      end
       local res = tree
       for _, k in ipairs(tab) do
 	 res = res[k]
