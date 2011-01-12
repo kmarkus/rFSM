@@ -1,8 +1,25 @@
+#+TITLE:	The rFSM Statecharts (alpha)
+#+AUTHOR:	Markus Klotzbuecher
+#+EMAIL:	markus.klotzbuecher@mech.kuleuven.be
+#+DATE:		[2011-01-12 Wed]
+#+DESCRIPTION:
+#+KEYWORDS:
+#+LANGUAGE:	en
+#+OPTIONS:	H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:	TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT:	view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LINK_UP:
+#+LINK_HOME:
+#+XSLT:
+##+STYLE:	<link rel="stylesheet" type="text/css" href="css/stylesheet.css" />
 
-* The rFSM Statecharts
-** Introduction
-   A simple example
-** API
+#+STARTUP:	showall
+#+STARTUP:	hidestars
+
+* Introduction
+* API
 *** Model entities
 
     | Function             | description                                 |
@@ -13,6 +30,24 @@
     | =rfsm.trans:new{}=   | create a transition                         |
     | =fsm rfsm.init(fsm)= | initialize a fsm and return initialized fsm |
 
+
+    1. states (simple =sista= and composite =csta=)
+
+       =entry(fsm, state, 'entry')=
+       =exit(fsm, state, 'entry')=
+
+       only for simple states:
+
+       =active doo(fsm, state, 'doo')=
+
+       returns a bool which indicates the doo is still active that it
+       would like to be called again if no other events occured.
+
+
+    3. connector: =connector=
+
+    4. transitions: =transitions=
+
 *** Operational API
 
     | Function         | description                    |
@@ -22,37 +57,36 @@
 
     todo Explain!
 
-*** Hooks functions
+*** Hook functions
 
-    | function     | description                                        |
-    |--------------+----------------------------------------------------|
-    | =dbg=        | will be called to output debug information         |
-    | =info=       | will be called to output informational information |
-    | =warn=       | will be called to output warnings                  |
-    | =err=        | will be called to output errors                    |
-    | =getevents=  | function which returns a table of events           |
-    | =dropevents= |                                                    |
+    | function                 | description                                             |
+    |--------------------------+---------------------------------------------------------|
+    | =dbg=                    | will be called to output debug information              |
+    | =info=                   | will be called to output informational information      |
+    | =warn=                   | will be called to output warnings                       |
+    | =err=                    | will be called to output errors                         |
+    | =table getevents()=      | function which returns a table of events                |
+    | =dropevents(fsm, evtab)= | function is called with events which are discarded      |
+    | =step_hook(fsm)=         | is called for each step (mostly for debugging purposes) |
+    | =idle_hook(fsm)=         | called *instead* of returning from step/run functions   |
+    |                          |                                                         |
 
-** Analysing rFSM Statecharts
-*** Measuring transition latencies
-
-** Using rFSM with RTT
-
-** Tools
+* Extensions
+** Measuring transition latencies
+* Tools
 *** fsm2uml
 *** fsmdbg
 
     Important: who wakes the rFSM when it hibernates? Various possibilites:
 
-      - RTT triggers =updateHook()= after receiving a variable on a
-        DataPort, which in turn can be used to call the fsm's =step()=
-        function.
+    - RTT triggers =updateHook()= after receiving a variable on a
+      DataPort, which in turn can be used to call the fsm's =step()=
+      function.
 
       - For debug purposes you can insert a sleep in the _idle_hook
 
-      - 
+      -
 
 *** fsmpp
 *** fsmtesting
-** Internals
-   
+* Internals

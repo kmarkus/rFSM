@@ -9,7 +9,7 @@ require("fsmdbg")
 
 simple_templ = rfsm.csta:new{
 
-   _idle=function () os.execute("sleep 0.1") end,
+   idle_hook=function () os.execute("sleep 0.1") end,
 
    on = rfsm.sista:new{},
    off = rfsm.sista:new{},

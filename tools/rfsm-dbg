@@ -12,7 +12,7 @@ if arg and #arg == 2 and arg[1] == 'spawn' then
    fsm_tpl.info = false
    fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
 
-   fsm._idle=function () os.execute("sleep 0.1") end
+   fsm.idle_hook=function () os.execute("sleep 0.1") end
    fsm.dbg = fsmpp.gen_dbgcolor({["STATE_ENTER"]=true, ["STATE_EXIT"]=true,
    				 ["HIBERNATING"]=true, ["EXEC_PATH"]=true,
  				 ["EFFECT"]=true, ["DOO"]=true, ["CHECKING"]=true}),

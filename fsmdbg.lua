@@ -156,7 +156,7 @@ end
 --     - process: will process all commands reveived
 --     - getevents: call process and clears and returns the current event queue
 --
--- Rationale: process should be called in ctl_hook in order
+-- Rationale: process should be called in step_hook in order
 -- continuously process incoming commands and getevents can be added
 -- to getevents queue.
 -- 
