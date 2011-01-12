@@ -13,7 +13,7 @@ require("fsmpp")
 cnt = 0
 
 simple_templ = rfsm.csta:new{
-   dbg = false, -- fsmpp.dbgcolor,
+   dbg = fsmpp.gen_dbgcolor("fsmtest_simple"),
    on = rfsm.sista:new{},
    off = rfsm.sista:new{},
    busy = rfsm.sista:new{
@@ -63,4 +63,4 @@ local test = {
 
 fsm = rfsm.init(simple_templ, "simple_test")
 
-fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, false))
+fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, true))
