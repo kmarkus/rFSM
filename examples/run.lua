@@ -78,23 +78,36 @@ function viztree()
    os.execute(viewer .. " " .. tmpdir .. "rfsm-tree-tmp.png" .. "&")
 end
 
-print([=[
-    available commands:
-	    dbg(bool)      -- enable/disable debug info
-	    se(...)        -- send events
-	    ser(...)       -- send events and run()
-	    run()          -- run FSM
-	    step()         -- step FSM
-	    pp()           -- pretty print fsm
-	    uml()          -- generate uml figure
-	    vizuml()       -- show uml figure ($RFSM_VIEWER)
-	    tree()         -- generate tree figure
-	    viztree()      -- show tree figure ($RFSM_VIEWER)
-	    add_hook(func) -- add a function to be called after state changes (e.g. 'add_hook(pp)')
-      ]=])
+function showeq()
+   rfsm.check_events(fsm)
+   print("queue: " .. table.concat(utils.map(tostring, fsm._intq), ', '))
+end
 
-add_hook(pp)
+function help()
+   print([=[
+rfsm simulator v0.1
+
+available commands:
+   help()         -- show this information
+   dbg(bool)      -- enable/disable debug info
+   se(...)        -- send events
+   ser(...)       -- send events and run()
+   run()          -- run FSM
+   step()         -- step FSM
+   pp()           -- pretty print fsm
+   showeq()       -- show current event queue
+   uml()          -- generate uml figure
+   vizuml()       -- show uml figure ($RFSM_VIEWER)
+   tree()         -- generate tree figure
+   viztree()      -- show tree figure ($RFSM_VIEWER)
+   add_hook(func) -- add a function to be called after state changes (e.g. 'add_hook(pp)')
+	 ]=])
+end
+
 add_hook(uml)
 add_hook(tree)
+add_hook(showeq)
 
 dbg(true)
+
+help()
