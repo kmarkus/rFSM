@@ -96,3 +96,5 @@ print([=[
 add_hook(pp)
 add_hook(uml)
 add_hook(tree)
+
+dbg(true)
