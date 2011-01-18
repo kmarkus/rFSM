@@ -681,7 +681,7 @@ end
 ----------------------------------------
 -- check for new external events and merge them into the internal
 -- queue. return the number of events in the queue.
-local function check_events(fsm)
+function check_events(fsm)
    local extq = fsm.getevents()
    local intq = fsm._intq
    for _,v in ipairs(extq) do table.insert(intq, v) end
