@@ -89,7 +89,8 @@ end
 function trans:type() return 'transition' end
 
 function trans:__tostring()
-   local src, tgt, event = "none", "none", "none"
+   local src, tgt = "none", "none"
+   local pn = ""
 
    if self.src then
       if type(self.src) == 'string' then
@@ -101,7 +102,10 @@ function trans:__tostring()
       if type(self.tgt) == 'string' then tgt = self.tgt
       else tgt = self.tgt._fqn end
    end
-   return "T={ src='" .. src .. "', tgt='" .. tgt .. "', event='" .. events2str(self.events) .. "' }"
+
+   if self.pn then pn = ', pn=' .. tostring(self.pn) end
+
+   return "T={ src='" .. src .. "', tgt='" .. tgt .. pn .. "', events='" .. events2str(self.events) .. "' }"
 end
 
 -- alias
@@ -333,6 +337,21 @@ local function expand_e_done(fsm)
        end, fsm, is_trans)
 end
 
+----------------------------------------
+-- sort otrs according to priority numbers
+-- must be called after add_otrs obviously
+local function sort_otrs_pn(fsm)
+   -- sort greater first, no pn amounts to pn=0
+   local function tr_gt (t1, t2)
+      local pn1 = t1.pn or 0
+      local pn2 = t2.pn or 0
+      return pn1 > pn2
+   end
+
+   mapfsm(function (nd)
+	     table.sort(nd._otrs, tr_gt)
+	  end, fsm, is_node)
+end
 
 ----------------------------------------
 -- resolve path function
@@ -589,6 +608,7 @@ function init(fsm_templ)
    add_otrs(fsm) -- add outgoing transition table
    check_no_otrs(fsm)
    expand_e_done(fsm)
+   sort_otrs_pn(fsm)
 
    fsm._act_leaf = false
 

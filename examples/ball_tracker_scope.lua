@@ -7,7 +7,7 @@ return rfsm.csta:new {
       following = rfsm.sista:new{ },
       hitting = rfsm.sista:new{ },
       rfsm.trans:new{ src='initial', tgt='following' },
-      rfsm.trans:new{ src='following', tgt='hitting', events={ 't6' } },
+      rfsm.trans:new{ src='following', tgt='hitting', pn=10, events={ 't6' } },
       rfsm.trans:new{ src='hitting', tgt='following', events={ 't7' } }
    },
    
