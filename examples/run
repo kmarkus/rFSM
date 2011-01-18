@@ -1,3 +1,0 @@
-#!/bin/bash
-
-lua -i run.lua $1
