@@ -1,0 +1,8 @@
+Some experimental tools
+
+* rfsm-sim, rfsm-sim.lua
+  - rfsm simulator run rfsm-sim <file>
+
+* rfsm2json
+* rfsm-dbg
+* rfsm-viz
