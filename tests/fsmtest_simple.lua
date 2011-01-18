@@ -18,10 +18,7 @@ simple_templ = rfsm.csta:new{
    off = rfsm.sista:new{},
    busy = rfsm.sista:new{
       doo=function()
-	     while cnt < 100000 do
-		cnt = cnt + 1
-		coroutine.yield()
-	     end
+	     coroutine.yield(true)
 	  end
    },
 
@@ -29,7 +26,7 @@ simple_templ = rfsm.csta:new{
    rfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
    rfsm.trans:new{ src='on', tgt='off', events={ 'e_off' } },
    rfsm.trans:new{ src='off', tgt='busy', events={ 'e_busy' } },
-   rfsm.trans:new{ src='busy', tgt='off', events={ 'e_done@root.busy' } },
+   rfsm.trans:new{ src='busy', tgt='off', events={ 'e_done' } },
 }
 
 
@@ -53,7 +50,7 @@ local test = {
       }, {
 	 descr='testing to busy',
 	 events = { 'e_busy' },
-	 expect = { leaf='root.busy', mode='done'},
+	 expect = { leaf='root.busy', mode='active'},
       }, {
 	 descr='doing nothing',
 	 expect = { leaf='root.off', mode='done'}
