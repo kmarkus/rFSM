@@ -18,7 +18,7 @@ if arg and #arg == 2 and arg[1] == 'spawn' then
  				 ["EFFECT"]=true, ["DOO"]=true, ["CHECKING"]=true}),
    -- fsm.dbg=fsmpp.dbgcolor,
    fsmdbg.enable(fsm)
-   rfsm.step(fsm)
+   rfsm.run(fsm)
    -- does not return
    print("stopped")
    os.exit(1)

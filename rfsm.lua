@@ -1181,7 +1181,7 @@ function step(fsm, n)
       if idle then
 	 if fsm.idle_hook then fsm.idle_hook(fsm); idle = false  -- call idle hook
 	 else
-	    fsm.dbg("HIBERNATING", "no events, no idle func, no doos or doo idle, halting engines")
+	    fsm.dbg("HIBERNATING", "no events, no idle_hook, no doos or doo idle, halting engines")
 	    return true -- we are idle
 	 end
       end

@@ -1,7 +1,8 @@
 -- -*- lua -*-
 require "rfsm"
 require "fsmpp"
-require "fsmuml"
+require "fsm2uml"
+require "fsm2tree"
 
 if arg and #arg < 1 then
    print("usage: run <fsmfile>")
@@ -31,17 +32,33 @@ function run()
    pp()
 end
 
-function step()
-   rfsm.step(fsm)
+function step(n)
+   n = n or 1
+   rfsm.step(fsm, n)
    pp()
 end
 
-print([=[
+function uml()
+   local outfile = "/tmp/" .. file .. "-uml.png"
+   local viewer = os.getenv("RFSM_VIEWER") or "iceweasel"
+   fsm2uml.fsm2uml(fsm, "png", outfile)
+   os.execute(viewer .. " " .. outfile)
+end
 
+function tree()
+   local outfile = "/tmp/" .. file .. "-tree.png"
+   local viewer = os.getenv("RFSM_VIEWER") or "iceweasel"
+   fsm2tree.fsm2tree(fsm, "png", outfile)
+   os.execute(viewer .. " " .. outfile)
+end
+
+print([=[
     available commands:
 	    dbg(bool) -- enable/disable debug info
 	    se(...)   -- send events
-	    pp()      -- pretty print fsm
 	    run()     -- run FSM
 	    step()    -- step FSM
+	    pp()      -- pretty print fsm
+	    uml()     -- pretty print fsm as uml (export RFSM_VIEWER)
+	    tree()    -- pretty print fsm as tree (export RFSM_VIEWER)
       ]=])
