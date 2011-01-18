@@ -316,6 +316,20 @@ local function add_otrs(fsm)
 end
 
 ----------------------------------------
+-- expand e_done events into e_done@fqn
+local function expand_e_done(fsm)
+   mapfsm(function (tr, p)
+	     if not tr.events then return end
+	     for i=1,#tr.events do
+		if tr.events[i] == 'e_done' then
+		   tr.events[i] = 'e_done' .. '@' .. tr.src._fqn
+		end
+	  end
+       end, fsm, is_trans)
+end
+
+
+----------------------------------------
 -- resolve path function
 -- turn string state into the real thing
 local function __resolve_path(fsm, state_str, parent)
@@ -568,8 +582,9 @@ function init(fsm_templ)
    end
 
    add_otrs(fsm) -- add outgoing transition table
-
    check_no_otrs(fsm)
+   expand_e_done(fsm)
+
    fsm._act_leaf = false
 
    fsm._intq = { 'e_init_fsm' }
