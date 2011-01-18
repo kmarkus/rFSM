@@ -74,6 +74,11 @@ end
 --
 -- transition
 --
+
+local function events2str(ev)
+   return table.concat(map(tostring, ev), ", ")
+end
+
 trans = {}
 function trans:new(t)
    setmetatable(t, self)
@@ -96,7 +101,7 @@ function trans:__tostring()
       if type(self.tgt) == 'string' then tgt = self.tgt
       else tgt = self.tgt._fqn end
    end
-   return "T={ src='" .. src .. "', tgt='" .. tgt .. "', event='" .. tostring(self.event) .. "' }"
+   return "T={ src='" .. src .. "', tgt='" .. tgt .. "', event='" .. events2str(self.events) .. "' }"
 end
 
 -- alias
@@ -486,7 +491,7 @@ function verify_early(fsm)
       end
 
       if t.event then
-	 mes[#mes+1] = "WARNING: " .. tostring(t) .." 'event' field undefined, did you mean 'events'?"
+	 mes[#mes+1] = "WARNING: " .. tostring(t) .." 'event' field has no meaning, did you mean 'events'?"
       end
 
       -- tbd event
@@ -599,7 +604,7 @@ function init(fsm_templ)
    if not fsm.dropevents then
       fsm.dropevents =
 	 function (fsm, events)
-	    if #events>0 then fsm.dbg("DROPPING_EVENTS", events) end end
+	    if #events>0 then fsm.dbg("DROPPING_EVENTS", events2str(events)) end end
    end
 
    -- All OK!
@@ -1099,7 +1104,7 @@ end
 ----------------------------------------
 -- attempt to transition the fsm
 local function transition(fsm, events)
-   fsm.dbg("TRANSITION", "searching transitions for events", events)
+   fsm.dbg("TRANSITION", "searching transitions for events: " .. events2str(events))
 
    local path = fsm_find_enabled(fsm, events)
    if not path then
