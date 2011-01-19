@@ -35,9 +35,8 @@ param.hedge_color="blue"
 param.hedge_style="dotted"
 
 param.layout="dot"
-param.dbg=print
 param.err=print
-
+param.dbg = function () return true end
 
 -- overall state properties
 
