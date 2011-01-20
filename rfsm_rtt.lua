@@ -6,7 +6,7 @@
 local rtt = rtt
 local string = string
 
-module("rfsm-rtt")
+module("rfsm_rtt")
 
 --
 -- generates a function which reads all new events from the given
