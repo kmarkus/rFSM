@@ -3,6 +3,7 @@
 --
 
 return rfsm.csta:new {
+   getevents=function() return {1} end,
    on = rfsm.sista:new{},
    off = rfsm.sista:new{},
 

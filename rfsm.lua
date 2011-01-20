@@ -134,7 +134,7 @@ function is_fsmobj(s)
    if mt and  mt.__index then
       return true
    else
-      fsm.err("ERROR: no fsmobj: " .. table.foreach(s, print) .. " (interesting!)")
+      print("ERROR: no fsmobj: " .. table.concat(s, ',') .. " (interesting!)")
       return false
    end
 end
