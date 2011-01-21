@@ -19,7 +19,7 @@ function gen_read_events(...)
       while true do
 	 fs, ev = port:read()
 	 if fs == 'NewData' then
-	    tgttab[#tgtab+1] = ev 
+	    tgttab[#tgtab+1] = ev
 	 else
 	    break -- OldData or NoData
 	 end
@@ -43,7 +43,9 @@ function gen_write_fqn(port)
    local act_fqn = "<none>"
    local out_dsb = rtt.Variable.new("string", string.rep(" ", 100))
    return function (fsm)
-	     if act_fqn == fsm._act_leaf._fqn then return end
+	     if not fsm._act_leaf then return
+	     elseif act_fqn == fsm._act_leaf._fqn then return end
+
 	     act_fqn = fsm._act_leaf._fqn
 	     out_dsb:assign(act_fqn)
 	     port:write(out_dsb)
