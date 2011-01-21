@@ -27,6 +27,8 @@ function gen_read_events(...)
    end
 
    local ports = {...}
+   assert(#ports > 0, "no ports given")
+   -- check its all ports
    return function ()
 	     local res = {}
 	     for _,port in ipairs(ports) do
