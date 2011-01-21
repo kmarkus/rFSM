@@ -5,6 +5,7 @@
 
 local rtt = rtt
 local string = string
+local assert, ipairs = assert, ipairs
 
 module("rfsm_rtt")
 
@@ -19,7 +20,7 @@ function gen_read_events(...)
       while true do
 	 fs, ev = port:read()
 	 if fs == 'NewData' then
-	    tgttab[#tgtab+1] = ev
+	    tgttab[#tgttab+1] = ev
 	 else
 	    break -- OldData or NoData
 	 end
@@ -34,14 +35,17 @@ function gen_read_events(...)
 	     for _,port in ipairs(ports) do
 		read_events(res, port)
 	     end
+	     return res
 	  end
 end
 
 -- generate a function which sends the fqn out through the given
 -- dataport. To be added to step_hook
 function gen_write_fqn(port)
-   local act_fqn = "<none>"
+   local act_fqn = ""
    local out_dsb = rtt.Variable.new("string", string.rep(" ", 100))
+   port:write("<none>") -- initial val
+
    return function (fsm)
 	     if not fsm._act_leaf then return
 	     elseif act_fqn == fsm._act_leaf._fqn then return end
