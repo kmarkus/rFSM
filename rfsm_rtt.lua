@@ -51,3 +51,45 @@ function gen_write_fqn(port)
 	     port:write(out_dsb)
 	  end
 end
+
+
+-- this function launches an rfsm statemachine in the given file
+-- (specified with return csta:new{}) into a service, and optionally
+-- install a eehook so that it will be periodically triggerred.
+--
+-- also create a port "fqn" in the TC's interface where it writes its fqn.
+-- service_launch_rfsm(file, execstr_t, eehook) 
+--   file: string filename
+--   execstr_f: exec_string function of the resp. service
+--   eehook: bool flag, if true create and enable eehook for periodic triggering.
+--
+-- todo: this could be done much nicer with cosmo, if we chose to add
+-- that dependency.
+function service_launch_rfsm(file, execstr_f, eehook)
+   local s = {}
+
+   s[#s+1] = [[
+	 fqn = rtt.OutputPort.new("string", "fqn", "fsm fqn status")
+	 rtt.getTC():addPort(fqn)
+	 setfqn = rfsm_rtt.gen_write_fqn(fqn)
+   ]]
+
+
+   s[#s+1] = '_fsm = dofile("' .. file .. '")'
+   s[#s+1] = "fsm = rfsm.init(_fsm)"
+   s[#s+1] = "fsm.step_hook = setfqn"
+   s[#s+1] = [[ function trigger()
+		   rfsm.step(fsm)
+		   return true
+		end ]]
+
+   if eehook then
+      s[#s+1] = 'eehook = rtt.EEHook.new("trigger")'
+      s[#s+1] = "eehook:enable()"
+   end
+
+   for _,str in ipairs(s) do
+      assert(execstr_f(str), "Error launching rfsm: executing " .. str .. " failed")
+   end
+
+end
