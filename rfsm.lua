@@ -763,7 +763,9 @@ local function run_doos(fsm)
    local doo_done = false
    local doo_idle = false  -- fsm.doo_idle_def -- default for doo_idle???
 
-   if not fsm._act_leaf then
+   -- can safely assume an act_leaf exists, because run_doos is never
+   -- called during transitions.
+   if get_sta_mode(fsm._act_leaf) ~= 'active' then
       return true
    else
       local state = fsm._act_leaf
@@ -786,7 +788,6 @@ local function run_doos(fsm)
 	       doo_done = true
 	       state._doo_co = nil
 	       set_sta_mode(state, 'done')
-	       fsm._act_leaf = false
 	       send_events(fsm, "e_done@" .. state._fqn)
 	       fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
 	    end
@@ -807,9 +808,9 @@ local function enter_one_state(fsm, state)
    if state.entry then state.entry(fsm, state, 'entry') end
 
    if is_sista(state) then
-      if state.doo then fsm._act_leaf = state
-      else
-	 set_sta_mode(state, "done")
+      fsm._act_leaf = state
+      if not state.doo then
+	 set_sta_mode(state, 'done')
 	 send_events(fsm, "e_done@" .. state._fqn)
       end
    end
