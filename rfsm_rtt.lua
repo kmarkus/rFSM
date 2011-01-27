@@ -5,7 +5,7 @@
 
 local rtt = rtt
 local string = string
-local assert, ipairs = assert, ipairs
+local assert, ipairs, pairs, type = assert, ipairs, pairs, type
 
 module("rfsm_rtt")
 
