@@ -69,8 +69,12 @@ end
 --
 -- todo: this could be done much nicer with cosmo, if we chose to add
 -- that dependency.
-function service_launch_rfsm(file, execstr_f, eehook)
+function service_launch_rfsm(file, execstr_f, eehook, env)
    local s = {}
+
+   if env and type(env) == 'table' then
+      for k,v in pairs(env) do s[#s+1] = k .. '=' .. v end
+   end
 
    s[#s+1] = [[
 	 fqn = rtt.OutputPort.new("string", "fqn", "fsm fqn status")
