@@ -815,14 +815,14 @@ local function run_doos(fsm)
    return doo_done, doo_idle
 end
 
-----------------------------------------
--- enter a state (and nothing else)
-local function enter_one_state(fsm, state)
+--- enter a state (and nothing else)
+-- @param fsm initialized rfsm state machine
+-- @param state the state to enter
+-- @param hot hot entry: resume an previous coroutine if available
+local function enter_one_state(fsm, state, hot)
 
    if not is_sta(state) then return end
-
    set_sta_mode(state, 'active')
-
    if state.entry then state.entry(fsm, state, 'entry') end
 
    if is_sista(state) then
@@ -830,9 +830,10 @@ local function enter_one_state(fsm, state)
       if not state.doo then
 	 set_sta_mode(state, 'done')
 	 send_events(fsm, "e_done@" .. state._fqn)
+      else -- is there an old coroutine lingering?
+	 if not hot and state._doo_co then state._doo_co = nil end
       end
    end
-
    fsm.dbg("STATE_ENTER", state._fqn)
 end
 
@@ -845,7 +846,8 @@ local function exit_state(fsm, state)
 
    if is_sta(state) then
       -- save this for possible history entry
-      state._parent._last_active = { child=state, mode=get_sta_mode(state) }
+      state._parent._last_active = state
+      state._parent._last_active_mode = get_sta_mode(state)
 
       set_sta_mode(state, 'inactive')
       if state.exit then state.exit(fsm, state, 'exit') end
