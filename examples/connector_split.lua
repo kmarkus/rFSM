@@ -21,4 +21,5 @@ return rfsm.csta:new{
    rfsm.trans:new{ src='initial', tgt='operational' },
    rfsm.trans:new{ src='operational', tgt='error.err_dispatch', events={"e_error" } },
    rfsm.trans:new{ src='calibration', tgt='error.err_dispatch', events={"e_error" } },
+   rfsm.trans:new{ src='error', tgt='operational', events={"e_error_reset" } },
 }

@@ -1,4 +1,4 @@
-return  rfsm.csta:new{
+return rfsm.csta:new{
 
    start = rfsm.sista:new{},
    conn = rfsm.conn:new{},

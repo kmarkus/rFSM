@@ -8,46 +8,41 @@ require("rfsm")
 require("fsmtesting")
 require("utils")
 
-local err = print
-local id = 'conn_chain_with_split_test'
-
-conn_chain_split_templ = rfsm.csta:new{
-   dbg = false,
-   dummyA = rfsm.sista:new{},
-   dummyB = rfsm.sista:new{},
-
-   rfsm.trans:new{ src='initial', tgt='connA1' },
-   rfsm.trans:new{ src='connA1', tgt='connA2' },
-   rfsm.trans:new{ src='connA2', tgt='dummyA' },
-
-   rfsm.trans:new{ src='initial', tgt='connB1' },
-   rfsm.trans:new{ src='connB1', tgt='connB2'},
-   rfsm.trans:new{ src='connB2', tgt='dummyB', guard=function () return false end  },
-
-   connA1 = rfsm.conn:new{},
-   connA2 = rfsm.conn:new{},
-   connB1 = rfsm.conn:new{},
-   connB2 = rfsm.conn:new{},
-}
+-- load fsm
+testfsm = dofile("../examples/connector_split.lua")
+testfsm.dbg = false
 
 test = {
    id = 'simple_conn_split_test',
    pics = true,
-   tests = { 
-      {
-	 descr='testing entry',
-	 preact = nil,
-	 events = nil,
-	 expect = { leaf='root.dummyA', mode='done' },
-      }
+   tests = {
+
+      -- initial entry
+      { descr='testing entry',
+	expect = { leaf='root.operational', mode='done' }, },
+
+      -- transition to hw error
+      { descr='testing hw_error',
+	events={"e_error", "e_hw_err" },
+	expect = { leaf='root.error.hardware_err', mode='done' }, },
+
+      -- transition back to operational
+      { descr='testing back to operational',
+	events={"e_error_reset" },
+	expect = { leaf='root.operational', mode='done' }, },
+
+      -- transition to sw error
+      { descr='testing sw_error',
+	events={"e_error", "e_sw_err" },
+	expect = { leaf='root.error.software_err', mode='done' }, },
    }
 }
 
-jc = rfsm.init(conn_chain_split_templ)
+jc = rfsm.init(testfsm)
 
 if not jc then
    print(id .. " initalization failed")
    os.exit(1)
 end
 
-fsmtesting.print_stats(fsmtesting.test_fsm(jc, test))
+fsmtesting.print_stats(fsmtesting.test_fsm(jc, test, true))

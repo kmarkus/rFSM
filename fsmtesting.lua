@@ -29,30 +29,14 @@
 require("rfsm")
 require("fsm2uml")
 require("utils")
-require("ansicolors")
-
-local table = table
-local io = io
-local utils = utils
-local rfsm = rfsm
-local string = string
-local fsm2uml = fsm2uml
-local ac = ansicolors
-
-local pairs = pairs
-local ipairs = ipairs
-local print = print
-local type = type
-local assert = assert
-local tostring = tostring
-local unpack = unpack
+local ac = require("ansicolors")
 
 local tab2str = utils.tab2str
 local sista = rfsm.sista
 local is_sista = rfsm.is_sista
 local csta = sista
 
-module("fsmtesting")
+module("fsmtesting", package.seeall)
 
 local verbose = false
 
@@ -79,11 +63,16 @@ end
 function get_act_leaf(fsm)
    local c = rfsm.actchild_get(fsm)
    if c == nil then
-      error("get_act_leaf: no active child!")
       return false
    end
    if is_sista(c) then return c end
    return get_act_leaf(c)
+end
+
+function get_act_fqn(fsm)
+   local s = get_act_leaf(fsm)
+   if not s then return "<none>" end
+   return s._fqn
 end
 
 -- nano fsm test framework.
@@ -108,14 +97,17 @@ function test_fsm(fsm, test, verb)
 
    for i,t in ipairs(test.tests) do
       local ret
-      local boiler = "test: " .. t.descr .. '\n' ..
-	 "   preact:      " .. tab2str(t.preact) .. '\n' ..
-	 "   sent events: " .. tab2str(t.events) .. '\n' ..
-	 "   pre intq:    " .. tab2str(fsm._intq) .. '\n'
+      local boiler =
+	 "test: " .. t.descr .. '\n' ..
+	 "   initial state:              " .. get_act_fqn(fsm) .. '\n' ..
+	 "   prior sent events:          " .. tab2str(t.events) .. '\n' ..
+	 "   prior internal event queue: " .. tab2str(fsm._intq) .. '\n' ..
+	 "   expected fqn:               " .. tab2str(t.expect) .. '\n'
 
       stdout(boiler)
 
-      if t.preact then activate_sista(fsm, t.fqn, t.mode) end
+      -- if t.preact then activate_sista(fsm, t.preact.fqn, t.preact.mode) end
+      -- this should work with a
       utils.foreach(function (e) rfsm.send_events(fsm, e) end, t.events)
 
       rfsm.run(fsm)

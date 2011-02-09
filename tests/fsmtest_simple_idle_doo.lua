@@ -10,25 +10,7 @@ require("fsmtesting")
 require("utils")
 require("fsmpp")
 
-cnt = 0
-
-simple_templ = rfsm.csta:new{
-   dbg = fsmpp.gen_dbgcolor("fsmtest_simple"),
-   on = rfsm.sista:new{},
-   off = rfsm.sista:new{},
-   busy = rfsm.sista:new{
-      doo=function()
-	     coroutine.yield(true)
-	  end
-   },
-
-   rfsm.trans:new{ src='initial', tgt='off' },
-   rfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
-   rfsm.trans:new{ src='on', tgt='off', events={ 'e_off' } },
-   rfsm.trans:new{ src='off', tgt='busy', events={ 'e_busy' } },
-   rfsm.trans:new{ src='busy', tgt='off', events={ 'e_done' } },
-}
-
+local testfsm = dofile("../examples/simple_doo_idle.lua")
 
 local test = {
    id = 'simple_tests',
@@ -58,6 +40,6 @@ local test = {
    }
 }
 
-fsm = rfsm.init(simple_templ, "simple_test")
 
+fsm = rfsm.init(testfsm, "simple_test")
 fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, true))

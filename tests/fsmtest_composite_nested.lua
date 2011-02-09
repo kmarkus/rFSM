@@ -22,38 +22,8 @@ local function safe_doo()
    end
 end
 
-csta_tmpl = rfsm.csta:new {
-   dbg = false, --fsmpp.dbgcolor,
-   -- dbg = fsmpp.gen_dbgcolor({["STATE_ENTER"]=true, ["STATE_EXIT"]=true,
-   -- 				 ["HIBERNATING"]=true, ["EXEC_PATH"]=true,
-   -- 				 ["EFFECT"]=true, ["DOO"]=true, ["CHECKING"]=true}),
-
-   operational = rfsm.csta:new{
-
-      approaching = rfsm.sista:new{
-	 entry=puts("entering approaching state"),
-	 exit=puts("exiting approaching state")
-      },
-
-      in_contact = rfsm.sista:new{
-	 entry=puts("contact established"),
-	 exit=puts("contact lost")
-      },
-
-      rfsm.trans:new{ src='initial', tgt='approaching' },
-      rfsm.trans:new{ src='approaching', tgt='in_contact', events={ 'e_contact_made' } },
-      rfsm.trans:new{ src='in_contact', tgt='approaching', events={ 'e_contact_lost' } },
-   },
-
-   safe = rfsm.sista:new{ entry=puts("entering safe mode"),
-			  doo=safe_doo,
-			  exit=puts("exiting safe mode") },
-
-   rfsm.trans:new{ src='initial', tgt='safe' },
-   rfsm.trans:new{ src='safe', tgt='operational', events={ 'e_range_clear' } },
-   rfsm.trans:new{ src='operational', tgt='safe', events={ 'e_close_object' } },
-}
-
+testfsm = dofile("../examples/composite_nested.lua")
+testfsm.dbg = false
 
 local test = {
    id = 'composite_nested_tests',
@@ -81,6 +51,6 @@ local test = {
 }
 
 
-fsm = rfsm.init(csta_tmpl, "composite_nested_tests")
+fsm = rfsm.init(testfsm, "composite_nested_tests")
 
-fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, false))
+fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, true))
