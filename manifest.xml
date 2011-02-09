@@ -1,7 +1,5 @@
 <package>
-  <description brief="rfsm">
-
-  </description>
+  <description brief="rfsm"></description>
   <author>Markus Klotzbuecher, markus.klotzbuecher@mech.kuleuven.be</author>
   <license>GPL</license>
   <review status="unreviewed" notes=""/>

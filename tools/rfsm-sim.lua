@@ -38,8 +38,14 @@ function se(...)
    rfsm.send_events(fsm, unpack(arg)) 
 end
 
+function ses(...)
+   rfsm.send_events(fsm, ...)
+   rfsm.step(fsm)
+   run_hooks()
+end
+
 function ser(...)
-   rfsm.send_events(fsm, unpack(arg))
+   rfsm.send_events(fsm, ...)
    rfsm.run(fsm)
    run_hooks()
 end
@@ -70,10 +76,12 @@ end
 
 function vizuml()
    local viewer = os.getenv("RFSM_VIEWER") or "iceweasel"
+   uml()
    os.execute(viewer .. " " ..  tmpdir .. "rfsm-uml-tmp.png" .. "&")
 end
 
 function viztree()
+   tree()
    local viewer = os.getenv("RFSM_VIEWER") or "iceweasel"
    os.execute(viewer .. " " .. tmpdir .. "rfsm-tree-tmp.png" .. "&")
 end
@@ -91,9 +99,10 @@ available commands:
    help()         -- show this information
    dbg(bool)      -- enable/disable debug info
    se(...)        -- send events
+   ses(...)       -- send events and step(1)
    ser(...)       -- send events and run()
    run()          -- run FSM
-   step()         -- step FSM
+   step(n)        -- step FSM n times
    pp()           -- pretty print fsm
    showeq()       -- show current event queue
    uml()          -- generate uml figure

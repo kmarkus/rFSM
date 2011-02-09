@@ -24,11 +24,13 @@
   thus highly portable and embeddable. Being a Lua domain specific
   language, rFSM inherits the easy extensibility of its host language.
 
-  The following example shows a simple yet rather complete example
+  The following example shows a simple yet rather complete example,
+  which can be found in the example directory
+  (examples/composite_nested.lua)
 
 #+BEGIN_SRC lua
   -- any rFSM is always contained in a composite_state
-  return rfsm.composite_staet:new {
+  return rfsm.composite_state:new {
      dbg = false, -- disable debugging
 
      -- this defines a composite state operational which contains two
@@ -74,79 +76,227 @@
   }
 #+END_SRC
 
+  It is recommended to store statemachines in a single file and return
+  the toplevel state as in the example. This makes it straightforward
+  for tools to read them.
+
+  To execute this file the following
+
 * API
-*** Model entities
+** Model entities
 
-    | Function                | short alias   | description                                 |
-    |-------------------------+---------------+---------------------------------------------+-
-    | =simple_state:new{}=    | =sista:new{}= | create a simple state                       |
-    | =composite_state:new{}= | =csta{}=      | create a composite state                    |
-    | =connector:new{}=       | =conn:new{}=  | create a connector                          |
-    | =transition:new{}=      | =trans:new{}= | create a transition                         |
-    | =fsm rfsm.init(fsm)=    | none          | initialize a fsm and return initialized fsm |
+   | Function                | short alias   | description                                 |
+   |-------------------------+---------------+---------------------------------------------+-
+   | =simple_state:new{}=    | =sista:new{}= | create a simple state                       |
+   | =composite_state:new{}= | =csta{}=      | create a composite state                    |
+   | =connector:new{}=       | =conn:new{}=  | create a connector                          |
+   | =transition:new{}=      | =trans:new{}= | create a transition                         |
+
+   (these functions are part of the rfsm module, thus can be called
+   in Lua with =rfsm.simple_state{}=)
+
+   1. states (=simple_state= and =composite_state=) may define the
+      following programs:
+
+      =entry(fsm, state, 'entry')=
+      =exit(fsm, state, 'exit')=
+
+      which are called when the state is entered exited or exited
+      respectively. The argument passed in are the toplevel
+      statechart, the current state and the string 'entry'
+      resp. 'exit'. (The rationale behind the third argument is to
+      allow one function to handle entry and exit and thus to be able
+      to identify which one is being called.)
+
+      Simple states may additionaly define a do function (it is called
+      =doo= in to avoid clashes with the identically named Lua
+      keyword).
+
+      =bool doo(fsm, state, 'doo')=
+
+      This function is called repetitively while a state remains
+      active, that is no events trigger an outgoing transition and the
+      do function has not yet completed. The bool returned defines
+      wheter the doo is active or idle. In practice this means: if doo
+      does not return true and there are no other events, doo will be
+      called in a tight loop.
+
+      As the doo function is created as a Lua coroutine, it is
+      possible to suspend it at arbitray points by calling
+      coroutine.yield()
+
+   2. connector: =connector=
+
+      Connectors allow to define so called compound transitions by
+      chaining multiple transition segments together. Connectors are
+      similar to the UML junction element and are statically
+      checked. This means for a compound transition to be executed the
+      events specified on all transitions must match the current
+      events and the guards of all transitions must be true.
+
+      See the examples
+      - connector_simple.lua
+      - connector_split.lua
+
+      Connectors are useful for defining common entry points which are
+      later dispatched to various internal states.
+
+      Note: defining cycles is possible, but dangerous, unsupported
+      and discouraged.
+
+   4. transitions: =transitions=
+
+      Transitions define how the state machine changes states when
+      events occur:
+
+      example:
+
+      #+begin_src lua
+	rfsm.transition:new{ src='stateX',
+			     tgt='stateY',
+			     events = {"e1", "e2" },
+			     effect=function () do_this() end }
+      #+end_src
+
+      This defines a transition between stateX and stateY which is
+      triggered by e1 _and_ e2 and which will execute the given effect
+      function when transitioning.
+
+      Three ways of specifying src and target states are supported:
+      /local/, /relative/ or /absolute/. In the above example 'stateX'
+      and 'stateY' are referenced locally and must therefore be
+      defined within the same composite state as this transition.
+
+      Relative references specify states which are, relative to the
+      position of the transition, deeper nested. Such a reference
+      starts with a leading dot. For example:
+
+      #+begin_src lua
+	return rfsm.csta:new{
+	   operational=rfsm.csta:new{
+	      motors_on = rfsm.csta:new{
+		 moving = rfsm.sista:new{},
+		 stopped = rfsm.sista:new{},
+	      },
+	   },
+	   off=rfsm.sista:new{},
+	   rfsm.trans:new{src='initial', tgt=".operational.motors_on.moving"}
+	}
+      #+end_src
+
+      This transition is defined between the (locally referenced)
+      'initial' connector to the relatively referenced =moving= state.
+
+      At last absolute references begin with "root." Using absolute
+      syntax is strongly discouraged for anything other than testing,
+      as it breaks compositionality: if a state machine is used with a
+      larger statemachine the absolute reference is broken.
 
 
-    (these functions are part of the rfsm module, thus can be called
-    in Lua with =rfsm.simple_state{}=)
+** Operational API
 
-    1. states (=simple_state= and =composite_state=) may define the
-       following programs:
+   | Function             | description                                      |
+   |----------------------+--------------------------------------------------|
+   | =fsm rfsm.init(fsm)= | create an inialized rfsm instance from model     |
+   | =rfsm.step(fsm, n)=  | attempt to transition FSM n times. Default: once |
+   | =rfsm.run(fsm)=      | run FSM until it goes idle                       |
 
-       =entry(fsm, state, 'entry')=
-       =exit(fsm, state, 'entry')=
-
-       Which will be called when the state is entered exited or exited
-       respectively. The argument passed in are the toplevel
-       statechart, the current state and the string 'entry'. The
-       rationale behind the third argument is to allow one function to
-       handle entry and exit and thus to be able to identify which one
-       is being called.
-
-       only simple states may additionaly define a do function (it is
-       called =doo= in to avoid clashes with the identically named Lua
-       keyword).
-
-       =bool doo(fsm, state, 'doo')=
-
-       This function is called repeatedly while a state remains
-       active, that is no events trigger an outgoing transition. The
-       bool returned defines wheter the doo is active or idle. In
-       practice this means: if doo does not return true and there are
-       no other events, doo will be called in a tight loop. If d
-
-    3. connector: =connector=
-
-    4. transitions: =transitions=
-
-*** Operational API
-
-    | Function            | description                    |
-    |---------------------+--------------------------------|
-    | =rfsm.step(fsm, n)= | attempt to transition FSM once |
-    | =rfsm.run(fsm)=     | run FSM until it goes idle     |
-
-    The =step= will attempt to step the given initialized fsm for n
-    times. A step can either be a transition or a run of the doo
-    program. Invoking =run= will call step as long as the fsm is not
-    idle. Not idle means: there are events in the queue or there is an
-    active =doo= function which is not idle.
+   The =step= will attempt to step the given initialized fsm for n
+   times. A step can either be a transition or a run of the doo
+   program. Invoking =run= will call step as long as the fsm is not
+   idle. Not idle means: there are events in the queue or there is an
+   active =doo= function which is not idle.
 
 
 
-*** Hook functions
+** Hook functions
 
-    | function                 | description                                                                      |
-    |--------------------------+----------------------------------------------------------------------------------|
-    | =dbg=                    | called to output debug information. Set to false to disable. Default false.      |
-    | =info=                   | called to output informational messages. Set to false to disable. Default stdout |
-    | =warn=                   | called to output warnings. Set to false to disable. Default stderr.              |
-    | =err=                    | called to output errors. Set to false to disable. Default stderr.                |
-    | =table getevents()=      | function which returns a table of new events which have occured                  |
-    | =dropevents(fsm, evtab)= | function is called with events which are discarded                               |
-    | =step_hook(fsm)=         | is called for each step (mostly for debugging purposes)                          |
-    | =idle_hook(fsm)=         | called *instead* of returning from step/run functions                            |
+   The following hook functions can be defined for a toplevel
+   composite state and allow to refine various behavior of the state
+   machine.
 
-*
+   | function                 | description                                                                      |
+   |--------------------------+----------------------------------------------------------------------------------|
+   | =dbg=                    | called to output debug information. Set to false to disable. Default false.      |
+   | =info=                   | called to output informational messages. Set to false to disable. Default stdout |
+   | =warn=                   | called to output warnings. Set to false to disable. Default stderr.              |
+   | =err=                    | called to output errors. Set to false to disable. Default stderr.                |
+   | =table getevents()=      | function which returns a table of new events which have occured                  |
+   | =dropevents(fsm, evtab)= | function is called with events which are discarded                               |
+   | =step_hook(fsm)=         | is called for each step (mostly for debugging purposes)                          |
+   | =idle_hook(fsm)=         | called *instead* of returning from step/run functions                            |
+
+   The most important function is =getevents=. The purpose of this
+   function is return all events which occured in a table. This allows
+   to integrate rFSM instances into any event driven environemnt.
+
+* Common pitfalls
+
+  1. Name clashes between state/connector names with reserved Lua
+     keywords.
+
+     This can be worked around by using the following syntax:
+
+     #+BEGIN_EXAMPLE
+     ['end'] = rfsm.sista{...}
+     #+END_EXAMPLE
+
+  2. Executing functions accidentially
+
+     It is a common mistake to execute externally defined functions
+     instead of adding references to them:
+
+     #+BEGIN_EXAMPLE
+     stateX = rfsm.sista{ entry = my_func() }
+     #+END_EXAMPLE
+
+     The likely mistake above is to execute my_func and assing the
+     result to entry instead of assigning my_func:
+
+     #+BEGIN_EXAMPLE
+     stateX = rfsm.sista{ entry = my_func }
+     #+END_EXAMPLE
+
+     Of course first example would be perfectly valid if my_func()
+     returned a function as a result!
+
+* Tools
+  - =rfsm-viz=
+    simple tool which can generate images from statemachines.
+
+    to generate all possible formats run:
+
+    #+BEGIN_EXAMPLE
+    rfsm-viz all examples/composite_nested.lua
+    #+END_EXAMPLE
+
+  - =rfsm-sim=
+
+    small command line simulator for running a fsm
+    interactively.
+
+    #+BEGIN_EXAMPLE
+    rfsm-viz all examples/ball_tracker_scope.lua
+    #+END_EXAMPLE
+
+    It requires a image viewer which automatically updates once the
+    file displayed changes. For example =evince= works nicely.
+
+  - =rfsm2json= converts an lua fsm to a json representation. Requires
+    lua-json.
+
+  - =rfsm-dbg= experimental. don't use.
+
+* Helper modules
+  - =fsm2uml.lua= module to generate UML like figures from rFSM
+  - =fsm2tree.lua= module to generate the tree structure of an rFSM instance
+  - =fsmpp.lua= Lowlevel function used to improve the debug output.
+  - =fsmtesting.lua= statemachine testing infrastructure.
+  - =rfsm_rtt.lua= Useful functions for using rFSM with OROCOS rtt
+  - =fsmdbg.lua= a remote debugger interface which is simply still too
+    experimental to be even documented.
+
+* Background
 ** Structural Model
 
    The rFSM state machine model is a minimal subset of UML2 and Harel
@@ -170,13 +320,13 @@
 
    In contrast to composite states /simple states/ can not contain any
    other states; they are leaves in the state machine tree. (This
-   \emph{tree} is not to be confused with the state machine \emph{graph},
-   in that the tree represents a hierarchy of decomposition, and not a
+   *tree* is not to be confused with the state machine *graph*, in
+   that the tree represents a hierarchy of decomposition, and not a
    map of the transitions that can take place between states.)
    Transitions connect Nodes in a directed fashion and carry a list of
-   events which will trigger the transition. Transitions are owned by a
-   composite state and not (as often assumed) by the state from which
-   they originate.
+   events which will trigger the transition. Transitions are owned by
+   a composite state and not (as often assumed) by the state from
+   which they originate.
 
    Connectors can be used to build complex transitions by interconnecting
    several elementary ones. This model element unifies the four very
@@ -242,64 +392,25 @@
    (priority numbers).
 
 
-
-
-
-** Advanced conceps
-
-
-* Common pitfalls
-
-  1. Name clashes between state/connector names with reserved Lua
-     keywords.
-
-     This can be worked around by using the following syntax:
-
-     #+BEGIN_EXAMPLE
-     ['end'] = rfsm.sista{...}
-     #+END_EXAMPLE
-
-  2. Executing functions accidentially
-
-     It is a common mistake to execute externally defined functions
-     instead of adding references to them:
-
-     #+BEGIN_EXAMPLE
-     stateX = rfsm.sista{ entry = my_func() }
-     #+END_EXAMPLE
-
-     The likely mistake above is to execute my_func and assing the
-     result to entry instead of assigning my_func:
-
-     #+BEGIN_EXAMPLE
-     stateX = rfsm.sista{ entry = my_func }
-     #+END_EXAMPLE
-
-     Of course first example would be perfectly valid if my_func()
-     returned a function as a result!
-
-* Extensions
-** Measuring transition latencies
-* Tools
-*** fsm2uml
-*** fsmdbg
-
-    Important: who wakes the rFSM when it hibernates? Various possibilites:
-
-    - RTT triggers =updateHook()= after receiving a variable on a
-      DataPort, which in turn can be used to call the fsm's =step()=
-      function.
-
-      - For debug purposes you can insert a sleep in the _idle_hook
-
-      -
-
-*** fsmpp
-*** fsmtesting
-* Internals
 * Acknowledgement
 
-  The research leading to these results has received funding from the
-  European Community's Seventh Framework Programme (FP7/2007-2013)
-  under grant agreement no. FP7-ICT-231940-BRICS (Best Practice in
-  Robotics)
+  - Funding
+
+    The research leading to these results has received funding from
+    the European Community's Seventh Framework Programme
+    (FP7/2007-2013) under grant agreement no. FP7-ICT-231940-BRICS
+    (Best Practice in Robotics)
+
+  - Scientific background
+
+    This work borrows many ideas from the Statecharts by David Harel
+    and some ideas from UML 2.1 State Machines. The following
+    publications are the most relevant
+
+    David Harel and Amnon Naamad. 1996. The STATEMATE semantics of
+    statecharts. ACM Trans. Softw. Eng. Methodol. 5, 4 (October 1996),
+    293-333. DOI=10.1145/235321.235322
+    http://doi.acm.org/10.1145/235321.235322
+
+    The OMG UML Specification:
+    http://www.omg.org/spec/UML/2.3/Superstructure/PDF/
