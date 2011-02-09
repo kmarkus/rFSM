@@ -1,4 +1,3 @@
-
 require "rfsm"
 
 local csta = rfsm.csta
@@ -12,7 +11,7 @@ return rfsm.csta:new{
       hardware_err = rfsm.sista:new{},
       software_err = rfsm.sista:new{},
       err_dispatch = rfsm.conn:new{},
-      
+
       rfsm.trans:new{ src='initial', tgt='err_dispatch' },
       rfsm.trans:new{ src='err_dispatch', tgt='hardware_err', events={"e_hw_err" } },
       rfsm.trans:new{ src='err_dispatch', tgt='software_err', events={"e_sw_err" } },

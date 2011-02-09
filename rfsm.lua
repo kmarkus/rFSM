@@ -356,7 +356,7 @@ end
 ----------------------------------------
 -- resolve path function
 -- turn string state into the real thing
-local function __resolve_path(fsm, state_str, parent)
+function __resolve_path(fsm, state_str, parent)
 
    -- index tree with array tab
    local function index_tree(tree, tab)
@@ -572,10 +572,9 @@ local function setup_printers(fsm)
 			    info=utils.stdout, dbg=utils.stdout } )
 end
 
-----------------------------------------
--- initialize fsm
--- create parent links
--- create table for lookups
+--- initialize fsm from rfsm template
+-- @param rfsm template to initialize
+-- @return inialized fsm
 function init(fsm_templ)
 
    assert(is_csta(fsm_templ), "invalid fsm model passed to rfsm.init")
@@ -1164,6 +1163,13 @@ end
 --           - doo_completed and #events == 0 or
 --	     - doo_idle and #events == 0
 --
+
+--- step the fsm n-times.
+-- Step the given initialized fsm for n times. A step can either be a
+-- transition or a run of the doo program.
+-- @param fsm initialized rfsm state machine
+-- @param n number of steps to execute. default: 1.
+-- @return idle boolean if fsm is idle or not
 function step(fsm, n)
    if not is_root(fsm) then fsm.err("ERROR step: invalid fsm") end
 
@@ -1216,6 +1222,11 @@ function step(fsm, n)
    return step(fsm, n)
 end
 
+--- run the fsm until there is nothing else to do.
+-- Run the given initialized fsm until there are no events to process,
+-- the doo function has completed or is idle.
+-- @param fsm initialized rfsm state machine
+-- @return idle boolean if fsm is idle or not
 function run(fsm)
    if not is_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
    return step(fsm, math.huge)
