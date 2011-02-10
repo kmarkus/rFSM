@@ -58,7 +58,20 @@
   thus highly portable and embeddable. Being a Lua domain specific
   language, rFSM inherits the easy extensibility of its host language.
 
-  The following example shows a simple hello\_world example:
+  The following shows a simple hello\_world example
+
+  #+begin_src ditaa :file example1.png :cmdline -o
+
+    /-----------------------------------------\
+    |       +---------+  e_done   /---------\ |
+    | *---> |  hello  | --------> |  world  | |
+    |       +---------+           \---------/ |
+    |           ^                      |      |
+    |           |      e_restart       |      |
+    | cDEF      +----------------------+      |
+    \-----------------------------------------/
+
+  #+end_src
 
   #+begin_src lua
     return rfsm.composite_state:new {
@@ -356,8 +369,10 @@
     to generate all possible formats run:
 
     #+BEGIN_EXAMPLE
-    rfsm-viz all examples/composite_nested.lua
+    tools/rfsm-viz all examples/composite_nested.lua
     #+END_EXAMPLE
+
+    generates various representations (in examples/)
 
   - =rfsm-sim=
 
@@ -365,7 +380,7 @@
     interactively.
 
     #+BEGIN_EXAMPLE
-    rfsm-viz all examples/ball_tracker_scope.lua
+    tools/rfsm-sim all examples/ball_tracker_scope.lua
     #+END_EXAMPLE
 
     It requires a image viewer which automatically updates once the
@@ -386,73 +401,109 @@
     experimental to be even documented.
 
 * More examples, tips and tricks
-  - How to use the =doo= function as a coroutine:
 
-    #+begin_src lua
-      -- any rFSM is always contained in a composite_state
-      return rfsm.composite_state:new {
-	 dbg = true, -- enable debugging
+  1. A more complete example
 
-	 on = rfsm.composite_state:new {
-	    entry = function () print("disabling brakes") end,
-	    exit = function () print("enabling brakes") end,
+     graphical model:
 
-	    moving = rfsm.simple_state:new {
-	       entry=function () print("starting to move") end,
-	       exit=function () print("stopping") end,
-	    },
+  #+begin_src ditaa :file example2.png :cmdline -o
 
-	    waiting = rfsm.simple_state:new {},
+  /-----------------------------------------------------\
+  | root                                                |
+  |                                                     |
+  |        /----------------------------------------\   |
+  |        | on                                     |   |
+  |        |        *                     c9AC      |   |
+  |        |        |                               |   |
+  |        |        v                               |   |
+  |  *---->|  /------------\ e_stop  /-----------\  |   |
+  |  ^     |  |            |-------->|           |  |   |
+  |  |     |  |   moving   |         |  waiting  |  |   |
+  |  |     |  |            |<--------|           |  |   |
+  |  |     |  \------------/ e_start \-----------/  |   |
+  |  |     |                                        |   |
+  |  |     \----------------------------------------/   |
+  |  |                                 ^  |             |
+  |  | e_reset           e_error_fixed |  |             |
+  |  |                                 |  | e_error     |
+  |  |                                 |  v             |
+  |  |    /-------------\            /-------\          |
+  |  +----| fatal_error |<-----------| error |          |
+  |       \-------------/            \-------/          |
+  |                      e_fatal_error                  |
+  |                                        cDEF         |
+  |                                                     |
+  \-----------------------------------------------------/
 
-	    -- define some transitions
-	    rfsm.trans:new{ src='initial', tgt='waiting' },
-	    rfsm.trans:new{ src='waiting', tgt='moving', events={ 'e_start' } },
-	    rfsm.trans:new{ src='moving', tgt='waiting', events={ 'e_stop' } },
-	 },
+  #+end_src
 
-	 error = rfsm.simple_state:new {
-	    doo = function (fsm)
-		       print ("Error detected - trying to fix")
-		       coroutine.yield()
-		       math.randomseed( os.time() )
-		       coroutine.yield()
-		       if math.random(0,100) < 40 then
-			  print("unable to fix, raising e_fatal_error")
-			  rfsm.send_events(fsm, "e_fatal_error")
-		       else
-			  print("repair succeeded!")
-			  rfsm.send_events(fsm, "e_error_fixed")
-		       end
-		    end,
-	 },
+     textual representation:
 
-	 fatal_error = rfsm.simple_state:new {},
+  #+begin_src lua
+    -- any rFSM is always contained in a composite_state
+    return rfsm.composite_state:new {
+       dbg = true, -- enable debugging
 
-	 rfsm.trans:new{ src='initial', tgt='on', effect=function () print("initalizing system") end },
-	 rfsm.trans:new{ src='on', tgt='error', events={ 'e_error' } },
-	 rfsm.trans:new{ src='error', tgt='on', events={ 'e_error_fixed' } },
-	 rfsm.trans:new{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
-	 rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
-      }
-    #+end_src
+       on = rfsm.composite_state:new {
+	  entry = function () print("disabling brakes") end,
+	  exit = function () print("enabling brakes") end,
 
-  - How to include other state machines
+	  moving = rfsm.simple_state:new {
+	     entry=function () print("starting to move") end,
+	     exit=function () print("stopping") end,
+	  },
 
-    this is easy! Let's assume the state machine is is a file
-    "subfsm.lua" and uses the strongly recommended =return
-    rfsm.csta:new ...= syntax, it can be included as follows:
+	  waiting = rfsm.simple_state:new {},
 
-    #+begin_src lua
-      return rfsm.csta:new {
+	  -- define some transitions
+	  rfsm.trans:new{ src='initial', tgt='waiting' },
+	  rfsm.trans:new{ src='waiting', tgt='moving', events={ 'e_start' } },
+	  rfsm.trans:new{ src='moving', tgt='waiting', events={ 'e_stop' } },
+       },
 
-	 name_of_composite_state = dofile("subfsm.lua"),
+       error = rfsm.simple_state:new {
+	  doo = function (fsm)
+		     print ("Error detected - trying to fix")
+		     coroutine.yield()
+		     math.randomseed( os.time() )
+		     coroutine.yield()
+		     if math.random(0,100) < 40 then
+			print("unable to fix, raising e_fatal_error")
+			rfsm.send_events(fsm, "e_fatal_error")
+		     else
+			print("repair succeeded!")
+			rfsm.send_events(fsm, "e_error_fixed")
+		     end
+		  end,
+       },
 
-	 otherstateX = rfsm.sista{},
-	 ...
-      }
-    #+end_src
+       fatal_error = rfsm.simple_state:new {},
 
-    Make sure not to forget the ',' after the =dofile()= statement!
+       rfsm.trans:new{ src='initial', tgt='on', effect=function () print("initalizing system") end },
+       rfsm.trans:new{ src='on', tgt='error', events={ 'e_error' } },
+       rfsm.trans:new{ src='error', tgt='on', events={ 'e_error_fixed' } },
+       rfsm.trans:new{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
+       rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
+    }
+  #+end_src
+
+  2. How to include other state machines
+
+     this is easy! Let's assume the state machine is is a file
+     "subfsm.lua" and uses the strongly recommended =return
+     rfsm.csta:new ...= syntax, it can be included as follows:
+
+     #+begin_src lua
+       return rfsm.csta:new {
+
+	  name_of_composite_state = dofile("subfsm.lua"),
+
+	  otherstateX = rfsm.sista{},
+	  ...
+       }
+     #+end_src
+
+     Make sure not to forget the ',' after the =dofile()= statement!
 
 * Acknowledgement
 

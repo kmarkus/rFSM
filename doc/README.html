@@ -196,7 +196,11 @@ thus highly portable and embeddable. Being a Lua domain specific
 language, rFSM inherits the easy extensibility of its host language.
 </p>
 <p>
-The following example shows a simple hello_world example:
+The following shows a simple hello_world example
+</p>
+
+<p>
+<img src="example1.png"  alt="example1.png" />
 </p>
 
 
@@ -673,11 +677,14 @@ to generate all possible formats run:
 
 
 
-<pre class="example">rfsm-viz all examples/composite_nested.lua
+<pre class="example">tools/rfsm-viz all examples/composite_nested.lua
 </pre>
 
 
 
+<p>
+generates various representations (in examples/)
+</p>
 </li>
 <li>
 <code>rfsm-sim</code>
@@ -689,7 +696,7 @@ interactively.
 
 
 
-<pre class="example">rfsm-viz all examples/ball_tracker_scope.lua
+<pre class="example">tools/rfsm-sim all examples/ball_tracker_scope.lua
 </pre>
 
 
@@ -749,10 +756,24 @@ experimental to be even documented.
 <h2 id="sec-9"><span class="section-number-2">9</span> More examples, tips and tricks </h2>
 <div class="outline-text-2" id="text-9">
 
-<ul>
-<li>
-How to use the <code>doo</code> function as a coroutine:
 
+<ol>
+<li>
+A more complete example
+
+<p>
+graphical model:
+</p></li>
+</ol>
+
+
+
+<p>
+<img src="example2.png"  alt="example2.png" />
+</p>
+<p>
+textual representation:
+</p>
 
 
 
@@ -805,13 +826,13 @@ How to use the <code>doo</code> function as a coroutine:
 
 
 
-</li>
+<ol>
 <li>
 How to include other state machines
 
 <p>
 this is easy! Let's assume the state machine is is a file
-"subfsm.lua" and uses the strongly recommended <code>return     rfsm.csta:new ...</code> syntax, it can be included as follows:
+"subfsm.lua" and uses the strongly recommended <code>return      rfsm.csta:new ...</code> syntax, it can be included as follows:
 </p>
 
 
@@ -830,7 +851,7 @@ this is easy! Let's assume the state machine is is a file
 <p>
 Make sure not to forget the ',' after the <code>dofile()</code> statement!
 </p></li>
-</ul>
+</ol>
 
 
 </div>

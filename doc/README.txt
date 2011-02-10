@@ -65,7 +65,10 @@ Table of Contents
   thus highly portable and embeddable. Being a Lua domain specific
   language, rFSM inherits the easy extensibility of its host language.
 
-  The following example shows a simple hello\_world example:
+  The following shows a simple hello\_world example
+
+
+  [file:example1.png]
 
 
   return rfsm.composite_state:new {
@@ -357,7 +360,9 @@ Table of Contents
     to generate all possible formats run:
 
 
-  rfsm-viz all examples/composite_nested.lua
+  tools/rfsm-viz all examples/composite_nested.lua
+
+    generates various representations (in examples/)
 
   - =rfsm-sim=
 
@@ -365,7 +370,7 @@ Table of Contents
     interactively.
 
 
-  rfsm-viz all examples/ball_tracker_scope.lua
+  tools/rfsm-sim all examples/ball_tracker_scope.lua
 
     It requires a image viewer which automatically updates once the
     file displayed changes. For example =evince= works nicely.
@@ -387,7 +392,15 @@ Table of Contents
 
 9 More examples, tips and tricks 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  - How to use the =doo= function as a coroutine:
+
+  1. A more complete example
+
+     graphical model:
+
+
+  [file:example2.png]
+
+     textual representation:
 
 
   -- any rFSM is always contained in a composite_state
@@ -436,11 +449,11 @@ Table of Contents
      rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
   }
 
-  - How to include other state machines
+  2. How to include other state machines
 
-    this is easy! Let's assume the state machine is is a file
-    "subfsm.lua" and uses the strongly recommended =return
-    rfsm.csta:new ...= syntax, it can be included as follows:
+     this is easy! Let's assume the state machine is is a file
+     "subfsm.lua" and uses the strongly recommended =return
+     rfsm.csta:new ...= syntax, it can be included as follows:
 
 
   return rfsm.csta:new {
@@ -451,7 +464,7 @@ Table of Contents
      ...
   }
 
-    Make sure not to forget the ',' after the =dofile()= statement!
+     Make sure not to forget the ',' after the =dofile()= statement!
 
 10 Acknowledgement 
 ~~~~~~~~~~~~~~~~~~~
