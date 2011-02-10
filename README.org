@@ -26,6 +26,8 @@
   thus highly portable and embeddable. Being a Lua domain specific
   language, rFSM inherits the easy extensibility of its host language.
 
+  rFSM is dual licensed under LGPL/BSD.
+
 * Quickstart
 
   1. define an rfsm state machine (examples/hello_world.lua)
