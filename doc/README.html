@@ -92,20 +92,21 @@ lang="en" xml:lang="en">
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#sec-1">1 Overview </a></li>
-<li><a href="#sec-2">2 Quickstart </a></li>
-<li><a href="#sec-3">3 Introduction </a></li>
-<li><a href="#sec-4">4 API </a>
+<li><a href="#sec-2">2 Setup </a></li>
+<li><a href="#sec-3">3 Quickstart </a></li>
+<li><a href="#sec-4">4 Introduction </a></li>
+<li><a href="#sec-5">5 API </a>
 <ul>
-<li><a href="#sec-4_1">4.1 Model entities </a></li>
-<li><a href="#sec-4_2">4.2 Operational API </a></li>
-<li><a href="#sec-4_3">4.3 Hook functions </a></li>
+<li><a href="#sec-5_1">5.1 Model entities </a></li>
+<li><a href="#sec-5_2">5.2 Operational API </a></li>
+<li><a href="#sec-5_3">5.3 Hook functions </a></li>
 </ul>
 </li>
-<li><a href="#sec-5">5 Common pitfalls </a></li>
-<li><a href="#sec-6">6 Tools </a></li>
-<li><a href="#sec-7">7 Helper modules </a></li>
-<li><a href="#sec-8">8 More examples, tips and tricks </a></li>
-<li><a href="#sec-9">9 Acknowledgement </a></li>
+<li><a href="#sec-6">6 Common pitfalls </a></li>
+<li><a href="#sec-7">7 Tools </a></li>
+<li><a href="#sec-8">8 Helper modules </a></li>
+<li><a href="#sec-9">9 More examples, tips and tricks </a></li>
+<li><a href="#sec-10">10 Acknowledgement </a></li>
 </ul>
 </div>
 </div>
@@ -130,8 +131,28 @@ rFSM is dual licensed under LGPL/BSD.
 </div>
 
 <div id="outline-container-2" class="outline-2">
-<h2 id="sec-2"><span class="section-number-2">2</span> Quickstart </h2>
+<h2 id="sec-2"><span class="section-number-2">2</span> Setup </h2>
 <div class="outline-text-2" id="text-2">
+
+
+<p>
+Make sure the rfsm folder is in your LUA<sub>PATH</sub>. For example:
+</p>
+
+
+
+<pre class="src src-sh"><span style="color: #0000cd; font-weight: bold;">export</span> <span style="color: #cdcd00;">LUA_PATH</span>=<span style="color: #00cd00;">"$LUA_PATH;/home/mk/src/git/rfsm/"</span>
+</pre>
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Quickstart </h2>
+<div class="outline-text-2" id="text-3">
 
 
 <ol>
@@ -163,9 +184,9 @@ world
 
 </div>
 
-<div id="outline-container-3" class="outline-2">
-<h2 id="sec-3"><span class="section-number-2">3</span> Introduction </h2>
-<div class="outline-text-2" id="text-3">
+<div id="outline-container-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Introduction </h2>
+<div class="outline-text-2" id="text-4">
 
 
 <p>
@@ -288,16 +309,16 @@ queue:  e_done@root.hello
 
 </div>
 
-<div id="outline-container-4" class="outline-2">
-<h2 id="sec-4"><span class="section-number-2">4</span> API </h2>
-<div class="outline-text-2" id="text-4">
+<div id="outline-container-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> API </h2>
+<div class="outline-text-2" id="text-5">
 
 
 </div>
 
-<div id="outline-container-4_1" class="outline-3">
-<h3 id="sec-4_1"><span class="section-number-3">4.1</span> Model entities </h3>
-<div class="outline-text-3" id="text-4_1">
+<div id="outline-container-5_1" class="outline-3">
+<h3 id="sec-5_1"><span class="section-number-3">5.1</span> Model entities </h3>
+<div class="outline-text-3" id="text-5_1">
 
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -495,9 +516,9 @@ a larger statemachine the absolute reference is broken.
 
 </div>
 
-<div id="outline-container-4_2" class="outline-3">
-<h3 id="sec-4_2"><span class="section-number-3">4.2</span> Operational API </h3>
-<div class="outline-text-3" id="text-4_2">
+<div id="outline-container-5_2" class="outline-3">
+<h3 id="sec-5_2"><span class="section-number-3">5.2</span> Operational API </h3>
+<div class="outline-text-3" id="text-5_2">
 
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -533,9 +554,9 @@ function which is not idle.
 
 </div>
 
-<div id="outline-container-4_3" class="outline-3">
-<h3 id="sec-4_3"><span class="section-number-3">4.3</span> Hook functions </h3>
-<div class="outline-text-3" id="text-4_3">
+<div id="outline-container-5_3" class="outline-3">
+<h3 id="sec-5_3"><span class="section-number-3">5.3</span> Hook functions </h3>
+<div class="outline-text-3" id="text-5_3">
 
 
 <p>
@@ -573,9 +594,9 @@ to integrate rFSM instances into any event driven environment.
 
 </div>
 
-<div id="outline-container-5" class="outline-2">
-<h2 id="sec-5"><span class="section-number-2">5</span> Common pitfalls </h2>
-<div class="outline-text-2" id="text-5">
+<div id="outline-container-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Common pitfalls </h2>
+<div class="outline-text-2" id="text-6">
 
 
 <ol>
@@ -633,10 +654,14 @@ returned a function as a result!
 
 </div>
 
-<div id="outline-container-6" class="outline-2">
-<h2 id="sec-6"><span class="section-number-2">6</span> Tools </h2>
-<div class="outline-text-2" id="text-6">
+<div id="outline-container-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Tools </h2>
+<div class="outline-text-2" id="text-7">
 
+
+<p>
+Some useful tools to be found in the <code>tools/</code> directory.
+</p>
 <ul>
 <li>
 <code>rfsm-viz</code>
@@ -689,9 +714,9 @@ lua-json.
 
 </div>
 
-<div id="outline-container-7" class="outline-2">
-<h2 id="sec-7"><span class="section-number-2">7</span> Helper modules </h2>
-<div class="outline-text-2" id="text-7">
+<div id="outline-container-8" class="outline-2">
+<h2 id="sec-8"><span class="section-number-2">8</span> Helper modules </h2>
+<div class="outline-text-2" id="text-8">
 
 <ul>
 <li>
@@ -720,9 +745,9 @@ experimental to be even documented.
 
 </div>
 
-<div id="outline-container-8" class="outline-2">
-<h2 id="sec-8"><span class="section-number-2">8</span> More examples, tips and tricks </h2>
-<div class="outline-text-2" id="text-8">
+<div id="outline-container-9" class="outline-2">
+<h2 id="sec-9"><span class="section-number-2">9</span> More examples, tips and tricks </h2>
+<div class="outline-text-2" id="text-9">
 
 <ul>
 <li>
@@ -812,9 +837,9 @@ Make sure not to forget the ',' after the <code>dofile()</code> statement!
 
 </div>
 
-<div id="outline-container-9" class="outline-2">
-<h2 id="sec-9"><span class="section-number-2">9</span> Acknowledgement </h2>
-<div class="outline-text-2" id="text-9">
+<div id="outline-container-10" class="outline-2">
+<h2 id="sec-10"><span class="section-number-2">10</span> Acknowledgement </h2>
+<div class="outline-text-2" id="text-10">
 
 
 <ul>

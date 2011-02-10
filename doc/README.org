@@ -29,6 +29,14 @@
 
   rFSM is dual licensed under LGPL/BSD.
 
+* Setup
+
+  Make sure the rfsm folder is in your LUA_PATH. For example:
+
+  #+begin_src sh
+    export LUA_PATH="$LUA_PATH;/home/mk/src/git/rfsm/"
+  #+end_src
+
 * Quickstart
 
   1. define an rfsm state machine (see =examples/hello\_world.lua=)
@@ -339,6 +347,9 @@
      returned a function as a result!
 
 * Tools
+
+  Some useful tools to be found in the =tools/= directory.
+
   - =rfsm-viz=
     simple tool which can generate images from state machines.
 

@@ -10,17 +10,18 @@ Date: [2011-02-10 Thu]
 Table of Contents
 =================
 1 Overview 
-2 Quickstart 
-3 Introduction 
-4 API 
-    4.1 Model entities 
-    4.2 Operational API 
-    4.3 Hook functions 
-5 Common pitfalls 
-6 Tools 
-7 Helper modules 
-8 More examples, tips and tricks 
-9 Acknowledgement 
+2 Setup 
+3 Quickstart 
+4 Introduction 
+5 API 
+    5.1 Model entities 
+    5.2 Operational API 
+    5.3 Hook functions 
+6 Common pitfalls 
+7 Tools 
+8 Helper modules 
+9 More examples, tips and tricks 
+10 Acknowledgement 
 
 
 1 Overview 
@@ -34,7 +35,15 @@ Table of Contents
 
   rFSM is dual licensed under LGPL/BSD.
 
-2 Quickstart 
+2 Setup 
+~~~~~~~~
+
+  Make sure the rfsm folder is in your LUA_PATH. For example:
+
+
+  export LUA_PATH="$LUA_PATH;/home/mk/src/git/rfsm/"
+
+3 Quickstart 
 ~~~~~~~~~~~~~
 
   1. define an rfsm state machine (see =examples/hello\_world.lua=)
@@ -48,7 +57,7 @@ Table of Contents
   hello
   world
 
-3 Introduction 
+4 Introduction 
 ~~~~~~~~~~~~~~~
 
   rFSM is a minimal Statechart variant designed for /Coordinating/
@@ -132,10 +141,10 @@ Table of Contents
   queue:  e_done@root.hello
 
 
-4 API 
+5 API 
 ~~~~~~
 
-4.1 Model entities 
+5.1 Model entities 
 ===================
 
      Function                   short alias     description               
@@ -266,7 +275,7 @@ Table of Contents
       as it breaks compositionality: if a state machine is used within
       a larger statemachine the absolute reference is broken.
 
-4.2 Operational API 
+5.2 Operational API 
 ====================
 
      Function                        description                                           
@@ -287,7 +296,7 @@ Table of Contents
    means: there are events in the queue or there is an active =doo=
    function which is not idle.
 
-4.3 Hook functions 
+5.3 Hook functions 
 ===================
 
    The following hook functions can be defined for a toplevel
@@ -309,7 +318,7 @@ Table of Contents
    function is return all events which occurred in a table. This allows
    to integrate rFSM instances into any event driven environment.
 
-5 Common pitfalls 
+6 Common pitfalls 
 ~~~~~~~~~~~~~~~~~~
 
   1. Name clashes between state/connector names with reserved Lua
@@ -337,8 +346,11 @@ Table of Contents
      Of course the first example would be perfectly valid if my_func()
      returned a function as a result!
 
-6 Tools 
+7 Tools 
 ~~~~~~~~
+
+  Some useful tools to be found in the =tools/= directory.
+
   - =rfsm-viz=
     simple tool which can generate images from state machines.
 
@@ -363,7 +375,7 @@ Table of Contents
 
   - =rfsm-dbg= experimental. don't use.
 
-7 Helper modules 
+8 Helper modules 
 ~~~~~~~~~~~~~~~~~
   - =fsm2uml.lua= module to generate UML like figures from rFSM
   - =fsm2tree.lua= module to generate the tree structure of an rFSM instance
@@ -373,7 +385,7 @@ Table of Contents
   - =fsmdbg.lua= a remote debugger interface which is simply still too
     experimental to be even documented.
 
-8 More examples, tips and tricks 
+9 More examples, tips and tricks 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   - How to use the =doo= function as a coroutine:
 
@@ -441,8 +453,8 @@ Table of Contents
 
     Make sure not to forget the ',' after the =dofile()= statement!
 
-9 Acknowledgement 
-~~~~~~~~~~~~~~~~~~
+10 Acknowledgement 
+~~~~~~~~~~~~~~~~~~~
 
   - Funding
 
