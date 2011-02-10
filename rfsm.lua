@@ -588,7 +588,7 @@ local function setup_printers(fsm)
       end
    end
    foreach(setup_printer, { err=utils.stderr, warn=utils.stderr,
-			    info=utils.stdout, dbg=utils.stdout } )
+			    info=utils.stdout, dbg=__null_func } )
 end
 
 --- initialize fsm from rfsm template

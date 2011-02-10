@@ -10,10 +10,6 @@ if arg and #arg < 1 then
 end
 
 file = arg[1]
-
-_fsm=dofile(file)
-fsm=rfsm.init(_fsm)
-
 tmpdir="/tmp/"
 
 -- change_hooks handling
@@ -35,7 +31,7 @@ end
 
 -- operational
 function se(...)
-   rfsm.send_events(fsm, unpack(arg)) 
+   rfsm.send_events(fsm, unpack(arg))
 end
 
 function ses(...)
@@ -86,14 +82,27 @@ function viztree()
    os.execute(viewer .. " " .. tmpdir .. "rfsm-tree-tmp.png" .. "&")
 end
 
+function showfqn()
+   local actfqn
+   if fsm._actchild then
+      actfqn = fsm._actchild._fqn .. '(' .. rfsm.get_sta_mode(fsm._actchild) .. ')'
+   else
+      actfqn = "<none>"
+   end
+   print("active: " .. actfqn)
+end
+
 function showeq()
    rfsm.check_events(fsm)
-   print("queue: " .. table.concat(utils.map(tostring, fsm._intq), ', '))
+   print("queue:  " .. table.concat(utils.map(tostring, fsm._intq), ', '))
+end
+
+function boiler()
+   print("rFSM simulator v0.1, type 'help()' to list available commands")
 end
 
 function help()
    print([=[
-rfsm simulator v0.1
 
 available commands:
    help()         -- show this information
@@ -113,10 +122,12 @@ available commands:
 	 ]=])
 end
 
+boiler()
+_fsm=dofile(file)
+fsm=rfsm.init(_fsm)
+
 add_hook(uml)
 add_hook(tree)
+add_hook(showfqn)
 add_hook(showeq)
-
-dbg(true)
-
-help()
+dbg(false)
