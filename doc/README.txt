@@ -19,28 +19,26 @@ Table of Contents
 5 Common pitfalls 
 6 Tools 
 7 Helper modules 
-8 Background 
-    8.1 Structural Model 
-    8.2 Behavioral model 
-9 More examples, tips and tricks 
-10 Acknowledgement 
+8 More examples, tips and tricks 
+9 Acknowledgement 
 
 
 1 Overview 
 ~~~~~~~~~~~
 
-  rFSM is a minimal Statechart variant designed for /Coordinating/
-  complex systems such as robots. It is written purely in Lua and is
-  thus highly portable and embeddable. Being a Lua domain specific
-  language, rFSM inherits the easy extensibility of its host language.
+  rFSM is a small yet powerful Statechart implementation. It is mainly
+  designed for /Coordinating/ of complex systems but not limited to
+  that. rFSM is written purely in Lua and is thus highly portable and
+  embeddable. As a Lua domain specific language rFSM inherits the
+  extensibility of its host language.
 
   rFSM is dual licensed under LGPL/BSD.
 
 2 Quickstart 
 ~~~~~~~~~~~~~
 
-  1. define an rfsm state machine (examples/hello\_world.lua)
-  2. define a context script to execute it (examples/runscript.lua)
+  1. define an rfsm state machine (see =examples/hello\_world.lua=)
+  2. define a context script to execute it (see =examples/runscript.lua=)
   3. run it
 
   lua examples/runscript.lua
@@ -153,8 +151,9 @@ Table of Contents
    1. states (=simple\_state= and =composite\_state=) may define the
       following programs:
 
-      =entry(fsm, state, 'entry')=
-      =exit(fsm, state, 'exit')=
+
+  entry(fsm, state, 'entry')
+  exit(fsm, state, 'exit')
 
       which are called when the state is entered exited or exited
       respectively. The argument passed in are the toplevel
@@ -167,11 +166,12 @@ Table of Contents
       =doo= in to avoid clashes with the identically named Lua
       keyword).
 
-      =bool doo(fsm, state, 'doo')=
+
+  bool doo(fsm, state, 'doo')
 
       This function is called repetitively while a state remains
       active, that is no events trigger an outgoing transition and the
-      do function has not yet completed. The bool returned defines
+      do function has not yet completed. The bool return value defines
       wheter the doo is active or idle. In practice this means: if doo
       does not return true and there are no other events, doo will be
       called in a tight loop.
@@ -189,9 +189,7 @@ Table of Contents
       events specified on all transitions must match the current
       events and the guards of all transitions must be true.
 
-      See the examples
-      - =connector\_simple.lua=
-      - =connector\_split.lua=
+      See the examples =connector\_simple.lua= and =connector\_split.lua=
 
       Connectors are useful for defining common entry points which are
       later dispatched to various internal states.
@@ -259,13 +257,12 @@ Table of Contents
    The =step= will attempt to step the given initialized fsm for n
    times. A step can either be a transition or a single execution of
    the doo program. Step will return either when the state machine is
-   idle or the number of steps has been reached. The boolean return
+   idle or the number of steps has been reached. The Boolean return
    value is whether the fsm is idle or not.
 
    Invoking =run= will call step as long as the fsm is not idle. Not idle
    means: there are events in the queue or there is an active =doo=
    function which is not idle.
-
 
 4.3 Hook functions 
 ===================
@@ -280,14 +277,14 @@ Table of Contents
      =info=                     called to output informational messages. Set to false to disable. Default stdout  
      =warn=                     called to output warnings. Set to false to disable. Default stderr.               
      =err=                      called to output errors. Set to false to disable. Default stderr.                 
-     =table getevents()=        function which returns a table of new events which have occured                   
+     =table getevents()=        function which returns a table of new events which have occurred                  
      =dropevents(fsm, evtab)=   function is called with events which are discarded                                
      =step\_hook(fsm)=          is called for each step (mostly for debugging purposes)                           
      =idle\_hook(fsm)=          called *instead* of returning from step/run functions                             
 
    The most important function is =getevents=. The purpose of this
-   function is return all events which occured in a table. This allows
-   to integrate rFSM instances into any event driven environemnt.
+   function is return all events which occurred in a table. This allows
+   to integrate rFSM instances into any event driven environment.
 
 5 Common pitfalls 
 ~~~~~~~~~~~~~~~~~~
@@ -308,7 +305,7 @@ Table of Contents
 
   stateX = rfsm.sista{ entry = my_func() }
 
-     The (likely) mistake above is to execute my_func and assing the
+     The (likely) mistake above is to execute my_func and assigning the
      result to entry instead of assigning my_func:
 
 
@@ -320,7 +317,7 @@ Table of Contents
 6 Tools 
 ~~~~~~~~
   - =rfsm-viz=
-    simple tool which can generate images from statemachines.
+    simple tool which can generate images from state machines.
 
     to generate all possible formats run:
 
@@ -353,107 +350,7 @@ Table of Contents
   - =fsmdbg.lua= a remote debugger interface which is simply still too
     experimental to be even documented.
 
-8 Background 
-~~~~~~~~~~~~~
-
-8.1 Structural Model 
-=====================
-
-   The rFSM state machine model is a minimal subset of UML2 and Harel
-   Statecharts. It consists of the following four, main model elements:
-
-       1) Simple state
-       2) Composite state
-       3) Transition
-       4) Connector
-
-   In addition two virtual model elements are introduced in order to
-   simplify descriptions about different types of elements:
-
-       - /States/ are either of simple state or composite state type.
-       - /Nodes/ are either States or Connectors.
-
-   A composite state is a state which can contain either other composite
-   states or simple states. At the top-level any rFSM model is always
-   contained in a top-level composite state. This way a state machine can
-   immediately be composed by inserting it into a new composite state.
-
-   In contrast to composite states /simple states/ can not contain any
-   other states; they are leaves in the state machine tree. (This
-   *tree* is not to be confused with the state machine *graph*, in
-   that the tree represents a hierarchy of decomposition, and not a
-   map of the transitions that can take place between states.)
-   Transitions connect Nodes in a directed fashion and carry a list of
-   events which will trigger the transition. Transitions are owned by
-   a composite state and not (as often assumed) by the state from
-   which they originate.
-
-   Connectors can be used to build complex transitions by interconnecting
-   several elementary ones. This model element unifies the four very
-   similar UML model elements junction, initial, entry- and exit
-   pseudostates.
-
-   While connectors can join together multiple transitions it is required
-   that any complex transition must always start and end on a State.
-
-   There exists one connector with special semantics: the initial
-   connector. When a transition which ends on the boundary of a composite
-   state is executed, the execution will continue with the transition
-   emanating from the initial connector. Static checks assure that each
-   composite state which is the target of a transition also contains a
-   initial connector.
-
-   Both States and transitions can be associated with programs. States
-   may have entry and/or exit programs which are executed when the state
-   is entered or left respectively. Simple states may in addition define
-   a /do/ program which will be executed while the state is
-   active. Transitions can define a guard condition and an =effect=
-   program. The guard condition is executed when the transition is
-   checked and can disable the transition if =false= is returned.  The
-   =effect= function is executed when the transition is taken.
-
-   This model is simple, structured and rich enough (in our modest
-   opinion) (i) to serve most of the robot control use cases, even very
-   complex ones, and (ii) to be integrate-able in KIF triples and code
-   generation tools.
-
-8.2 Behavioral model 
-=====================
-
-   In classical finite state automatons only one state may be active at a
-   time. In contrast the Statecharts formalism allows multiple states to
-   be active. The constraints under which this is allowed are:
-
-   - for any active state its parent state must be active too
-   - in a composite state only one child state may be active at a time
-
-   A state-machine is executed for the first time by executing the
-   transition starting from the initial connector which will result in
-   the target state of this transition to be entered.
-
-   The elementary way to advance the state machine is to invoke its
-   =step= procedure. The step procedure will take *all* events which
-   accumulated since the last step and attempt to find an enabled
-   transition. This process starts top down, starting from the root
-   composite state down to the active leaf simple state. As soon as a
-   transition is found the searching is finished and the transition is
-   executed.
-
-   This approach of identifying the next transition has the advantage
-   that it assigns explicit priorities (called /structural priorities/
-   to transitions (higher to less deeply nested transitions) which are
-   visible in the graphical representation. Given a set of events and
-   the current active states of the state graph it is immediately
-   visible which transition will be taken. (This follows the approach
-   taken in STATEMATE semantics). Furthermore structural priority
-   largely avoids conflicts among emanating transitions, leaving only
-   the possibility of conflicts for transitions leaving a single
-   state. These can be eliminated either by additional guard
-   conditions or by means of explicitly defining their priorities
-   (priority numbers).
-
-
-9 More examples, tips and tricks 
+8 More examples, tips and tricks 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   - How to use the =doo= function as a coroutine:
 
@@ -519,10 +416,10 @@ Table of Contents
      ...
   }
 
-    Make sure not to forget the =,= after the  dofile() statement!
+    Make sure not to forget the ',' after the =dofile()= statement!
 
-10 Acknowledgement 
-~~~~~~~~~~~~~~~~~~~
+9 Acknowledgement 
+~~~~~~~~~~~~~~~~~~
 
   - Funding
 
