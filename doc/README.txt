@@ -148,8 +148,10 @@ Table of Contents
    (these functions are part of the rfsm module, thus can be called
    in Lua with =rfsm.simple\_state{}=)
 
-   1. states (=simple\_state= and =composite\_state=) may define the
-      following programs:
+   1. states
+
+      States are either of type =simple\_state= or =composite\_state=)
+      and may define the following programs:
 
 
   entry(fsm, state, 'entry')
@@ -169,16 +171,37 @@ Table of Contents
 
   bool doo(fsm, state, 'doo')
 
-      This function is called repetitively while a state remains
-      active, that is no events trigger an outgoing transition and the
-      do function has not yet completed. The bool return value defines
-      wheter the doo is active or idle. In practice this means: if doo
-      does not return true and there are no other events, doo will be
-      called in a tight loop.
+      This function is treated as a Lua coroutine. This means if it is
+      just a function it will be excuted and a completion event
+      "e_done" raised afterwards. It will not run if there is an event
+      which triggers an outgoing transition.
 
-      As the doo function is created as a Lua coroutine, it is
-      possible to suspend it at arbitray points by calling
-      coroutine.yield()
+      More commonly this function shall run for a longer period until
+      some event occurs. To allow the rFSM core to check for events
+      and possibly execute a transition, the doo function must give up
+      control. This can be done by calling =coroutine.yield()=.
+
+      The following example illustrates this:
+
+
+  doo = function(fsm)
+           while true do
+              if min_distance() < 0.1 then
+                 rfsm.send_events(fsm, "e_close_obj")
+              end
+              coroutine.yield()
+           end
+        end
+
+      This =doo= will check a certain condition repeadedly and raise
+      an event if it is true. After that control is returned to the
+      rFSM core.
+
+      An boolen idle flag can be return to the rFSM core by passing it
+      as a parameter to =coroutine.yield=. If this flag is true then
+      it will cause the rfsm core to go idle if there are no other
+      events. Otherwise, if no value or false is returned and there
+      are no other events, doo will be called in a tight loop.
 
    2. connector: =connector=
 
@@ -186,8 +209,8 @@ Table of Contents
       chaining multiple transition segments together. Connectors are
       similar to the UML junction element and are statically
       checked. This means for a compound transition to be executed the
-      events specified on all transitions must match the current
-      events and the guards of all transitions must be true.
+      events specified on all transitions must match the current set
+      of events and the guards of all transitions must be true.
 
       See the examples =connector\_simple.lua= and =connector\_split.lua=
 
@@ -197,7 +220,7 @@ Table of Contents
       Note: defining cycles is possible, but dangerous, unsupported
       and discouraged.
 
-   4. transitions: =transitions=
+   3. transitions: =transitions=
 
       Transitions define how the state machine changes states when
       events occur:
@@ -240,8 +263,8 @@ Table of Contents
 
       At last absolute references begin with "root." Using absolute
       syntax is strongly discouraged for anything other than testing,
-      as it breaks compositionality: if a state machine is used with a
-      larger statemachine the absolute reference is broken.
+      as it breaks compositionality: if a state machine is used within
+      a larger statemachine the absolute reference is broken.
 
 4.2 Operational API 
 ====================
