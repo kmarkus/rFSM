@@ -1,0 +1,991 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>The rFSM Statecharts (beta1)</title>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="[2011-02-10 Thu]"/>
+<meta name="author" content="Markus Klotzbuecher"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  {margin-left:auto; margin-right:0px;  text-align:right;}
+  .left   {margin-left:0px;  margin-right:auto; text-align:left;}
+  .center {margin-left:auto; margin-right:auto; text-align:center;}
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top;  }
+  th.right  { text-align:center;  }
+  th.left   { text-align:center;   }
+  th.center { text-align:center; }
+  td.right  { text-align:right;  }
+  td.left   { text-align:left;   }
+  td.center { text-align:center; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="css/stylesheet.css" />
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">The rFSM Statecharts (beta1)</h1>
+
+
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 Overview </a></li>
+<li><a href="#sec-2">2 Quickstart </a></li>
+<li><a href="#sec-3">3 Introduction </a></li>
+<li><a href="#sec-4">4 API </a>
+<ul>
+<li><a href="#sec-4_1">4.1 Model entities </a></li>
+<li><a href="#sec-4_2">4.2 Operational API </a></li>
+<li><a href="#sec-4_3">4.3 Hook functions </a></li>
+</ul>
+</li>
+<li><a href="#sec-5">5 Common pitfalls </a></li>
+<li><a href="#sec-6">6 Tools </a></li>
+<li><a href="#sec-7">7 Helper modules </a></li>
+<li><a href="#sec-8">8 Background </a>
+<ul>
+<li><a href="#sec-8_1">8.1 Structural Model </a></li>
+<li><a href="#sec-8_2">8.2 Behavioral model </a></li>
+</ul>
+</li>
+<li><a href="#sec-9">9 More examples, tips and tricks </a></li>
+<li><a href="#sec-10">10 Acknowledgement </a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Overview </h2>
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+rFSM is a minimal Statechart variant designed for <i>Coordinating</i>
+complex systems such as robots. It is written purely in Lua and is
+thus highly portable and embeddable. Being a Lua domain specific
+language, rFSM inherits the easy extensibility of its host language.
+</p>
+<p>
+rFSM is dual licensed under LGPL/BSD.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Quickstart </h2>
+<div class="outline-text-2" id="text-2">
+
+
+<ol>
+<li>
+define an rfsm state machine (examples/hello_world.lua)
+</li>
+<li>
+define a context script to execute it (examples/runscript.lua)
+</li>
+<li>
+run it
+
+
+
+<pre class="src src-sh">lua examples/runscript.lua
+INFO: created undeclared connector root.initial
+hello
+world
+hello
+world
+</pre>
+
+
+</li>
+</ol>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Introduction </h2>
+<div class="outline-text-2" id="text-3">
+
+
+<p>
+rFSM is a minimal Statechart variant designed for <i>Coordinating</i>
+complex systems such as robots. It is written purely in Lua and is
+thus highly portable and embeddable. Being a Lua domain specific
+language, rFSM inherits the easy extensibility of its host language.
+</p>
+<p>
+The following example shows a simple hello_world example:
+</p>
+
+
+
+<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.composite_state:new {
+   hello = rfsm.simple_state:new{ <span style="color: #0000cd; font-weight: bold;">exit</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"hello"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },
+   world = rfsm.simple_state:new{ <span style="color: #0000cd; font-weight: bold;">entry</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"world"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },
+
+   rfsm.transition:new{ src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'hello'</span> },
+   rfsm.transition:new{ src=<span style="color: #00cd00;">'hello'</span>, tgt=<span style="color: #00cd00;">'world'</span>, events={ <span style="color: #00cd00;">'e_done'</span> } },
+   rfsm.transition:new{ src=<span style="color: #00cd00;">'world'</span>, tgt=<span style="color: #00cd00;">'hello'</span>, events={ <span style="color: #00cd00;">'e_restart'</span> } },
+}
+</pre>
+
+
+
+<p>
+The first line defines a new toplevel composite state and returns
+it. By always returning the fsm as the last statement in an rfsm
+file, it can be very easily read by tools and reused.
+</p>
+<p>
+The second and third line define two simple states which are part of
+the toplevel composite state. hello defines and exit function and
+world and entry function which are called when the state is
+exited/entered resp.
+</p>
+<p>
+The next three lines define transition between these states. The
+first is from the initial connector to the hello state. This
+transition will be taken the first time the state machine is
+entered. The initial connector, as an exception, need not be defined
+and will be created automatically.
+</p>
+<p>
+The next transition is from hello to world and is triggered by the
+<code>e_done</code> event. This event is raised internally when the a state
+completes, which is either the case when the states "doo" function
+(see below) finishes or immediately if there is no doo, as is the
+case here.
+</p>
+<p>
+Next we execute this statemachine in the rfsm-simulator:
+</p>
+
+
+
+<pre class="src src-sh">PMA-10-048 ~/prog/lua/rfsm(master) $ tools/rfsm-sim examples/hello_world.lua
+Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio
+rFSM simulator v0.1, type <span style="color: #00cd00;">'help()'</span> to list available commands
+INFO: created undeclared connector root.initial
+&gt; step()
+hello
+active: root.hello(<span style="color: #00cdcd; font-weight: bold;">done</span>)
+queue:  e_done@root.hello
+</pre>
+
+
+
+<p>
+We execute <code>step()</code> to advance the state machine once. As this is
+the first step, the fsm is entered via the 'initial' connector to
+the <code>hello</code> state. After that hello is active and <code>done</code> (because no
+doo function is defined). Consequently an <code>e_done</code> completion event
+has been generated which is in the queue. So the next step&hellip;
+</p>
+
+
+
+<pre class="src src-sh">&gt; step()
+world
+active: root.world(<span style="color: #00cdcd; font-weight: bold;">done</span>)
+queue:  e_done@root.world
+</pre>
+
+
+
+<p>
+&hellip; causes a transtion to done. As the 'world' state completion
+event does not trigger any transitons, running <code>step()</code> again does
+not cause any changes:
+</p>
+
+
+
+<pre class="src src-sh">&gt; step()
+active: root.world(<span style="color: #00cdcd; font-weight: bold;">done</span>)
+queue:
+</pre>
+
+
+<p>
+But we can manually send in the <code>e_restart</code> event and call <code>step()</code>,
+which takes us back to <code>hello</code>:
+</p>
+
+
+
+<pre class="src src-sh">&gt; se(<span style="color: #00cd00;">"e_restart"</span>)
+&gt; step()
+hello
+active: root.hello(<span style="color: #00cdcd; font-weight: bold;">done</span>)
+queue:  e_done@root.hello
+</pre>
+
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> API </h2>
+<div class="outline-text-2" id="text-4">
+
+
+</div>
+
+<div id="outline-container-4_1" class="outline-3">
+<h3 id="sec-4_1"><span class="section-number-3">4.1</span> Model entities </h3>
+<div class="outline-text-3" id="text-4_1">
+
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption></caption>
+<colgroup><col class="left" /><col class="left" /><col class="left" />
+</colgroup>
+<thead>
+<tr><th scope="col" class="left">Function</th><th scope="col" class="left">short alias</th><th scope="col" class="left">description</th></tr>
+</thead>
+<tbody>
+<tr><td class="left"><code>simple_state:new{}</code></td><td class="left"><code>sista:new{}</code></td><td class="left">create a simple state</td></tr>
+<tr><td class="left"><code>composite_state:new{}</code></td><td class="left"><code>csta:new{}</code></td><td class="left">create a composite state</td></tr>
+<tr><td class="left"><code>connector:new{}</code></td><td class="left"><code>conn:new{}</code></td><td class="left">create a connector</td></tr>
+<tr><td class="left"><code>transition:new{}</code></td><td class="left"><code>trans:new{}</code></td><td class="left">create a transition</td></tr>
+</tbody>
+</table>
+
+
+<p>
+(these functions are part of the rfsm module, thus can be called
+in Lua with <code>rfsm.simple_state{}</code>)
+</p>
+<ol>
+<li>
+states (<code>simple_state</code> and <code>composite_state</code>) may define the
+following programs:
+
+<p>
+<code>entry(fsm, state, 'entry')</code>
+<code>exit(fsm, state, 'exit')</code>
+</p>
+<p>
+which are called when the state is entered exited or exited
+respectively. The argument passed in are the toplevel
+statechart, the current state and the string 'entry'
+resp. 'exit'. (The rationale behind the third argument is to
+allow one function to handle entry and exit and thus to be able
+to identify which one is being called.)
+</p>
+<p>
+Simple states may additionaly define a do function (it is called
+<code>doo</code> in to avoid clashes with the identically named Lua
+keyword).
+</p>
+<p>
+<code>bool doo(fsm, state, 'doo')</code>
+</p>
+<p>
+This function is called repetitively while a state remains
+active, that is no events trigger an outgoing transition and the
+do function has not yet completed. The bool returned defines
+wheter the doo is active or idle. In practice this means: if doo
+does not return true and there are no other events, doo will be
+called in a tight loop.
+</p>
+<p>
+As the doo function is created as a Lua coroutine, it is
+possible to suspend it at arbitray points by calling
+coroutine.yield()
+</p>
+</li>
+<li>
+connector: <code>connector</code>
+
+<p>
+Connectors allow to define so called compound transitions by
+chaining multiple transition segments together. Connectors are
+similar to the UML junction element and are statically
+checked. This means for a compound transition to be executed the
+events specified on all transitions must match the current
+events and the guards of all transitions must be true.
+</p>
+<p>
+See the examples
+</p><ul>
+<li>
+<code>connector_simple.lua</code>
+</li>
+<li>
+<code>connector_split.lua</code>
+</li>
+</ul>
+</li>
+</ol>
+
+
+<p>
+Connectors are useful for defining common entry points which are
+later dispatched to various internal states.
+</p>
+<p>
+Note: defining cycles is possible, but dangerous, unsupported
+and discouraged.
+</p>
+<ol>
+<li>
+transitions: <code>transitions</code>
+
+<p>
+Transitions define how the state machine changes states when
+events occur:
+</p>
+<p>
+example:
+</p>
+
+
+
+<pre class="src src-lua">rfsm.transition:new{ src=<span style="color: #00cd00;">'stateX'</span>,
+                     tgt=<span style="color: #00cd00;">'stateY'</span>,
+                     events = {<span style="color: #00cd00;">"e1"</span>, <span style="color: #00cd00;">"e2"</span> },
+                     <span style="color: #0000cd; font-weight: bold;">effect</span>=<span style="color: #00cdcd; font-weight: bold;">function</span> () do_this() <span style="color: #00cdcd; font-weight: bold;">end</span> }
+</pre>
+
+
+
+<p>
+This defines a transition between stateX and stateY which is
+triggered by e1 <span style="text-decoration:underline;">and</span> e2 and which will execute the given effect
+function when transitioning.
+</p>
+<p>
+Three ways of specifying src and target states are supported:
+<i>local</i>, <i>relative</i> or <i>absolute</i>. In the above example 'stateX'
+and 'stateY' are referenced locally and must therefore be
+defined within the same composite state as this transition.
+</p>
+<p>
+Relative references specify states which are, relative to the
+position of the transition, deeper nested. Such a reference
+starts with a leading dot. For example:
+</p>
+
+
+
+<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta:new{
+   operational=rfsm.csta:new{
+      motors_on = rfsm.csta:new{
+         moving = rfsm.sista:new{},
+         stopped = rfsm.sista:new{},
+      },
+   },
+   off=rfsm.sista:new{},
+   rfsm.trans:new{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">".operational.motors_on.moving"</span>}
+}
+</pre>
+
+
+
+<p>
+This transition is defined between the (locally referenced)
+'initial' connector to the relatively referenced <code>moving</code> state.
+</p>
+<p>
+At last absolute references begin with "root." Using absolute
+syntax is strongly discouraged for anything other than testing,
+as it breaks compositionality: if a state machine is used with a
+larger statemachine the absolute reference is broken.
+</p>
+</li>
+</ol>
+
+</div>
+
+</div>
+
+<div id="outline-container-4_2" class="outline-3">
+<h3 id="sec-4_2"><span class="section-number-3">4.2</span> Operational API </h3>
+<div class="outline-text-3" id="text-4_2">
+
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption></caption>
+<colgroup><col class="left" /><col class="left" />
+</colgroup>
+<thead>
+<tr><th scope="col" class="left">Function</th><th scope="col" class="left">description</th></tr>
+</thead>
+<tbody>
+<tr><td class="left"><code>fsm rfsm.init(fsmmodel)</code></td><td class="left">create an inialized rfsm instance from model</td></tr>
+<tr><td class="left"><code>idle rfsm.step(fsm, n)</code></td><td class="left">attempt to transition FSM n times. Default: once</td></tr>
+<tr><td class="left"><code>rfsm.run(fsm)</code></td><td class="left">run FSM until it goes idle</td></tr>
+<tr><td class="left"><code>rfsm.send_events(fsm, ...)</code></td><td class="left">send one or more events to internal rfsm event queue</td></tr>
+</tbody>
+</table>
+
+
+
+<p>
+The <code>step</code> will attempt to step the given initialized fsm for n
+times. A step can either be a transition or a single execution of
+the doo program. Step will return either when the state machine is
+idle or the number of steps has been reached. The boolean return
+value is whether the fsm is idle or not.
+</p>
+<p>
+Invoking <code>run</code> will call step as long as the fsm is not idle. Not idle
+means: there are events in the queue or there is an active <code>doo</code>
+function which is not idle.
+</p>
+
+</div>
+
+</div>
+
+<div id="outline-container-4_3" class="outline-3">
+<h3 id="sec-4_3"><span class="section-number-3">4.3</span> Hook functions </h3>
+<div class="outline-text-3" id="text-4_3">
+
+
+<p>
+The following hook functions can be defined for a toplevel
+composite state and allow to refine various behavior of the state
+machine.
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption></caption>
+<colgroup><col class="left" /><col class="left" />
+</colgroup>
+<thead>
+<tr><th scope="col" class="left">function</th><th scope="col" class="left">description</th></tr>
+</thead>
+<tbody>
+<tr><td class="left"><code>dbg</code></td><td class="left">called to output debug information. Set to false to disable. Default false.</td></tr>
+<tr><td class="left"><code>info</code></td><td class="left">called to output informational messages. Set to false to disable. Default stdout</td></tr>
+<tr><td class="left"><code>warn</code></td><td class="left">called to output warnings. Set to false to disable. Default stderr.</td></tr>
+<tr><td class="left"><code>err</code></td><td class="left">called to output errors. Set to false to disable. Default stderr.</td></tr>
+<tr><td class="left"><code>table getevents()</code></td><td class="left">function which returns a table of new events which have occured</td></tr>
+<tr><td class="left"><code>dropevents(fsm, evtab)</code></td><td class="left">function is called with events which are discarded</td></tr>
+<tr><td class="left"><code>step_hook(fsm)</code></td><td class="left">is called for each step (mostly for debugging purposes)</td></tr>
+<tr><td class="left"><code>idle_hook(fsm)</code></td><td class="left">called <b>instead</b> of returning from step/run functions</td></tr>
+</tbody>
+</table>
+
+
+<p>
+The most important function is <code>getevents</code>. The purpose of this
+function is return all events which occured in a table. This allows
+to integrate rFSM instances into any event driven environemnt.
+</p>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Common pitfalls </h2>
+<div class="outline-text-2" id="text-5">
+
+
+<ol>
+<li>
+Name clashes between state/connector names with reserved Lua
+keywords.
+
+<p>
+This can be worked around by using the following syntax:
+</p>
+
+
+
+<pre class="example">['end'] = rfsm.sista{...}
+</pre>
+
+
+
+</li>
+<li>
+Executing functions accidentially
+
+<p>
+It is a common mistake to execute externally defined functions
+instead of adding references to them:
+</p>
+
+
+
+<pre class="example">stateX = rfsm.sista{ entry = my_func() }
+</pre>
+
+
+
+<p>
+The (likely) mistake above is to execute my<sub>func</sub> and assing the
+result to entry instead of assigning my<sub>func</sub>:
+</p>
+
+
+
+<pre class="example">stateX = rfsm.sista{ entry = my_func }
+</pre>
+
+
+
+<p>
+Of course the first example would be perfectly valid if my<sub>func</sub>()
+returned a function as a result!
+</p></li>
+</ol>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Tools </h2>
+<div class="outline-text-2" id="text-6">
+
+<ul>
+<li>
+<code>rfsm-viz</code>
+simple tool which can generate images from statemachines.
+
+<p>
+to generate all possible formats run:
+</p>
+
+
+
+<pre class="example">rfsm-viz all examples/composite_nested.lua
+</pre>
+
+
+
+</li>
+<li>
+<code>rfsm-sim</code>
+
+<p>
+small command line simulator for running a fsm
+interactively.
+</p>
+
+
+
+<pre class="example">rfsm-viz all examples/ball_tracker_scope.lua
+</pre>
+
+
+
+<p>
+It requires a image viewer which automatically updates once the
+file displayed changes. For example <code>evince</code> works nicely.
+</p>
+</li>
+<li>
+<code>rfsm2json</code> converts an lua fsm to a json representation. Requires
+lua-json.
+
+</li>
+<li>
+<code>rfsm-dbg</code> experimental. don't use.
+</li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Helper modules </h2>
+<div class="outline-text-2" id="text-7">
+
+<ul>
+<li>
+<code>fsm2uml.lua</code> module to generate UML like figures from rFSM
+</li>
+<li>
+<code>fsm2tree.lua</code> module to generate the tree structure of an rFSM instance
+</li>
+<li>
+<code>fsmpp.lua</code> Lowlevel function used to improve the debug output.
+</li>
+<li>
+<code>fsmtesting.lua</code> statemachine testing infrastructure.
+</li>
+<li>
+<code>rfsm_rtt.lua</code> Useful functions for using rFSM with OROCOS rtt
+</li>
+<li>
+<code>fsmdbg.lua</code> a remote debugger interface which is simply still too
+experimental to be even documented.
+</li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-8" class="outline-2">
+<h2 id="sec-8"><span class="section-number-2">8</span> Background </h2>
+<div class="outline-text-2" id="text-8">
+
+
+</div>
+
+<div id="outline-container-8_1" class="outline-3">
+<h3 id="sec-8_1"><span class="section-number-3">8.1</span> Structural Model </h3>
+<div class="outline-text-3" id="text-8_1">
+
+
+<p>
+The rFSM state machine model is a minimal subset of UML2 and Harel
+Statecharts. It consists of the following four, main model elements:
+</p>
+<ol>
+<li>
+Simple state
+</li>
+<li>
+Composite state
+</li>
+<li>
+Transition
+</li>
+<li>
+Connector
+</li>
+</ol>
+
+
+<p>
+In addition two virtual model elements are introduced in order to
+simplify descriptions about different types of elements:
+</p>
+<ul>
+<li>
+<i>States</i> are either of simple state or composite state type.
+</li>
+<li>
+<i>Nodes</i> are either States or Connectors.
+</li>
+</ul>
+
+
+<p>
+A composite state is a state which can contain either other composite
+states or simple states. At the top-level any rFSM model is always
+contained in a top-level composite state. This way a state machine can
+immediately be composed by inserting it into a new composite state.
+</p>
+<p>
+In contrast to composite states <i>simple states</i> can not contain any
+other states; they are leaves in the state machine tree. (This
+<b>tree</b> is not to be confused with the state machine <b>graph</b>, in
+that the tree represents a hierarchy of decomposition, and not a
+map of the transitions that can take place between states.)
+Transitions connect Nodes in a directed fashion and carry a list of
+events which will trigger the transition. Transitions are owned by
+a composite state and not (as often assumed) by the state from
+which they originate.
+</p>
+<p>
+Connectors can be used to build complex transitions by interconnecting
+several elementary ones. This model element unifies the four very
+similar UML model elements junction, initial, entry- and exit
+pseudostates.
+</p>
+<p>
+While connectors can join together multiple transitions it is required
+that any complex transition must always start and end on a State.
+</p>
+<p>
+There exists one connector with special semantics: the initial
+connector. When a transition which ends on the boundary of a composite
+state is executed, the execution will continue with the transition
+emanating from the initial connector. Static checks assure that each
+composite state which is the target of a transition also contains a
+initial connector.
+</p>
+<p>
+Both States and transitions can be associated with programs. States
+may have entry and/or exit programs which are executed when the state
+is entered or left respectively. Simple states may in addition define
+a <i>do</i> program which will be executed while the state is
+active. Transitions can define a guard condition and an <code>effect</code>
+program. The guard condition is executed when the transition is
+checked and can disable the transition if <code>false</code> is returned.  The
+<code>effect</code> function is executed when the transition is taken.
+</p>
+<p>
+This model is simple, structured and rich enough (in our modest
+opinion) (i) to serve most of the robot control use cases, even very
+complex ones, and (ii) to be integrate-able in KIF triples and code
+generation tools.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-8_2" class="outline-3">
+<h3 id="sec-8_2"><span class="section-number-3">8.2</span> Behavioral model </h3>
+<div class="outline-text-3" id="text-8_2">
+
+
+<p>
+In classical finite state automatons only one state may be active at a
+time. In contrast the Statecharts formalism allows multiple states to
+be active. The constraints under which this is allowed are:
+</p>
+<ul>
+<li>
+for any active state its parent state must be active too
+</li>
+<li>
+in a composite state only one child state may be active at a time
+</li>
+</ul>
+
+
+<p>
+A state-machine is executed for the first time by executing the
+transition starting from the initial connector which will result in
+the target state of this transition to be entered.
+</p>
+<p>
+The elementary way to advance the state machine is to invoke its
+<code>step</code> procedure. The step procedure will take <b>all</b> events which
+accumulated since the last step and attempt to find an enabled
+transition. This process starts top down, starting from the root
+composite state down to the active leaf simple state. As soon as a
+transition is found the searching is finished and the transition is
+executed.
+</p>
+<p>
+This approach of identifying the next transition has the advantage
+that it assigns explicit priorities (called <i>structural priorities</i>
+to transitions (higher to less deeply nested transitions) which are
+visible in the graphical representation. Given a set of events and
+the current active states of the state graph it is immediately
+visible which transition will be taken. (This follows the approach
+taken in STATEMATE semantics). Furthermore structural priority
+largely avoids conflicts among emanating transitions, leaving only
+the possibility of conflicts for transitions leaving a single
+state. These can be eliminated either by additional guard
+conditions or by means of explicitly defining their priorities
+(priority numbers).
+</p>
+
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-9" class="outline-2">
+<h2 id="sec-9"><span class="section-number-2">9</span> More examples, tips and tricks </h2>
+<div class="outline-text-2" id="text-9">
+
+<ul>
+<li>
+How to use the <code>doo</code> function as a coroutine:
+
+
+
+
+<pre class="src src-lua"><span style="color: #cd0000;">--</span><span style="color: #cd0000;"> any rFSM is always contained in a composite_state
+</span><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.composite_state:new {
+   dbg = <span style="color: #00cdcd; font-weight: bold;">true</span>, <span style="color: #cd0000;">--</span><span style="color: #cd0000;"> enable debugging
+</span>
+   on = rfsm.composite_state:new {
+      <span style="color: #0000cd; font-weight: bold;">entry</span> = <span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"disabling brakes"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
+      <span style="color: #0000cd; font-weight: bold;">exit</span> = <span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"enabling brakes"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
+
+      moving = rfsm.simple_state:new {
+         <span style="color: #0000cd; font-weight: bold;">entry</span>=<span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"starting to move"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
+         <span style="color: #0000cd; font-weight: bold;">exit</span>=<span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"stopping"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
+      },
+
+      waiting = rfsm.simple_state:new {},
+
+      <span style="color: #cd0000;">--</span><span style="color: #cd0000;"> define some transitions
+</span>      rfsm.trans:new{ src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'waiting'</span> },
+      rfsm.trans:new{ src=<span style="color: #00cd00;">'waiting'</span>, tgt=<span style="color: #00cd00;">'moving'</span>, events={ <span style="color: #00cd00;">'e_start'</span> } },
+      rfsm.trans:new{ src=<span style="color: #00cd00;">'moving'</span>, tgt=<span style="color: #00cd00;">'waiting'</span>, events={ <span style="color: #00cd00;">'e_stop'</span> } },
+   },
+
+   error = rfsm.simple_state:new {
+      <span style="color: #0000cd; font-weight: bold;">doo</span> = <span style="color: #00cdcd; font-weight: bold;">function</span> (fsm)
+                 print (<span style="color: #00cd00;">"Error detected - trying to fix"</span>)
+                 coroutine.yield()
+                 math.randomseed( os.time() )
+                 coroutine.yield()
+                 <span style="color: #00cdcd; font-weight: bold;">if</span> math.random(0,100) &lt; 40 <span style="color: #00cdcd; font-weight: bold;">then</span>
+                    print(<span style="color: #00cd00;">"unable to fix, raising e_fatal_error"</span>)
+                    rfsm.send_events(fsm, <span style="color: #00cd00;">"e_fatal_error"</span>)
+                 <span style="color: #00cdcd; font-weight: bold;">else</span>
+                    print(<span style="color: #00cd00;">"repair succeeded!"</span>)
+                    rfsm.send_events(fsm, <span style="color: #00cd00;">"e_error_fixed"</span>)
+                 <span style="color: #00cdcd; font-weight: bold;">end</span>
+              <span style="color: #00cdcd; font-weight: bold;">end</span>,
+   },
+
+   fatal_error = rfsm.simple_state:new {},
+
+   rfsm.trans:new{ src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'on'</span>, <span style="color: #0000cd; font-weight: bold;">effect</span>=<span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"initalizing system"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },
+   rfsm.trans:new{ src=<span style="color: #00cd00;">'on'</span>, tgt=<span style="color: #00cd00;">'error'</span>, events={ <span style="color: #00cd00;">'e_error'</span> } },
+   rfsm.trans:new{ src=<span style="color: #00cd00;">'error'</span>, tgt=<span style="color: #00cd00;">'on'</span>, events={ <span style="color: #00cd00;">'e_error_fixed'</span> } },
+   rfsm.trans:new{ src=<span style="color: #00cd00;">'error'</span>, tgt=<span style="color: #00cd00;">'fatal_error'</span>, events={ <span style="color: #00cd00;">'e_fatal_error'</span> } },
+   rfsm.trans:new{ src=<span style="color: #00cd00;">'fatal_error'</span>, tgt=<span style="color: #00cd00;">'initial'</span>, events={ <span style="color: #00cd00;">'e_reset'</span> } },
+}
+</pre>
+
+
+
+</li>
+<li>
+How to include other state machines
+
+<p>
+this is easy! Let's assume the state machine is is a file
+"subfsm.lua" and uses the strongly recommended <code>return     rfsm.csta:new ...</code> syntax, it can be included as follows:
+</p>
+
+
+
+<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta:new {
+
+   name_of_composite_state = dofile(<span style="color: #00cd00;">"subfsm.lua"</span>),
+
+   otherstateX = rfsm.sista{},
+   ...
+}
+</pre>
+
+
+
+<p>
+Make sure not to forget the =,= after the  dofile() statement!
+</p></li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-10" class="outline-2">
+<h2 id="sec-10"><span class="section-number-2">10</span> Acknowledgement </h2>
+<div class="outline-text-2" id="text-10">
+
+
+<ul>
+<li>
+Funding
+
+<p>
+The research leading to these results has received funding from
+the European Community's Seventh Framework Programme
+(FP7/2007-2013) under grant agreement no. FP7-ICT-231940-BRICS
+(Best Practice in Robotics)
+</p>
+</li>
+<li>
+Scientific background
+
+<p>
+This work borrows many ideas from the Statecharts by David Harel
+and some ideas from UML 2.1 State Machines. The following
+publications are the most relevant
+</p>
+<p>
+David Harel and Amnon Naamad. 1996. The STATEMATE semantics of
+statecharts. ACM Trans. Softw. Eng. Methodol. 5, 4 (October 1996),
+293-333. DOI=10.1145/235321.235322
+<a href="http://doi.acm.org/10.1145/235321.235322">http://doi.acm.org/10.1145/235321.235322</a>
+</p>
+<p>
+The OMG UML Specification:
+<a href="http://www.omg.org/spec/UML/2.3/Superstructure/PDF/">http://www.omg.org/spec/UML/2.3/Superstructure/PDF/</a>
+</p></li>
+</ul>
+
+</div>
+</div>
+<div id="postamble">
+<p class="author"> Author: Markus Klotzbuecher
+</p>
+<p class="date"> Date: [2011-02-10 Thu]</p>
+<p class="creator">HTML generated by org-mode 7.4 in emacs 23</p>
+</div>
+</div>
+</body>
+</html>

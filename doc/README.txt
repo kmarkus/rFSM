@@ -1,25 +1,33 @@
-#+TITLE:	The rFSM Statecharts (beta1)
-#+AUTHOR:	Markus Klotzbuecher
-#+EMAIL:	markus.klotzbuecher@mech.kuleuven.be
-#+DATE:		[2011-02-10 Thu]
-#+DESCRIPTION:
-#+KEYWORDS:
-#+LANGUAGE:	en
-#+OPTIONS:	H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
-#+OPTIONS:	TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
-#+INFOJS_OPT:	view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
-#+EXPORT_SELECT_TAGS: export
-#+EXPORT_EXCLUDE_TAGS: noexport
-#+LINK_UP:
-#+LINK_HOME:
-#+XSLT:
-##+STYLE:	<link rel="stylesheet" type="text/css" href="css/stylesheet.css" />
+                     The rFSM Statecharts (beta1)
+                     ============================
 
-#+STARTUP:	showall
-#+STARTUP:	hidestars
+Author: Markus Klotzbuecher
+Date: [2011-02-10 Thu]
 
 
-* Overview
+
+
+Table of Contents
+=================
+1 Overview 
+2 Quickstart 
+3 Introduction 
+4 API 
+    4.1 Model entities 
+    4.2 Operational API 
+    4.3 Hook functions 
+5 Common pitfalls 
+6 Tools 
+7 Helper modules 
+8 Background 
+    8.1 Structural Model 
+    8.2 Behavioral model 
+9 More examples, tips and tricks 
+10 Acknowledgement 
+
+
+1 Overview 
+~~~~~~~~~~~
 
   rFSM is a minimal Statechart variant designed for /Coordinating/
   complex systems such as robots. It is written purely in Lua and is
@@ -28,39 +36,39 @@
 
   rFSM is dual licensed under LGPL/BSD.
 
-* Quickstart
+2 Quickstart 
+~~~~~~~~~~~~~
 
-  1. define an rfsm state machine (examples/hello_world.lua)
+  1. define an rfsm state machine (examples/hello\_world.lua)
   2. define a context script to execute it (examples/runscript.lua)
   3. run it
-     #+begin_src sh
-       lua examples/runscript.lua
-       INFO: created undeclared connector root.initial
-       hello
-       world
-       hello
-       world
-     #+end_src
 
-* Introduction
+  lua examples/runscript.lua
+  INFO: created undeclared connector root.initial
+  hello
+  world
+  hello
+  world
+
+3 Introduction 
+~~~~~~~~~~~~~~~
 
   rFSM is a minimal Statechart variant designed for /Coordinating/
   complex systems such as robots. It is written purely in Lua and is
   thus highly portable and embeddable. Being a Lua domain specific
   language, rFSM inherits the easy extensibility of its host language.
 
-  The following example shows a simple hello_world example:
+  The following example shows a simple hello\_world example:
 
-  #+begin_src lua
-    return rfsm.composite_state:new {
-       hello = rfsm.simple_state:new{ exit=function() print("hello") end },
-       world = rfsm.simple_state:new{ entry=function() print("world") end },
 
-       rfsm.transition:new{ src='initial', tgt='hello' },
-       rfsm.transition:new{ src='hello', tgt='world', events={ 'e_done' } },
-       rfsm.transition:new{ src='world', tgt='hello', events={ 'e_restart' } },
-    }
-  #+end_src
+  return rfsm.composite_state:new {
+     hello = rfsm.simple_state:new{ exit=function() print("hello") end },
+     world = rfsm.simple_state:new{ entry=function() print("world") end },
+  
+     rfsm.transition:new{ src='initial', tgt='hello' },
+     rfsm.transition:new{ src='hello', tgt='world', events={ 'e_done' } },
+     rfsm.transition:new{ src='world', tgt='hello', events={ 'e_restart' } },
+  }
 
   The first line defines a new toplevel composite state and returns
   it. By always returning the fsm as the last statement in an rfsm
@@ -78,72 +86,71 @@
   and will be created automatically.
 
   The next transition is from hello to world and is triggered by the
-  "e_done" event. This event is raised internally when the a state
-  "completes", which is either the case when the states "doo" function
+  =e\_done= event. This event is raised internally when the a state
+  completes, which is either the case when the states "doo" function
   (see below) finishes or immediately if there is no doo, as is the
   case here.
 
   Next we execute this statemachine in the rfsm-simulator:
 
-  #+begin_src sh
-    PMA-10-048 ~/prog/lua/rfsm(master) $ tools/rfsm-sim examples/hello_world.lua
-    Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio
-    rFSM simulator v0.1, type 'help()' to list available commands
-    INFO: created undeclared connector root.initial
-    > step()
-    hello
-    active: root.hello(done)
-    queue:  e_done@root.hello
-  #+end_src
+
+  PMA-10-048 ~/prog/lua/rfsm(master) $ tools/rfsm-sim examples/hello_world.lua
+  Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio
+  rFSM simulator v0.1, type 'help()' to list available commands
+  INFO: created undeclared connector root.initial
+  > step()
+  hello
+  active: root.hello(done)
+  queue:  e_done@root.hello
 
   We execute =step()= to advance the state machine once. As this is
   the first step, the fsm is entered via the 'initial' connector to
   the =hello= state. After that hello is active and =done= (because no
-  doo function is defined). Consequently an e_done completion event
+  doo function is defined). Consequently an =e\_done= completion event
   has been generated which is in the queue. So the next step...
 
-  #+begin_src sh
-    > step()
-    world
-    active: root.world(done)
-    queue:  e_done@root.world
-  #+end_src
+
+  > step()
+  world
+  active: root.world(done)
+  queue:  e_done@root.world
 
   ... causes a transtion to done. As the 'world' state completion
   event does not trigger any transitons, running =step()= again does
   not cause any changes:
 
-  #+begin_src sh
-    > step()
-    active: root.world(done)
-    queue:
-  #+end_src
-  But we can manually send in the =e_restart= event and call =step()=,
+
+  > step()
+  active: root.world(done)
+  queue:
+  But we can manually send in the =e\_restart= event and call =step()=,
   which takes us back to =hello=:
 
-  #+begin_src sh
-    > se("e_restart")
-    > step()
-    hello
-    active: root.hello(done)
-    queue:  e_done@root.hello
-  #+end_src
+
+  > se("e_restart")
+  > step()
+  hello
+  active: root.hello(done)
+  queue:  e_done@root.hello
 
 
-* API
-** Model entities
+4 API 
+~~~~~~
 
-   | Function                | short alias   | description                                 |
-   |-------------------------+---------------+---------------------------------------------+-
-   | =simple_state:new{}=    | =sista:new{}= | create a simple state                       |
-   | =composite_state:new{}= | =csta{}=      | create a composite state                    |
-   | =connector:new{}=       | =conn:new{}=  | create a connector                          |
-   | =transition:new{}=      | =trans:new{}= | create a transition                         |
+4.1 Model entities 
+===================
+
+     Function                   short alias     description               
+    --------------------------+---------------+--------------------------
+     =simple\_state:new{}=      =sista:new{}=   create a simple state     
+     =composite\_state:new{}=   =csta:new{}=    create a composite state  
+     =connector:new{}=          =conn:new{}=    create a connector        
+     =transition:new{}=         =trans:new{}=   create a transition       
 
    (these functions are part of the rfsm module, thus can be called
-   in Lua with =rfsm.simple_state{}=)
+   in Lua with =rfsm.simple\_state{}=)
 
-   1. states (=simple_state= and =composite_state=) may define the
+   1. states (=simple\_state= and =composite\_state=) may define the
       following programs:
 
       =entry(fsm, state, 'entry')=
@@ -183,8 +190,8 @@
       events and the guards of all transitions must be true.
 
       See the examples
-      - connector_simple.lua
-      - connector_split.lua
+      - =connector\_simple.lua=
+      - =connector\_split.lua=
 
       Connectors are useful for defining common entry points which are
       later dispatched to various internal states.
@@ -199,12 +206,11 @@
 
       example:
 
-      #+begin_src lua
-	rfsm.transition:new{ src='stateX',
-			     tgt='stateY',
-			     events = {"e1", "e2" },
-			     effect=function () do_this() end }
-      #+end_src
+
+  rfsm.transition:new{ src='stateX',
+                       tgt='stateY',
+                       events = {"e1", "e2" },
+                       effect=function () do_this() end }
 
       This defines a transition between stateX and stateY which is
       triggered by e1 _and_ e2 and which will execute the given effect
@@ -219,18 +225,17 @@
       position of the transition, deeper nested. Such a reference
       starts with a leading dot. For example:
 
-      #+begin_src lua
-	return rfsm.csta:new{
-	   operational=rfsm.csta:new{
-	      motors_on = rfsm.csta:new{
-		 moving = rfsm.sista:new{},
-		 stopped = rfsm.sista:new{},
-	      },
-	   },
-	   off=rfsm.sista:new{},
-	   rfsm.trans:new{src='initial', tgt=".operational.motors_on.moving"}
-	}
-      #+end_src
+
+  return rfsm.csta:new{
+     operational=rfsm.csta:new{
+        motors_on = rfsm.csta:new{
+           moving = rfsm.sista:new{},
+           stopped = rfsm.sista:new{},
+        },
+     },
+     off=rfsm.sista:new{},
+     rfsm.trans:new{src='initial', tgt=".operational.motors_on.moving"}
+  }
 
       This transition is defined between the (locally referenced)
       'initial' connector to the relatively referenced =moving= state.
@@ -240,15 +245,15 @@
       as it breaks compositionality: if a state machine is used with a
       larger statemachine the absolute reference is broken.
 
+4.2 Operational API 
+====================
 
-** Operational API
-
-   | Function                     | description                                          |
-   |------------------------------+------------------------------------------------------|
-   | =fsm rfsm.init(fsmmodel)=    | create an inialized rfsm instance from model         |
-   | =idle rfsm.step(fsm, n)=     | attempt to transition FSM n times. Default: once     |
-   | =rfsm.run(fsm)=              | run FSM until it goes idle                           |
-   | =rfsm.send_events(fsm, ...)= | send one or more events to internal rfsm event queue |
+     Function                        description                                           
+    -------------------------------+------------------------------------------------------
+     =fsm rfsm.init(fsmmodel)=       create an inialized rfsm instance from model          
+     =idle rfsm.step(fsm, n)=        attempt to transition FSM n times. Default: once      
+     =rfsm.run(fsm)=                 run FSM until it goes idle                            
+     =rfsm.send\_events(fsm, ...)=   send one or more events to internal rfsm event queue  
 
 
    The =step= will attempt to step the given initialized fsm for n
@@ -262,75 +267,73 @@
    function which is not idle.
 
 
-** Hook functions
+4.3 Hook functions 
+===================
 
    The following hook functions can be defined for a toplevel
    composite state and allow to refine various behavior of the state
    machine.
 
-   | function                 | description                                                                      |
-   |--------------------------+----------------------------------------------------------------------------------|
-   | =dbg=                    | called to output debug information. Set to false to disable. Default false.      |
-   | =info=                   | called to output informational messages. Set to false to disable. Default stdout |
-   | =warn=                   | called to output warnings. Set to false to disable. Default stderr.              |
-   | =err=                    | called to output errors. Set to false to disable. Default stderr.                |
-   | =table getevents()=      | function which returns a table of new events which have occured                  |
-   | =dropevents(fsm, evtab)= | function is called with events which are discarded                               |
-   | =step_hook(fsm)=         | is called for each step (mostly for debugging purposes)                          |
-   | =idle_hook(fsm)=         | called *instead* of returning from step/run functions                            |
+     function                   description                                                                       
+    --------------------------+----------------------------------------------------------------------------------
+     =dbg=                      called to output debug information. Set to false to disable. Default false.       
+     =info=                     called to output informational messages. Set to false to disable. Default stdout  
+     =warn=                     called to output warnings. Set to false to disable. Default stderr.               
+     =err=                      called to output errors. Set to false to disable. Default stderr.                 
+     =table getevents()=        function which returns a table of new events which have occured                   
+     =dropevents(fsm, evtab)=   function is called with events which are discarded                                
+     =step\_hook(fsm)=          is called for each step (mostly for debugging purposes)                           
+     =idle\_hook(fsm)=          called *instead* of returning from step/run functions                             
 
    The most important function is =getevents=. The purpose of this
    function is return all events which occured in a table. This allows
    to integrate rFSM instances into any event driven environemnt.
 
-* Common pitfalls
+5 Common pitfalls 
+~~~~~~~~~~~~~~~~~~
 
   1. Name clashes between state/connector names with reserved Lua
      keywords.
 
      This can be worked around by using the following syntax:
 
-     #+BEGIN_EXAMPLE
-     ['end'] = rfsm.sista{...}
-     #+END_EXAMPLE
+
+  ['end'] = rfsm.sista{...}
 
   2. Executing functions accidentially
 
      It is a common mistake to execute externally defined functions
      instead of adding references to them:
 
-     #+BEGIN_EXAMPLE
-     stateX = rfsm.sista{ entry = my_func() }
-     #+END_EXAMPLE
+
+  stateX = rfsm.sista{ entry = my_func() }
 
      The (likely) mistake above is to execute my_func and assing the
      result to entry instead of assigning my_func:
 
-     #+BEGIN_EXAMPLE
-     stateX = rfsm.sista{ entry = my_func }
-     #+END_EXAMPLE
+
+  stateX = rfsm.sista{ entry = my_func }
 
      Of course the first example would be perfectly valid if my_func()
      returned a function as a result!
 
-* Tools
+6 Tools 
+~~~~~~~~
   - =rfsm-viz=
     simple tool which can generate images from statemachines.
 
     to generate all possible formats run:
 
-    #+BEGIN_EXAMPLE
-    rfsm-viz all examples/composite_nested.lua
-    #+END_EXAMPLE
+
+  rfsm-viz all examples/composite_nested.lua
 
   - =rfsm-sim=
 
     small command line simulator for running a fsm
     interactively.
 
-    #+BEGIN_EXAMPLE
-    rfsm-viz all examples/ball_tracker_scope.lua
-    #+END_EXAMPLE
+
+  rfsm-viz all examples/ball_tracker_scope.lua
 
     It requires a image viewer which automatically updates once the
     file displayed changes. For example =evince= works nicely.
@@ -340,17 +343,21 @@
 
   - =rfsm-dbg= experimental. don't use.
 
-* Helper modules
+7 Helper modules 
+~~~~~~~~~~~~~~~~~
   - =fsm2uml.lua= module to generate UML like figures from rFSM
   - =fsm2tree.lua= module to generate the tree structure of an rFSM instance
   - =fsmpp.lua= Lowlevel function used to improve the debug output.
   - =fsmtesting.lua= statemachine testing infrastructure.
-  - =rfsm_rtt.lua= Useful functions for using rFSM with OROCOS rtt
+  - =rfsm\_rtt.lua= Useful functions for using rFSM with OROCOS rtt
   - =fsmdbg.lua= a remote debugger interface which is simply still too
     experimental to be even documented.
 
-* Background
-** Structural Model
+8 Background 
+~~~~~~~~~~~~~
+
+8.1 Structural Model 
+=====================
 
    The rFSM state machine model is a minimal subset of UML2 and Harel
    Statecharts. It consists of the following four, main model elements:
@@ -410,7 +417,8 @@
    complex ones, and (ii) to be integrate-able in KIF triples and code
    generation tools.
 
-** Behavioral model
+8.2 Behavioral model 
+=====================
 
    In classical finite state automatons only one state may be active at a
    time. In contrast the Statecharts formalism allows multiple states to
@@ -445,56 +453,56 @@
    (priority numbers).
 
 
-* More examples, tips and tricks
+9 More examples, tips and tricks 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   - How to use the =doo= function as a coroutine:
 
-    #+begin_src lua
-      -- any rFSM is always contained in a composite_state
-      return rfsm.composite_state:new {
-	 dbg = true, -- enable debugging
 
-	 on = rfsm.composite_state:new {
-	    entry = function () print("disabling brakes") end,
-	    exit = function () print("enabling brakes") end,
-
-	    moving = rfsm.simple_state:new {
-	       entry=function () print("starting to move") end,
-	       exit=function () print("stopping") end,
-	    },
-
-	    waiting = rfsm.simple_state:new {},
-
-	    -- define some transitions
-	    rfsm.trans:new{ src='initial', tgt='waiting' },
-	    rfsm.trans:new{ src='waiting', tgt='moving', events={ 'e_start' } },
-	    rfsm.trans:new{ src='moving', tgt='waiting', events={ 'e_stop' } },
-	 },
-
-	 error = rfsm.simple_state:new {
-	    doo = function (fsm)
-		       print ("Error detected - trying to fix")
-		       coroutine.yield()
-		       math.randomseed( os.time() )
-		       coroutine.yield()
-		       if math.random(0,100) < 40 then
-			  print("unable to fix, raising e_fatal_error")
-			  rfsm.send_events(fsm, "e_fatal_error")
-		       else
-			  print("repair succeeded!")
-			  rfsm.send_events(fsm, "e_error_fixed")
-		       end
-		    end,
-	 },
-
-	 fatal_error = rfsm.simple_state:new {},
-
-	 rfsm.trans:new{ src='initial', tgt='on', effect=function () print("initalizing system") end },
-	 rfsm.trans:new{ src='on', tgt='error', events={ 'e_error' } },
-	 rfsm.trans:new{ src='error', tgt='on', events={ 'e_error_fixed' } },
-	 rfsm.trans:new{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
-	 rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
-      }
-    #+end_src
+  -- any rFSM is always contained in a composite_state
+  return rfsm.composite_state:new {
+     dbg = true, -- enable debugging
+  
+     on = rfsm.composite_state:new {
+        entry = function () print("disabling brakes") end,
+        exit = function () print("enabling brakes") end,
+  
+        moving = rfsm.simple_state:new {
+           entry=function () print("starting to move") end,
+           exit=function () print("stopping") end,
+        },
+  
+        waiting = rfsm.simple_state:new {},
+  
+        -- define some transitions
+        rfsm.trans:new{ src='initial', tgt='waiting' },
+        rfsm.trans:new{ src='waiting', tgt='moving', events={ 'e_start' } },
+        rfsm.trans:new{ src='moving', tgt='waiting', events={ 'e_stop' } },
+     },
+  
+     error = rfsm.simple_state:new {
+        doo = function (fsm)
+                   print ("Error detected - trying to fix")
+                   coroutine.yield()
+                   math.randomseed( os.time() )
+                   coroutine.yield()
+                   if math.random(0,100) < 40 then
+                      print("unable to fix, raising e_fatal_error")
+                      rfsm.send_events(fsm, "e_fatal_error")
+                   else
+                      print("repair succeeded!")
+                      rfsm.send_events(fsm, "e_error_fixed")
+                   end
+                end,
+     },
+  
+     fatal_error = rfsm.simple_state:new {},
+  
+     rfsm.trans:new{ src='initial', tgt='on', effect=function () print("initalizing system") end },
+     rfsm.trans:new{ src='on', tgt='error', events={ 'e_error' } },
+     rfsm.trans:new{ src='error', tgt='on', events={ 'e_error_fixed' } },
+     rfsm.trans:new{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
+     rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
+  }
 
   - How to include other state machines
 
@@ -502,19 +510,19 @@
     "subfsm.lua" and uses the strongly recommended =return
     rfsm.csta:new ...= syntax, it can be included as follows:
 
-    #+begin_src lua
-      return rfsm.csta:new {
 
-	 name_of_composite_state = dofile("subfsm.lua"),
-
-	 otherstateX = rfsm.sista{},
-	 ...
-      }
-    #+end_src
+  return rfsm.csta:new {
+  
+     name_of_composite_state = dofile("subfsm.lua"),
+  
+     otherstateX = rfsm.sista{},
+     ...
+  }
 
     Make sure not to forget the =,= after the  dofile() statement!
 
-* Acknowledgement
+10 Acknowledgement 
+~~~~~~~~~~~~~~~~~~~
 
   - Funding
 
@@ -532,7 +540,7 @@
     David Harel and Amnon Naamad. 1996. The STATEMATE semantics of
     statecharts. ACM Trans. Softw. Eng. Methodol. 5, 4 (October 1996),
     293-333. DOI=10.1145/235321.235322
-    http://doi.acm.org/10.1145/235321.235322
+    [http://doi.acm.org/10.1145/235321.235322]
 
     The OMG UML Specification:
-    http://www.omg.org/spec/UML/2.3/Superstructure/PDF/
+    [http://www.omg.org/spec/UML/2.3/Superstructure/PDF/]

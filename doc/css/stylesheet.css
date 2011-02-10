@@ -1,0 +1,67 @@
+
+body
+{
+    margin:		0px;
+    padding:		0px;
+    font-family:	arial, sans-serif;
+}
+
+th
+{
+    text-align:		left;
+}
+
+p, table, td, ul, li, a, span, th
+{
+    font-weight:	normal;
+    color:		#000000;
+}
+
+h1
+{
+    color:		#00407a;
+}
+
+h2, h3
+{
+    font-weight:	normal;
+    color:		#00407a;
+}
+
+a
+{
+    color:		#666666;
+    text-decoration:	none;
+}
+
+code
+{
+    font-family:	courier, monospace;
+    font-size:		90%;
+    overflow:		auto;
+}
+
+a:hover
+{
+    color:		#666666;
+    text-decoration:	underline;
+}
+
+/* Kein Rahmen bei verlinktem Bild */
+a img
+{
+    border:		0;
+}
+
+#content
+{
+    padding-left:	30px;
+    padding-bottom:	30px;
+    padding-top:	30px;
+    padding-right:	55px;
+}
+
+#text-table-of-contents ul
+{
+    list-style: none;
+}
