@@ -41,7 +41,7 @@ Table of Contents
   Make sure the rfsm folder is in your LUA_PATH. For example:
 
 
-  export LUA_PATH="$LUA_PATH;/home/mk/src/git/rfsm/"
+  export LUA_PATH=";;;/home/mk/src/git/rfsm/?.lua"
 
 3 Quickstart 
 ~~~~~~~~~~~~~
@@ -85,8 +85,8 @@ Table of Contents
   file, it can be very easily read by tools and reused.
 
   The second and third line define two simple states which are part of
-  the toplevel composite state. hello defines and exit function and
-  world and entry function which are called when the state is
+  the toplevel composite state. hello defines an exit function and
+  world an entry function which are called when the state is
   exited/entered resp.
 
   The next three lines define transition between these states. The
@@ -162,7 +162,7 @@ Table of Contents
 
    1. states
 
-      States are either of type =simple\_state= or =composite\_state=)
+      States are either of type =simple\_state= or =composite\_state=
       and may define the following programs:
 
 

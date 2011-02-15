@@ -141,7 +141,7 @@ Make sure the rfsm folder is in your LUA<sub>PATH</sub>. For example:
 
 
 
-<pre class="src src-sh"><span style="color: #0000cd; font-weight: bold;">export</span> <span style="color: #cdcd00;">LUA_PATH</span>=<span style="color: #00cd00;">"$LUA_PATH;/home/mk/src/git/rfsm/"</span>
+<pre class="src src-sh"><span style="color: #0000cd; font-weight: bold;">export</span> <span style="color: #cdcd00;">LUA_PATH</span>=<span style="color: #00cd00;">";;;/home/mk/src/git/rfsm/?.lua"</span>
 </pre>
 
 
@@ -224,8 +224,8 @@ file, it can be very easily read by tools and reused.
 </p>
 <p>
 The second and third line define two simple states which are part of
-the toplevel composite state. hello defines and exit function and
-world and entry function which are called when the state is
+the toplevel composite state. hello defines an exit function and
+world an entry function which are called when the state is
 exited/entered resp.
 </p>
 <p>
@@ -350,7 +350,7 @@ in Lua with <code>rfsm.simple_state{}</code>)
 states
 
 <p>
-States are either of type <code>simple_state</code> or <code>composite_state</code>)
+States are either of type <code>simple_state</code> or <code>composite_state</code>
 and may define the following programs:
 </p>
 
