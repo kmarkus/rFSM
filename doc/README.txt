@@ -21,6 +21,8 @@ Table of Contents
 7 Tools 
 8 Helper modules 
 9 More examples, tips and tricks 
+    9.1 A more complete example 
+    9.2 How to compose state machines 
 10 Acknowledgement 
 
 
@@ -28,7 +30,7 @@ Table of Contents
 ~~~~~~~~~~~
 
   rFSM is a small yet powerful Statechart implementation. It is mainly
-  designed for /Coordinating/ of complex systems but not limited to
+  designed for /Coordinating/ complex systems but is not limited to
   that. rFSM is written purely in Lua and is thus highly portable and
   embeddable. As a Lua domain specific language rFSM inherits the
   extensibility of its host language.
@@ -38,7 +40,7 @@ Table of Contents
 2 Setup 
 ~~~~~~~~
 
-  Make sure the rfsm folder is in your LUA_PATH. For example:
+  Make sure the rFSM folder is in your =LUA\_PATH=. For example:
 
 
   export LUA_PATH=";;;/home/mk/src/git/rfsm/?.lua"
@@ -71,21 +73,21 @@ Table of Contents
   [file:example1.png]
 
 
-  return rfsm.composite_state:new {
-     hello = rfsm.simple_state:new{ exit=function() print("hello") end },
-     world = rfsm.simple_state:new{ entry=function() print("world") end },
-  
-     rfsm.transition:new{ src='initial', tgt='hello' },
-     rfsm.transition:new{ src='hello', tgt='world', events={ 'e_done' } },
-     rfsm.transition:new{ src='world', tgt='hello', events={ 'e_restart' } },
-  }
+  1:  return rfsm.composite_state:new {
+  2:     hello = rfsm.simple_state:new{ exit=function() print("hello") end },
+  3:     world = rfsm.simple_state:new{ entry=function() print("world") end },
+  4:  
+  5:     rfsm.transition:new{ src='initial', tgt='hello' },
+  6:     rfsm.transition:new{ src='hello', tgt='world', events={ 'e_done' } },
+  7:     rfsm.transition:new{ src='world', tgt='hello', events={ 'e_restart' } },
+  8:  }
 
   The first line defines a new toplevel composite state and returns
   it. By always returning the fsm as the last statement in an rfsm
-  file, it can be very easily read by tools and reused.
+  file, it can be very easily read by tools or other state machines.
 
   The second and third line define two simple states which are part of
-  the toplevel composite state. hello defines an exit function and
+  the toplevel composite state. =hello= defines an exit function and
   world an entry function which are called when the state is
   exited/entered resp.
 
@@ -99,7 +101,8 @@ Table of Contents
   =e\_done= event. This event is raised internally when the a state
   completes, which is either the case when the states "doo" function
   (see below) finishes or immediately if there is no doo, as is the
-  case here.
+  case here. The third transition is triggered by the =e\_restart=
+  event.
 
   Next we execute this statemachine in the rfsm-simulator:
 
@@ -393,14 +396,15 @@ Table of Contents
 9 More examples, tips and tricks 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  1. A more complete example
+9.1 A more complete example 
+============================
 
-     graphical model:
+   The graphical model:
 
 
-  [file:example2.png]
+   [file:example2.png]
 
-     textual representation:
+   ... and the corresponding textual representation:
 
 
   -- any rFSM is always contained in a composite_state
@@ -449,11 +453,12 @@ Table of Contents
      rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
   }
 
-  2. How to include other state machines
+9.2 How to compose state machines 
+==================================
 
-     this is easy! Let's assume the state machine is is a file
-     "subfsm.lua" and uses the strongly recommended =return
-     rfsm.csta:new ...= syntax, it can be included as follows:
+   This is easy! Let's assume the state machine is is a file
+   "subfsm.lua" and uses the strongly recommended =return
+   rfsm.csta:new ...= syntax, it can be included as follows:
 
 
   return rfsm.csta:new {
@@ -464,7 +469,7 @@ Table of Contents
      ...
   }
 
-     Make sure not to forget the ',' after the =dofile()= statement!
+   Make sure not to forget the ',' after the =dofile()= statement!
 
 10 Acknowledgement 
 ~~~~~~~~~~~~~~~~~~~

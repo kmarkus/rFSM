@@ -105,7 +105,12 @@ lang="en" xml:lang="en">
 <li><a href="#sec-6">6 Common pitfalls </a></li>
 <li><a href="#sec-7">7 Tools </a></li>
 <li><a href="#sec-8">8 Helper modules </a></li>
-<li><a href="#sec-9">9 More examples, tips and tricks </a></li>
+<li><a href="#sec-9">9 More examples, tips and tricks </a>
+<ul>
+<li><a href="#sec-9_1">9.1 A more complete example </a></li>
+<li><a href="#sec-9_2">9.2 How to compose state machines </a></li>
+</ul>
+</li>
 <li><a href="#sec-10">10 Acknowledgement </a></li>
 </ul>
 </div>
@@ -118,7 +123,7 @@ lang="en" xml:lang="en">
 
 <p>
 rFSM is a small yet powerful Statechart implementation. It is mainly
-designed for <i>Coordinating</i> of complex systems but not limited to
+designed for <i>Coordinating</i> complex systems but is not limited to
 that. rFSM is written purely in Lua and is thus highly portable and
 embeddable. As a Lua domain specific language rFSM inherits the
 extensibility of its host language.
@@ -136,7 +141,7 @@ rFSM is dual licensed under LGPL/BSD.
 
 
 <p>
-Make sure the rfsm folder is in your LUA<sub>PATH</sub>. For example:
+Make sure the rFSM folder is in your <code>LUA_PATH</code>. For example:
 </p>
 
 
@@ -205,42 +210,43 @@ The following shows a simple hello_world example
 
 
 
-<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.composite_state:new {
-   hello = rfsm.simple_state:new{ <span style="color: #0000cd; font-weight: bold;">exit</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"hello"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },
-   world = rfsm.simple_state:new{ <span style="color: #0000cd; font-weight: bold;">entry</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"world"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },
-
-   rfsm.transition:new{ src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'hello'</span> },
-   rfsm.transition:new{ src=<span style="color: #00cd00;">'hello'</span>, tgt=<span style="color: #00cd00;">'world'</span>, events={ <span style="color: #00cd00;">'e_done'</span> } },
-   rfsm.transition:new{ src=<span style="color: #00cd00;">'world'</span>, tgt=<span style="color: #00cd00;">'hello'</span>, events={ <span style="color: #00cd00;">'e_restart'</span> } },
-}
+<pre class="src src-lua"><span id="coderef-hello_fsm_root" class="coderef-off"><span class="linenr">1:  </span><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.composite_state:new {</span>
+<span id="coderef-hello_fsm_hello" class="coderef-off"><span class="linenr">2:  </span>   hello = rfsm.simple_state:new{ <span style="color: #0000cd; font-weight: bold;">exit</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"hello"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },</span>
+<span id="coderef-hello_fsm_world" class="coderef-off"><span class="linenr">3:  </span>   world = rfsm.simple_state:new{ <span style="color: #0000cd; font-weight: bold;">entry</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"world"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },</span>
+<span class="linenr">4:  </span>
+<span id="coderef-hello_fsm_trans_ini" class="coderef-off"><span class="linenr">5:  </span>   rfsm.transition:new{ src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'hello'</span> },</span>
+<span id="coderef-hello_fsm_e_done" class="coderef-off"><span class="linenr">6:  </span>   rfsm.transition:new{ src=<span style="color: #00cd00;">'hello'</span>, tgt=<span style="color: #00cd00;">'world'</span>, events={ <span style="color: #00cd00;">'e_done'</span> } },</span>
+<span id="coderef-hello_fsm_e_restart" class="coderef-off"><span class="linenr">7:  </span>   rfsm.transition:new{ src=<span style="color: #00cd00;">'world'</span>, tgt=<span style="color: #00cd00;">'hello'</span>, events={ <span style="color: #00cd00;">'e_restart'</span> } },</span>
+<span class="linenr">8:  </span>}
 </pre>
 
 
 
 <p>
-The first line defines a new toplevel composite state and returns
+The <a href="coderef:"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_root');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_root');">first line</a> defines a new toplevel composite state and returns
 it. By always returning the fsm as the last statement in an rfsm
-file, it can be very easily read by tools and reused.
+file, it can be very easily read by tools or other state machines.
 </p>
 <p>
-The second and third line define two simple states which are part of
-the toplevel composite state. hello defines an exit function and
+The <a href="coderef:"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_hello');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_hello');">second</a> and <a href="coderef:"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_world');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_world');">third</a> line define two simple states which are part of
+the toplevel composite state. <code>hello</code> defines an exit function and
 world an entry function which are called when the state is
 exited/entered resp.
 </p>
 <p>
 The next three lines define transition between these states. The
-first is from the initial connector to the hello state. This
+<a href="coderef:"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_trans_ini');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_trans_ini');">first</a> is from the initial connector to the hello state. This
 transition will be taken the first time the state machine is
 entered. The initial connector, as an exception, need not be defined
 and will be created automatically.
 </p>
 <p>
-The next transition is from hello to world and is triggered by the
+The <a href="coderef:"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_done');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_done');">next transition</a> is from hello to world and is triggered by the
 <code>e_done</code> event. This event is raised internally when the a state
 completes, which is either the case when the states "doo" function
 (see below) finishes or immediately if there is no doo, as is the
-case here.
+case here. The <a href="coderef:"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_restart');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_restart');">third transition</a> is triggered by the <code>e_restart</code>
+event.
 </p>
 <p>
 Next we execute this statemachine in the rfsm-simulator:
@@ -757,22 +763,22 @@ experimental to be even documented.
 <div class="outline-text-2" id="text-9">
 
 
-<ol>
-<li>
-A more complete example
+</div>
+
+<div id="outline-container-9_1" class="outline-3">
+<h3 id="sec-9_1"><span class="section-number-3">9.1</span> A more complete example </h3>
+<div class="outline-text-3" id="text-9_1">
+
 
 <p>
-graphical model:
-</p></li>
-</ol>
-
-
+The graphical model:
+</p>
 
 <p>
 <img src="example2.png"  alt="example2.png" />
 </p>
 <p>
-textual representation:
+&hellip; and the corresponding textual representation:
 </p>
 
 
@@ -826,13 +832,18 @@ textual representation:
 
 
 
-<ol>
-<li>
-How to include other state machines
+</div>
+
+</div>
+
+<div id="outline-container-9_2" class="outline-3">
+<h3 id="sec-9_2"><span class="section-number-3">9.2</span> How to compose state machines </h3>
+<div class="outline-text-3" id="text-9_2">
+
 
 <p>
-this is easy! Let's assume the state machine is is a file
-"subfsm.lua" and uses the strongly recommended <code>return      rfsm.csta:new ...</code> syntax, it can be included as follows:
+This is easy! Let's assume the state machine is is a file
+"subfsm.lua" and uses the strongly recommended <code>return    rfsm.csta:new ...</code> syntax, it can be included as follows:
 </p>
 
 
@@ -850,10 +861,8 @@ this is easy! Let's assume the state machine is is a file
 
 <p>
 Make sure not to forget the ',' after the <code>dofile()</code> statement!
-</p></li>
-</ol>
-
-
+</p>
+</div>
 </div>
 
 </div>
