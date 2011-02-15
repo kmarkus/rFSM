@@ -343,14 +343,14 @@ Table of Contents
 
   stateX = rfsm.sista{ entry = my_func() }
 
-     The (likely) mistake above is to execute my_func and assigning the
-     result to entry instead of assigning my_func:
+     The (likely) mistake above is to execute my_func and assigning
+     the result to entry instead of assigning my\_func:
 
 
   stateX = rfsm.sista{ entry = my_func }
 
-     Of course the first example would be perfectly valid if my_func()
-     returned a function as a result!
+     Of course the first example would be perfectly valid if
+     my\_func() returned a function as a result!
 
 7 Tools 
 ~~~~~~~~
