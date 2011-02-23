@@ -660,8 +660,8 @@ end
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
    if not is_root(fsm) then fsm.err("ERROR send_events: invalid fsm") end
-   fsm.dbg("RAISED", table.concat(arg, ", "))
-   for _,v in ipairs(arg) do
+   fsm.dbg("RAISED", ...)
+   for _,v in ipairs({...}) do
       table.insert(fsm._intq, v)
    end
 end
