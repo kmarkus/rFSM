@@ -484,8 +484,8 @@ Table of Contents
   - Scientific background
 
     This work borrows many ideas from the Statecharts by David Harel
-    and some ideas from UML 2.1 State Machines. The following
-    publications are the most relevant
+    and some from UML 2.1 State Machines. The following publications
+    are the most relevant
 
     David Harel and Amnon Naamad. 1996. The STATEMATE semantics of
     statecharts. ACM Trans. Softw. Eng. Methodol. 5, 4 (October 1996),
