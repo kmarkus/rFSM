@@ -1,13 +1,16 @@
 --
--- Useful code snips collected from the lua wiki
+-- Useful code snips
+-- some own ones, some collected from the lua wiki
 --
 
-local type, pairs, ipairs, setmetatable, getmetatable, assert, table,
-   print, tostring, string, io, unpack = type, pairs, ipairs,
-   setmetatable, getmetatable, assert, table, print, tostring, string,
-   io, unpack
+local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack =
+   type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack
 
 module('utils')
+
+-- increment major on API breaks
+-- increment minor on non breaking changes
+VERSION=0.4
 
 function append(car, ...)
    assert(type(car) == 'table')
@@ -16,7 +19,7 @@ function append(car, ...)
    for i,v in pairs(car) do
       table.insert(new_array, v)
    end
-   for _, tab in ipairs(arg) do
+   for _, tab in ipairs({...}) do
       for k,v in pairs(tab) do
 	 table.insert(new_array, v)
       end
@@ -61,6 +64,11 @@ function tab2str( tbl )
    return "{" .. table.concat( result, "," ) .. "}"
 end
 
+function pp(val)
+   if type(val) == 'table' then print(tab2str(val)) 
+   else print(val) end
+end
+
 function lpad(str, len, char)
    if char == nil then char = ' ' end
    return string.rep(char, len - #str) .. str
@@ -72,12 +80,12 @@ function rpad(str, len, char)
 end
 
 function stderr(...)
-   io.stderr:write(unpack(arg))
+   io.stderr:write(...)
    io.stderr:write("\n")
 end
 
 function stdout(...)
-   print(unpack(arg))
+   print(...)
 end
 
 function split(str, pat)
@@ -115,6 +123,7 @@ function car(tab)
 end
 
 function cdr(tab)
+   local new_array = {}
    for i = 2, table.getn(tab) do
       table.insert(new_array, tab[i])
    end
@@ -201,7 +210,8 @@ function AND(a, b) return a and b end
 -- and which takes table
 function andt(...)
    local res = true
-   for _,t in ipairs(arg) do
+   local tab = {...}
+   for _,t in ipairs(tab) do
       res = res and foldr(AND, true, t)
    end
    return res
@@ -209,4 +219,36 @@ end
 
 function eval(str)
    return assert(loadstring(str))()
+end
+
+-- compare two tables
+function table_cmp(t1, t2)
+   local function __cmp(t1, t2)
+      -- t1 _and_ t2 are not tables
+      if not (type(t1) == 'table' and type(t2) == 'table') then
+	 if t1 == t2 then return true
+	 else return false end
+      elseif type(t1) == 'table' and type(t2) == 'table' then
+	 if #t1 ~= #t2 then return false
+	 else
+	    -- iterate over all keys and compare against k's keys
+	    for k,v in pairs(t1) do
+	       if not __cmp(t1[k], t2[k]) then
+		  return false
+	       end
+	    end
+	    return true
+	 end
+      else -- t1 and t2 are not of the same type
+	 return false
+      end
+   end
+   return __cmp(t1,t2) and __cmp(t2,t1)
+end
+
+function table_has(t, x)
+   for _,e in ipairs(t) do
+      if e==x then return true end
+   end
+   return false
 end
