@@ -402,7 +402,7 @@ function __resolve_path(fsm, state_str, parent)
       end
    elseif string.sub(state_str, 1, 1) == '.' then
       -- leading dot, relative target
-      fsm.err("ERROR: relative transitions (leading dot) not yet supported: " .. state_str)
+      state, mes = index_tree(parent, utils.split(state_str, "[\\.]"))
    else
       -- absolute target, this is a fqn!
       state, mes = index_tree(fsm, utils.split(state_str, "[\\.]"))

@@ -391,15 +391,19 @@ keyword).
 
 <p>
 This function is treated as a Lua coroutine. This means if it is
-just a function it will be excuted and a completion event
-"e<sub>done</sub>" raised afterwards. It will not run if there is an event
-which triggers an outgoing transition.
+a function it will be excuted and a completion event <code>e_done</code>
+raised afterwards. In case there is an event which triggers an
+outgoing transition it will not be run and that transition will
+be taken instead.
 </p>
 <p>
-More commonly this function shall run for a longer period until
-some event occurs. To allow the rFSM core to check for events
-and possibly execute a transition, the doo function must give up
-control. This can be done by calling <code>coroutine.yield()</code>.
+In many cases this function shall run for a longer period until
+some event occurs. To allow the rFSM core to check for events in
+between and possibly execute a transition, the doo function must
+give up control. This can be done by calling
+</p>
+<p>
+<code>coroutine.yield()</code>
 </p>
 <p>
 The following example illustrates this:

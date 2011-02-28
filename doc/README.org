@@ -192,14 +192,17 @@
       #+end_src
 
       This function is treated as a Lua coroutine. This means if it is
-      just a function it will be excuted and a completion event
-      "e_done" raised afterwards. It will not run if there is an event
-      which triggers an outgoing transition.
+      a function it will be excuted and a completion event =e\_done=
+      raised afterwards. In case there is an event which triggers an
+      outgoing transition it will not be run and that transition will
+      be taken instead.
 
-      More commonly this function shall run for a longer period until
-      some event occurs. To allow the rFSM core to check for events
-      and possibly execute a transition, the doo function must give up
-      control. This can be done by calling =coroutine.yield()=.
+      In many cases this function shall run for a longer period until
+      some event occurs. To allow the rFSM core to check for events in
+      between and possibly execute a transition, the doo function must
+      give up control. This can be done by calling
+
+      =coroutine.yield()=
 
       The following example illustrates this:
 
