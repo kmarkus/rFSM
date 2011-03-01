@@ -386,7 +386,7 @@ function __resolve_path(fsm, state_str, parent)
       for _, k in ipairs(tab) do
 	 res = res[k]
 	 if not res then
-	    mes = "no " .. k .. " in " .. table.concat(tab, ".")
+	    mes = "no " .. k .. " in " .. table.concat(tab, ".", 1, #tab-1)
 	    break
 	 end
       end

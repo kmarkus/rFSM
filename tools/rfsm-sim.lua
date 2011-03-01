@@ -124,7 +124,12 @@ end
 
 boiler()
 _fsm=dofile(file)
-fsm=rfsm.init(_fsm)
+ret, fsm = pcall(rfsm.init, _fsm)
+
+if not ret or not fsm then
+   print("rfsm-sim: failed to initialize fsm")
+   os.exit(1)
+end
 
 add_hook(uml)
 add_hook(tree)
