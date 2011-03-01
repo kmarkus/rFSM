@@ -1,7 +1,7 @@
-#+TITLE:	The rFSM Statecharts (beta1)
+#+TITLE:	The rFSM Statecharts (v1.0-beta1)
 #+AUTHOR:	Markus Klotzbuecher
 #+EMAIL:	markus.klotzbuecher@mech.kuleuven.be
-#+DATE:		[2011-02-10 Thu]
+#+DATE:		[2011-03-01 Tue]
 #+DESCRIPTION:
 #+KEYWORDS:
 #+LANGUAGE:	en
@@ -28,6 +28,9 @@
   extensibility of its host language.
 
   rFSM is dual licensed under LGPL/BSD.
+
+  This README is also available in HTML and Text format in the doc/
+  subdirectory.
 
 * Setup
 

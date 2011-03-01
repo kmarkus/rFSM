@@ -1,8 +1,8 @@
-                     The rFSM Statecharts (beta1)
-                     ============================
+                  The rFSM Statecharts (v1.0-beta1)
+                  =================================
 
 Author: Markus Klotzbuecher
-Date: [2011-02-10 Thu]
+Date: [2011-03-01 Tue]
 
 
 
@@ -36,6 +36,9 @@ Table of Contents
   extensibility of its host language.
 
   rFSM is dual licensed under LGPL/BSD.
+
+  This README is also available in HTML and Text format in the doc/
+  subdirectory.
 
 2 Setup 
 ~~~~~~~~

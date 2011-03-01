@@ -1,6 +1,6 @@
 <package>
-  <description brief="rfsm"></description>
+  <description brief="rFSM reduced Statecharts"></description>
   <author>Markus Klotzbuecher, markus.klotzbuecher@mech.kuleuven.be</author>
-  <license>GPL</license>
+  <license>Dual LGPL/BSD</license>
   <review status="unreviewed" notes=""/>
 </package>
