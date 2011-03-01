@@ -343,25 +343,25 @@
 
      This can be worked around by using the following syntax:
 
-     #+BEGIN_EXAMPLE
+     #+begin_src lua
      ['end'] = rfsm.sista{...}
-     #+END_EXAMPLE
+     #+end_src
 
   2. Executing functions accidentially
 
      It is a common mistake to execute externally defined functions
      instead of adding references to them:
 
-     #+BEGIN_EXAMPLE
+     #+begin_src lua
      stateX = rfsm.sista{ entry = my_func() }
-     #+END_EXAMPLE
+     #+end_src
 
-     The (likely) mistake above is to execute my_func and assigning
+     The (likely) mistake above is to execute my\_func and assigning
      the result to entry instead of assigning my\_func:
 
-     #+BEGIN_EXAMPLE
+     #+begin_src lua
      stateX = rfsm.sista{ entry = my_func }
-     #+END_EXAMPLE
+     #+end_src
 
      Of course the first example would be perfectly valid if
      my\_func() returned a function as a result!
@@ -375,9 +375,9 @@
 
     to generate all possible formats run:
 
-    #+BEGIN_EXAMPLE
-    tools/rfsm-viz all examples/composite_nested.lua
-    #+END_EXAMPLE
+    #+begin_src sh
+    $ tools/rfsm-viz all examples/composite_nested.lua
+    #+end_src
 
     generates various representations (in examples/)
 
@@ -386,9 +386,9 @@
     small command line simulator for running a fsm
     interactively.
 
-    #+BEGIN_EXAMPLE
-    tools/rfsm-sim all examples/ball_tracker_scope.lua
-    #+END_EXAMPLE
+    #+begin_src sh
+    $ tools/rfsm-sim all examples/ball_tracker_scope.lua
+    #+end_src
 
     It requires a image viewer which automatically updates once the
     file displayed changes. For example =evince= works nicely.

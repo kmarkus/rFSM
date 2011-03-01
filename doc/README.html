@@ -628,7 +628,7 @@ This can be worked around by using the following syntax:
 
 
 
-<pre class="example">['end'] = rfsm.sista{...}
+<pre class="src src-lua">[<span style="color: #00cd00;">'end'</span>] = rfsm.sista{...}
 </pre>
 
 
@@ -644,19 +644,19 @@ instead of adding references to them:
 
 
 
-<pre class="example">stateX = rfsm.sista{ entry = my_func() }
+<pre class="src src-lua">stateX = rfsm.sista{ entry = my_func() }
 </pre>
 
 
 
 <p>
-The (likely) mistake above is to execute my<sub>func</sub> and assigning
+The (likely) mistake above is to execute my_func and assigning
 the result to entry instead of assigning my_func:
 </p>
 
 
 
-<pre class="example">stateX = rfsm.sista{ entry = my_func }
+<pre class="src src-lua">stateX = rfsm.sista{ entry = my_func }
 </pre>
 
 
@@ -691,7 +691,7 @@ to generate all possible formats run:
 
 
 
-<pre class="example">tools/rfsm-viz all examples/composite_nested.lua
+<pre class="src src-sh">$ tools/rfsm-viz all examples/composite_nested.lua
 </pre>
 
 
@@ -710,7 +710,7 @@ interactively.
 
 
 
-<pre class="example">tools/rfsm-sim all examples/ball_tracker_scope.lua
+<pre class="src src-sh">$ tools/rfsm-sim all examples/ball_tracker_scope.lua
 </pre>
 
 

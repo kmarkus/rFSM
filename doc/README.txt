@@ -349,7 +349,7 @@ Table of Contents
 
   stateX = rfsm.sista{ entry = my_func() }
 
-     The (likely) mistake above is to execute my_func and assigning
+     The (likely) mistake above is to execute my\_func and assigning
      the result to entry instead of assigning my\_func:
 
 
@@ -369,7 +369,7 @@ Table of Contents
     to generate all possible formats run:
 
 
-  tools/rfsm-viz all examples/composite_nested.lua
+  $ tools/rfsm-viz all examples/composite_nested.lua
 
     generates various representations (in examples/)
 
@@ -379,7 +379,7 @@ Table of Contents
     interactively.
 
 
-  tools/rfsm-sim all examples/ball_tracker_scope.lua
+  $ tools/rfsm-sim all examples/ball_tracker_scope.lua
 
     It requires a image viewer which automatically updates once the
     file displayed changes. For example =evince= works nicely.
