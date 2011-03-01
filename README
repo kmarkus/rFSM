@@ -1,0 +1,15 @@
+
+rFSM v1.0-beta1
+
+rFSM is a reduced (lightweight) Statechart implementation.
+
+For more information see
+
+ - http://people.mech.kuleuven.be/~mklotzbucher/rfsm/README.html
+
+or in the git repository
+
+ - doc/README.txt
+ - doc/README.html
+ - doc/README.org
+
