@@ -50,18 +50,25 @@ end
 -- added to the fsm step_hook.
 --
 -- @param port rtt OutputPort to which the fqn shall be written
-function gen_write_fqn(port)
+-- @param filter: function which must take a variable of type and a string fqn and assigns the string to the variable and returns it (optional)
+function gen_write_fqn(port, filter)
+   local type = port:info().type
+   if type ~= 'string' then
+      error("use of non string type " .. type .. " requires a filter function")
+   end
+
    local act_fqn = ""
-   local out_dsb = rtt.Variable.new("string", string.rep(" ", 100))
-   port:write("<none>") -- initial val
+   local _f = filter or function (var, fqn) var:assign(fqn); return var end
+   local out_dsb = rtt.Variable.new(type)
+
+   port:write(_f(out_dsb, "<none>")) -- initial val
 
    return function (fsm)
 	     if not fsm._act_leaf then return
 	     elseif act_fqn == fsm._act_leaf._fqn then return end
 
 	     act_fqn = fsm._act_leaf._fqn
-	     out_dsb:assign(act_fqn)
-	     port:write(out_dsb)
+	     port:write(_f(out_dsb, act_fqn))
 	  end
 end
 
