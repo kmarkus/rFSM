@@ -22,9 +22,9 @@ return rfsm.composite_state:new {
    error = rfsm.simple_state:new {
       doo = function (fsm) 
                  print ("Error detected - trying to fix") 
-                 coroutine.yield()
+                 rfsm.yield()
                  math.randomseed( os.time() )
-                 coroutine.yield()
+                 rfsm.yield()
                  if math.random(0,100) < 40 then
                     print("unable to fix, raising e_fatal_error")
                     rfsm.send_events(fsm, "e_fatal_error")

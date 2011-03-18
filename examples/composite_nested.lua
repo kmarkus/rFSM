@@ -8,7 +8,7 @@ local function safe_doo()
    for i = 1,3 do
       print("waiting in safe mode:", i)
       os.execute("sleep 0.3")
-      coroutine.yield()
+      rfsm.yield()
    end
 end
 

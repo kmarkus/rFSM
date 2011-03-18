@@ -2,7 +2,7 @@
                   =================================
 
 Author: Markus Klotzbuecher
-Date: [2011-03-01 Tue]
+Date: [2011-03-18 Fri]
 
 
 
@@ -201,7 +201,9 @@ Table of Contents
       between and possibly execute a transition, the doo function must
       give up control. This can be done by calling
 
-      =coroutine.yield()=
+      =rfsm.yield()=
+
+      (Note: this currently only an alias to =coroutine.yield=)
 
       The following example illustrates this:
 
@@ -211,7 +213,7 @@ Table of Contents
               if min_distance() < 0.1 then
                  rfsm.send_events(fsm, "e_close_obj")
               end
-              coroutine.yield()
+              rfsm.yield()
            end
         end
 
@@ -220,7 +222,7 @@ Table of Contents
       rFSM core.
 
       An boolen idle flag can be return to the rFSM core by passing it
-      as a parameter to =coroutine.yield=. If this flag is true then
+      as a parameter to =rfsm.yield=. If this flag is true then
       it will cause the rfsm core to go idle if there are no other
       events. Otherwise, if no value or false is returned and there
       are no other events, doo will be called in a tight loop.
@@ -438,9 +440,9 @@ Table of Contents
      error = rfsm.simple_state:new {
         doo = function (fsm)
                    print ("Error detected - trying to fix")
-                   coroutine.yield()
+                   rfsm.yield()
                    math.randomseed( os.time() )
-                   coroutine.yield()
+                   rfsm.yield()
                    if math.random(0,100) < 40 then
                       print("unable to fix, raising e_fatal_error")
                       rfsm.send_events(fsm, "e_fatal_error")

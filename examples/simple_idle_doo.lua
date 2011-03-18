@@ -1,6 +1,6 @@
 --
 -- Extremly simply state machine with two states shows the effect of
--- the doo idle flag (the return value of coroutine.yield(). When true
+-- the doo idle flag (the return value of rfsm.yield(). When true
 -- as for on the statemachine will assume no work needs to be done and
 -- go idle (if there are no other events). Thus step or run need to be
 -- called to run the doo. In contrast the doo of the 'off' state does
@@ -13,7 +13,7 @@ return rfsm.csta:new {
       doo=function(fsm)
 	     for i=1,5 do
 		print("hello ".. i .. " from on")
-		coroutine.yield(true)
+		rfsm.yield(true)
 	     end
 	  end
    },
@@ -24,7 +24,7 @@ return rfsm.csta:new {
       doo=function(fsm)
 	     for i=1,10 do
 		print("hello ".. i .. " from off")
-		coroutine.yield()
+		rfsm.yield()
 	     end
 	  end
    },

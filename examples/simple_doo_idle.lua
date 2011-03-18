@@ -6,7 +6,7 @@ return  rfsm.csta:new{
 
    on = rfsm.sista:new{},
    off = rfsm.sista:new{},
-   busy = rfsm.sista:new{ doo=function() coroutine.yield(true) end },
+   busy = rfsm.sista:new{ doo=function() rfsm.yield(true) end },
 
    rfsm.trans:new{ src='initial', tgt='off' },
    rfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },

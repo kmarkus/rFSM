@@ -71,14 +71,14 @@ function tree()
 end
 
 function vizuml()
-   local viewer = os.getenv("RFSM_VIEWER") or "iceweasel"
+   local viewer = os.getenv("RFSM_VIEWER") or "firefox"
    uml()
    os.execute(viewer .. " " ..  tmpdir .. "rfsm-uml-tmp.png" .. "&")
 end
 
 function viztree()
    tree()
-   local viewer = os.getenv("RFSM_VIEWER") or "iceweasel"
+   local viewer = os.getenv("RFSM_VIEWER") or "firefox"
    os.execute(viewer .. " " .. tmpdir .. "rfsm-tree-tmp.png" .. "&")
 end
 
