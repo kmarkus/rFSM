@@ -9,7 +9,7 @@ require("fsmtesting")
 require("utils")
 
 -- load fsm
-testfsm = dofile("../examples/connector_split.lua")
+testfsm = rfsm.load("../examples/connector_split.lua")
 testfsm.dbg = false
 
 test = {

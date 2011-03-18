@@ -10,7 +10,7 @@ require("fsmtesting")
 require("utils")
 require("fsmpp")
 
-local testfsm = dofile("../examples/simple_doo_idle.lua")
+local testfsm = rfsm.load("../examples/simple_doo_idle.lua")
 
 local test = {
    id = 'simple_tests',

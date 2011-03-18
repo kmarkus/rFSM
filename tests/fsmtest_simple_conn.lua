@@ -11,7 +11,7 @@ require("fsmtesting")
 require("fsmpp")
 require("utils")
 
-testfsm = dofile("../examples/connector_simple.lua")
+testfsm = rfsm.load("../examples/connector_simple.lua")
 testfsm.dbg=false
 
 test = {

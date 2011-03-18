@@ -47,6 +47,7 @@ local tostring = tostring
 local string = string
 local type = type
 local loadstring = loadstring
+local dofile = dofile
 local assert = assert
 local setmetatable = setmetatable
 local getmetatable = getmetatable
@@ -132,6 +133,8 @@ simple_state = sista
 composite_state = csta
 connector = conn
 transition = trans
+yield = coroutine.yield
+load = dofile
 
 --
 -- connector

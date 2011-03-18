@@ -16,7 +16,7 @@ end
 -- last
 file = arg[#arg]
 outfile = string.gsub(file, "\.%w*$", "")
-fsm_tpl = assert(dofile(file), "failed to open fsm file " .. file)
+fsm_tpl = assert(rfsm.load(file), "failed to open fsm file " .. file)
 assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
 fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
 

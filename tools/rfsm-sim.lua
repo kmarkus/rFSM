@@ -123,7 +123,7 @@ available commands:
 end
 
 boiler()
-_fsm=dofile(file)
+_fsm=rfsm.load(file)
 ret, fsm = pcall(rfsm.init, _fsm)
 
 if not ret or not fsm then

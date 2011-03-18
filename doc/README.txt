@@ -23,7 +23,8 @@ Table of Contents
 9 More examples, tips and tricks 
     9.1 A more complete example 
     9.2 How to compose state machines 
-10 Acknowledgement 
+10 Contact 
+11 Acknowledgement 
 
 
 1 Overview 
@@ -469,15 +470,24 @@ Table of Contents
 
   return rfsm.csta:new {
   
-     name_of_composite_state = dofile("subfsm.lua"),
+     name_of_composite_state = rfsm.load("subfsm.lua"),
   
      otherstateX = rfsm.sista{},
      ...
   }
 
-   Make sure not to forget the ',' after the =dofile()= statement!
+   Make sure not to forget the ',' after the =rfsm.load()= statement!
 
-10 Acknowledgement 
+10 Contact 
+~~~~~~~~~~~
+
+  Please direct questions, bugs or improvements to the [orocos-users]
+  mailing list.
+
+
+  [orocos-users]: http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users
+
+11 Acknowledgement 
 ~~~~~~~~~~~~~~~~~~~
 
   - Funding

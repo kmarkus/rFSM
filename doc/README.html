@@ -111,7 +111,8 @@ lang="en" xml:lang="en">
 <li><a href="#sec-9_2">9.2 How to compose state machines </a></li>
 </ul>
 </li>
-<li><a href="#sec-10">10 Acknowledgement </a></li>
+<li><a href="#sec-10">10 Contact </a></li>
+<li><a href="#sec-11">11 Acknowledgement </a></li>
 </ul>
 </div>
 </div>
@@ -858,7 +859,7 @@ This is easy! Let's assume the state machine is is a file
 
 <pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta:new {
 
-   name_of_composite_state = dofile(<span style="color: #00cd00;">"subfsm.lua"</span>),
+   name_of_composite_state = rfsm.load(<span style="color: #00cd00;">"subfsm.lua"</span>),
 
    otherstateX = rfsm.sista{},
    ...
@@ -868,7 +869,7 @@ This is easy! Let's assume the state machine is is a file
 
 
 <p>
-Make sure not to forget the ',' after the <code>dofile()</code> statement!
+Make sure not to forget the ',' after the <code>rfsm.load()</code> statement!
 </p>
 </div>
 </div>
@@ -876,8 +877,21 @@ Make sure not to forget the ',' after the <code>dofile()</code> statement!
 </div>
 
 <div id="outline-container-10" class="outline-2">
-<h2 id="sec-10"><span class="section-number-2">10</span> Acknowledgement </h2>
+<h2 id="sec-10"><span class="section-number-2">10</span> Contact </h2>
 <div class="outline-text-2" id="text-10">
+
+
+<p>
+Please direct questions, bugs or improvements to the <a href="http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users">orocos-users</a>
+mailing list.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-11" class="outline-2">
+<h2 id="sec-11"><span class="section-number-2">11</span> Acknowledgement </h2>
+<div class="outline-text-2" id="text-11">
 
 
 <ul>

@@ -5,7 +5,7 @@
 
 local rtt = rtt
 local string = string
-local assert, ipairs, pairs, type = assert, ipairs, pairs, type
+local assert, ipairs, pairs, type, error = assert, ipairs, pairs, type, error
 
 module("rfsm_rtt")
 
@@ -99,7 +99,7 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
    ]]
 
 
-   s[#s+1] = '_fsm = dofile("' .. file .. '")'
+   s[#s+1] = '_fsm = rfsm.load("' .. file .. '")'
    s[#s+1] = "fsm = rfsm.init(_fsm)"
    s[#s+1] = "fsm.step_hook = setfqn"
    s[#s+1] = [[ function trigger()

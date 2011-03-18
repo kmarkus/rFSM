@@ -502,14 +502,19 @@
    #+begin_src lua
        	return rfsm.csta:new {
 
-	   name_of_composite_state = dofile("subfsm.lua"),
+	   name_of_composite_state = rfsm.load("subfsm.lua"),
 
 	   otherstateX = rfsm.sista{},
 	   ...
        	}
    #+end_src
 
-   Make sure not to forget the ',' after the =dofile()= statement!
+   Make sure not to forget the ',' after the =rfsm.load()= statement!
+
+* Contact
+
+  Please direct questions, bugs or improvements to the [[http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users][orocos-users]]
+  mailing list.
 
 * Acknowledgement
 
