@@ -31,16 +31,14 @@ module("rfsm_ext")
 -- @retval an rfsm.simple_state object
 
 function gen_monitor_state(t)
-   local entry_func = t.entry or nil
-   local exit_func = t.exit or nil
    if t.montab==nil or type(t.montab) ~= 'table' then
       error("gen_monitor_state: missing or invalid 'montab' argument")
    end
    local break_first = t.breakfirst
 
    return rfsm.sista:new{
-      entry=entry_func,
-      exit=exit_func,
+      entry = t.entry or nil,
+      exit = t.exit or nil,
       
       doo = function(fsm)
 	       while true do
