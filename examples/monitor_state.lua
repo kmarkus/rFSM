@@ -7,10 +7,10 @@ require("rfsm_ext")
 --- generate a function which ramdomly returns true n of m times
 -- @param n
 -- @param m
-function gen_sometimes_true(times, of)
+function gen_sometimes_true(n, m)
    math.randomseed( os.time() )
    return function ()
-	     if times >= math.random(0,of) then
+	     if n > math.random(0,m) then
 		return true
 	     else
 		return false
