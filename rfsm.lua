@@ -324,10 +324,6 @@ local function add_defconn(fsm)
 	    fsm_merge(fsm, p, conn:new{}, 'initial')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
 	 end
-	 if tr.tgt == 'final' and p.final == nil then
-	    fsm_merge(fsm, p, conn:new{}, 'final')
-	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".final")
-	 end
       end
    end
 
