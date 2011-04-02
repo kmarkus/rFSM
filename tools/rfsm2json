@@ -18,6 +18,7 @@ function fsm2json(file)
    io.write(rfsm2json.encode(fsm))
 end
 
+arg[-1]=nil; arg[0]=nil;
 utils.map(fsm2json, arg)
 
 --io.write(json.encode(fsm_tpl))

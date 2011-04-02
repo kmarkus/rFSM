@@ -4,13 +4,17 @@ local json = require("json")
 local utils = require ("utils")
 local pcall = pcall
 local tostring = tostring
+local print = print -- debugging only
 
 module("rfsm2json")
 
 -- shortcuts
 local mapfsm = rfsm.mapfsm
+local is_csta = rfsm.is_csta
+local is_sista = rfsm.is_sista
+local is_conn = rfsm.is_conn
+local is_node = rfsm.is_node
 local is_trans = rfsm.is_trans
-local is_csta, is_sista, is_trans, is_conn, is_fsmobj = rfsm.is_csta, rfsm.is_sista, rfsm.is_trans, rfsm.is_conn, rfsm.is_fsmobj
 
 local VERSION = 1
 
@@ -40,7 +44,7 @@ function encode(fsm)
       elseif is_csta(s) then
 	 local tab = { id=s._id, type='composite' }
 	 tab.transitions = mapfsm(trans2tab, s, is_trans, 1)
-	 tab.subnodes = mapfsm(__rfsm2json, s, is_fsmobj, 1)
+	 tab.subnodes = mapfsm(__rfsm2json, s, is_node, 1)
 	 return tab
       end
    end
