@@ -199,22 +199,21 @@ function mapfsm(func, fsm, pred, depth)
    local res = {}
    local depth = depth or -1
 
-   local function __mapfsm(states)
+   local function __mapfsm(states, depth)
+      if depth == 0 then return end
       map(function (s, k)
-	     if depth == 0 then return end
 	     -- ugly: ignore entries starting with '_'
 	     if not is_meta(k) then
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
 		if is_csta(s) then
-		   depth = depth - 1
-		   __mapfsm(s)
+		   __mapfsm(s, depth-1)
 		end
 	     end
 	  end, states)
    end
-   __mapfsm(fsm)
+   __mapfsm(fsm, depth)
    return res
 end
 
