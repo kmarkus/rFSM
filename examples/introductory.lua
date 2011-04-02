@@ -19,7 +19,7 @@ return rfsm.composite_state:new {
       rfsm.trans:new{ src='moving', tgt='waiting', events={ 'e_stop' } },
    },
 
-   error = rfsm.simple_state:new {
+   in_error = rfsm.simple_state:new {
       doo = function (fsm) 
                  print ("Error detected - trying to fix") 
                  rfsm.yield()
@@ -38,8 +38,8 @@ return rfsm.composite_state:new {
    fatal_error = rfsm.simple_state:new {},
 
    rfsm.trans:new{ src='initial', tgt='on', effect=function () print("initalizing system") end },
-   rfsm.trans:new{ src='on', tgt='error', events={ 'e_error' } },
-   rfsm.trans:new{ src='error', tgt='on', events={ 'e_error_fixed' } },
-   rfsm.trans:new{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
+   rfsm.trans:new{ src='on', tgt='in_error', events={ 'e_error' } },
+   rfsm.trans:new{ src='in_error', tgt='on', events={ 'e_error_fixed' } },
+   rfsm.trans:new{ src='in_error', tgt='fatal_error', events={ 'e_fatal_error' } },
    rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
 }
