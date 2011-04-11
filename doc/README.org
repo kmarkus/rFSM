@@ -346,7 +346,7 @@
      This can be worked around by using the following syntax:
 
      #+begin_src lua
-     ['end'] = rfsm.sista{...}
+     ['end'] = rfsm.sista:new{...}
      #+end_src
 
   2. Executing functions accidentially
@@ -355,14 +355,14 @@
      instead of adding references to them:
 
      #+begin_src lua
-     stateX = rfsm.sista{ entry = my_func() }
+     stateX = rfsm.sista:new{ entry = my_func() }
      #+end_src
 
      The (likely) mistake above is to execute my\_func and assigning
      the result to entry instead of assigning my\_func:
 
      #+begin_src lua
-     stateX = rfsm.sista{ entry = my_func }
+     stateX = rfsm.sista:new{ entry = my_func }
      #+end_src
 
      Of course the first example would be perfectly valid if
