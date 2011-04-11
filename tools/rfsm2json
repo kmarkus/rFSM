@@ -1,6 +1,7 @@
 #!/usr/bin/env lua
 -- -*- lua -*-
 require("rfsm")
+require("fsmpp")
 require("rfsm2json")
 require("utils")
 
