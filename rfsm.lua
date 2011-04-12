@@ -1066,9 +1066,8 @@ local function is_enabled(tr, events)
    end
 
    -- is transition enabled by current events?
-   if tr.events then
-      if not is_triggered(tr.events, events) then return false end
-   end
+   if not tr.events or #tr.events == 0 then return true
+   else if not is_triggered(tr.events, events) then return false end end
 
    -- guard condition?
    if not tr.guard then return true end
