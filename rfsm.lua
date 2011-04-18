@@ -75,6 +75,7 @@ function sista:new(t)
    self.__index = self
    return t
 end
+setmetatable(sista, {__call=sista.new})
 
 --
 -- composite state
@@ -90,6 +91,9 @@ function csta:new(t)
    self.__index = self
    return t
 end
+setmetatable(csta, {__call=csta.new})
+
+
 
 --
 -- transition
@@ -105,6 +109,7 @@ function trans:new(t)
    self.__index = self
    return t
 end
+setmetatable(trans, {__call=trans.new})
 
 function trans:type() return 'transition' end
 
@@ -128,14 +133,6 @@ function trans:__tostring()
    return "T={ src='" .. src .. "', tgt='" .. tgt .. pn .. "', events='" .. events2str(self.events) .. "' }"
 end
 
--- alias
-simple_state = sista
-composite_state = csta
-connector = conn
-transition = trans
-yield = coroutine.yield
-load = dofile
-
 --
 -- connector
 --
@@ -146,6 +143,15 @@ function conn:new(t)
    self.__index = self
    return t
 end
+setmetatable(conn, {__call=conn.new})
+
+-- aliases
+simple_state = sista
+composite_state = csta
+connector = conn
+transition = trans
+yield = coroutine.yield
+load = dofile
 
 -- usefull predicates
 function is_fsmobj(s)
