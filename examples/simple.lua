@@ -2,12 +2,12 @@
 -- Extremly simply state machine with two states
 --
 
-return rfsm.csta:new {
+return rfsm.csta {
    getevents=function() return {1} end,
-   on = rfsm.sista:new{},
-   off = rfsm.sista:new{},
+   on = rfsm.sista{},
+   off = rfsm.sista{},
 
-   rfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
-   rfsm.trans:new{ src='on', tgt='off', events={ 'e_off' } },
-   rfsm.trans:new{ src='initial', tgt='off' }
+   rfsm.trans{ src='off', tgt='on', events={ 'e_on' } },
+   rfsm.trans{ src='on', tgt='off', events={ 'e_off' } },
+   rfsm.trans{ src='initial', tgt='off' }
 }
