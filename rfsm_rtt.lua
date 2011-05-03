@@ -50,10 +50,13 @@ end
 -- added to the fsm step_hook.
 --
 -- @param port rtt OutputPort to which the fqn shall be written
--- @param filter: function which must take a variable of type and a string fqn and assigns the string to the variable and returns it (optional)
+-- @param filter: function which must take a variable of type and a
+-- string fqn and assigns the string to the variable and returns it
+-- (optional)
+
 function gen_write_fqn(port, filter)
-   local type = port:info().type
-   if type ~= 'string' then
+   local type = port:info().type --todo check for filter?
+   if type ~= 'string' and type(filter) ~= 'function' then
       error("use of non string type " .. type .. " requires a filter function")
    end
 
@@ -80,7 +83,7 @@ end
 -- install a eehook so that it will be periodically triggerred. It
 -- also create a port "fqn" in the TC's interface where it writes the
 -- active. Todo: this could be done much nicer with cosmo, if we chose
--- to add that dependency. 
+-- to add that dependency.
 -- @param file file containing the rfsm model
 -- @param execstr_f exec_string function of the service. retrieve with compX:provides("Lua"):getOperation("exec_str")
 -- @param eehook boolean flag, if true eehook for periodic triggering is setup
