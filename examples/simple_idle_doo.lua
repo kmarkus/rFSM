@@ -8,8 +8,8 @@
 -- called while no other events are in the queue
 --
 
-return rfsm.csta:new {
-   on = rfsm.sista:new {
+return rfsm.csta {
+   on = rfsm.sista {
       doo=function(fsm)
 	     for i=1,5 do
 		print("hello ".. i .. " from on")
@@ -18,7 +18,7 @@ return rfsm.csta:new {
 	  end
    },
 
-   off = rfsm.sista:new{
+   off = rfsm.sista{
       entry=function() print("entering off") end,
 
       doo=function(fsm)
@@ -29,7 +29,7 @@ return rfsm.csta:new {
 	  end
    },
 
-   rfsm.trans:new{ src='off', tgt='on', events={ 'e_on' } },
-   rfsm.trans:new{ src='on', tgt='off', events={ 'e_done' } },
-   rfsm.trans:new{ src='initial', tgt='off' }
+   rfsm.trans{ src='off', tgt='on', events={ 'e_on' } },
+   rfsm.trans{ src='on', tgt='off', events={ 'e_done' } },
+   rfsm.trans{ src='initial', tgt='off' }
 }

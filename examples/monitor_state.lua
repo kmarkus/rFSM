@@ -31,13 +31,13 @@ mon={
    event_10 = gen_sometimes_true(10, 1000000),
 }
 
-return rfsm.csta:new {
+return rfsm.csta {
 
    monitoring = rfsm_ext.gen_monitor_state{montab=mon, break_first=true},
 
-   rfsm.trans:new{src='.monitoring', tgt='.monitoring', events={'event_1'}, effect=gen_print_this("event_1")},
-   rfsm.trans:new{src='.monitoring', tgt='.monitoring', events={'event_5'}, effect=gen_print_this("event_5")},
-   rfsm.trans:new{src='.monitoring', tgt='.monitoring', events={'event_10'}, effect=gen_print_this("event_10")},
-   rfsm.trans:new{src='initial', tgt='.monitoring'},
+   rfsm.trans{src='.monitoring', tgt='.monitoring', events={'event_1'}, effect=gen_print_this("event_1")},
+   rfsm.trans{src='.monitoring', tgt='.monitoring', events={'event_5'}, effect=gen_print_this("event_5")},
+   rfsm.trans{src='.monitoring', tgt='.monitoring', events={'event_10'}, effect=gen_print_this("event_10")},
+   rfsm.trans{src='initial', tgt='.monitoring'},
 
 }

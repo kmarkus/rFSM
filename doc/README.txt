@@ -28,7 +28,7 @@ Table of Contents
 
 
 1 Overview 
-~~~~~~~~~~~
+-----------
 
   rFSM is a small yet powerful Statechart implementation. It is mainly
   designed for /Coordinating/ complex systems but is not limited to
@@ -42,7 +42,7 @@ Table of Contents
   subdirectory.
 
 2 Setup 
-~~~~~~~~
+--------
 
   Make sure the rFSM folder is in your =LUA\_PATH=. For example:
 
@@ -50,7 +50,7 @@ Table of Contents
   export LUA_PATH=";;;/home/mk/src/git/rfsm/?.lua"
 
 3 Quickstart 
-~~~~~~~~~~~~~
+-------------
 
   1. define an rfsm state machine (see =examples/hello\_world.lua=)
   2. define a context script to execute it (see =examples/runscript.lua=)
@@ -64,7 +64,7 @@ Table of Contents
   world
 
 4 Introduction 
-~~~~~~~~~~~~~~~
+---------------
 
   rFSM is a minimal Statechart variant designed for /Coordinating/
   complex systems such as robots. It is written purely in Lua and is
@@ -77,13 +77,13 @@ Table of Contents
   [file:example1.png]
 
 
-  1:  return rfsm.composite_state:new {
-  2:     hello = rfsm.simple_state:new{ exit=function() print("hello") end },
-  3:     world = rfsm.simple_state:new{ entry=function() print("world") end },
+  1:  return rfsm.composite_state {
+  2:     hello = rfsm.simple_state { exit=function() print("hello") end },
+  3:     world = rfsm.simple_state { entry=function() print("world") end },
   4:  
-  5:     rfsm.transition:new{ src='initial', tgt='hello' },
-  6:     rfsm.transition:new{ src='hello', tgt='world', events={ 'e_done' } },
-  7:     rfsm.transition:new{ src='world', tgt='hello', events={ 'e_restart' } },
+  5:     rfsm.transition { src='initial', tgt='hello' },
+  6:     rfsm.transition { src='hello', tgt='world', events={ 'e_done' } },
+  7:     rfsm.transition { src='world', tgt='hello', events={ 'e_restart' } },
   8:  }
 
   The first line defines a new toplevel composite state and returns
@@ -152,17 +152,17 @@ Table of Contents
 
 
 5 API 
-~~~~~~
+------
 
 5.1 Model entities 
 ===================
 
-     Function                   short alias     description               
-    --------------------------+---------------+--------------------------
-     =simple\_state:new{}=      =sista:new{}=   create a simple state     
-     =composite\_state:new{}=   =csta:new{}=    create a composite state  
-     =connector:new{}=          =conn:new{}=    create a connector        
-     =transition:new{}=         =trans:new{}=   create a transition       
+     Function               short alias   description               
+    ----------------------+-------------+--------------------------
+     =simple\_state{}=      =sista{}=     create a simple state     
+     =composite\_state{}=   =csta{}=      create a composite state  
+     =connector{}=          =conn{}=      create a connector        
+     =transition{}=         =trans{}=     create a transition       
 
    (these functions are part of the rfsm module, thus can be called
    in Lua with =rfsm.simple\_state{}=)
@@ -252,7 +252,7 @@ Table of Contents
       example:
 
 
-  rfsm.transition:new{ src='stateX',
+  rfsm.transition{ src='stateX',
                        tgt='stateY',
                        events = {"e1", "e2" },
                        effect=function () do_this() end }
@@ -271,15 +271,15 @@ Table of Contents
       starts with a leading dot. For example:
 
 
-  return rfsm.csta:new{
-     operational=rfsm.csta:new{
-        motors_on = rfsm.csta:new{
-           moving = rfsm.sista:new{},
-           stopped = rfsm.sista:new{},
+  return rfsm.csta{
+     operational=rfsm.csta{
+        motors_on = rfsm.csta{
+           moving = rfsm.sista{},
+           stopped = rfsm.sista{},
         },
      },
-     off=rfsm.sista:new{},
-     rfsm.trans:new{src='initial', tgt=".operational.motors_on.moving"}
+     off=rfsm.sista{},
+     rfsm.trans{src='initial', tgt=".operational.motors_on.moving"}
   }
 
       This transition is defined between the (locally referenced)
@@ -334,7 +334,7 @@ Table of Contents
    to integrate rFSM instances into any event driven environment.
 
 6 Common pitfalls 
-~~~~~~~~~~~~~~~~~~
+------------------
 
   1. Name clashes between state/connector names with reserved Lua
      keywords.
@@ -362,7 +362,7 @@ Table of Contents
      my\_func() returned a function as a result!
 
 7 Tools 
-~~~~~~~~
+--------
 
   Some useful tools to be found in the =tools/= directory.
 
@@ -393,7 +393,7 @@ Table of Contents
   - =rfsm-dbg= experimental. don't use.
 
 8 Helper modules 
-~~~~~~~~~~~~~~~~~
+-----------------
   - =fsm2uml.lua= module to generate UML like figures from rFSM
   - =fsm2tree.lua= module to generate the tree structure of an rFSM instance
   - =fsmpp.lua= Lowlevel function used to improve the debug output.
@@ -403,7 +403,7 @@ Table of Contents
     experimental to be even documented.
 
 9 More examples, tips and tricks 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 9.1 A more complete example 
 ============================
@@ -417,27 +417,27 @@ Table of Contents
 
 
   -- any rFSM is always contained in a composite_state
-  return rfsm.composite_state:new {
+  return rfsm.composite_state {
      dbg = true, -- enable debugging
   
-     on = rfsm.composite_state:new {
+     on = rfsm.composite_state {
         entry = function () print("disabling brakes") end,
         exit = function () print("enabling brakes") end,
   
-        moving = rfsm.simple_state:new {
+        moving = rfsm.simple_state {
            entry=function () print("starting to move") end,
            exit=function () print("stopping") end,
         },
   
-        waiting = rfsm.simple_state:new {},
+        waiting = rfsm.simple_state {},
   
         -- define some transitions
-        rfsm.trans:new{ src='initial', tgt='waiting' },
-        rfsm.trans:new{ src='waiting', tgt='moving', events={ 'e_start' } },
-        rfsm.trans:new{ src='moving', tgt='waiting', events={ 'e_stop' } },
+        rfsm.trans{ src='initial', tgt='waiting' },
+        rfsm.trans{ src='waiting', tgt='moving', events={ 'e_start' } },
+        rfsm.trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
      },
   
-     error = rfsm.simple_state:new {
+     error = rfsm.simple_state {
         doo = function (fsm)
                    print ("Error detected - trying to fix")
                    rfsm.yield()
@@ -453,13 +453,13 @@ Table of Contents
                 end,
      },
   
-     fatal_error = rfsm.simple_state:new {},
+     fatal_error = rfsm.simple_state {},
   
-     rfsm.trans:new{ src='initial', tgt='on', effect=function () print("initalizing system") end },
-     rfsm.trans:new{ src='on', tgt='error', events={ 'e_error' } },
-     rfsm.trans:new{ src='error', tgt='on', events={ 'e_error_fixed' } },
-     rfsm.trans:new{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
-     rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
+     rfsm.trans{ src='initial', tgt='on', effect=function () print("initalizing system") end },
+     rfsm.trans{ src='on', tgt='error', events={ 'e_error' } },
+     rfsm.trans{ src='error', tgt='on', events={ 'e_error_fixed' } },
+     rfsm.trans{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
+     rfsm.trans{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
   }
 
 9.2 How to compose state machines 
@@ -467,10 +467,10 @@ Table of Contents
 
    This is easy! Let's assume the state machine is is a file
    "subfsm.lua" and uses the strongly recommended =return
-   rfsm.csta:new ...= syntax, it can be included as follows:
+   rfsm.csta ...= syntax, it can be included as follows:
 
 
-  return rfsm.csta:new {
+  return rfsm.csta {
   
      name_of_composite_state = rfsm.load("subfsm.lua"),
   
@@ -481,7 +481,7 @@ Table of Contents
    Make sure not to forget the ',' after the =rfsm.load()= statement!
 
 10 Contact 
-~~~~~~~~~~~
+-----------
 
   Please direct questions, bugs or improvements to the [orocos-users]
   mailing list.
@@ -490,7 +490,7 @@ Table of Contents
   [orocos-users]: http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users
 
 11 Acknowledgement 
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
   - Funding
 

@@ -77,13 +77,13 @@
   #+end_src
 
   #+begin_src lua -n -r
-    return rfsm.composite_state:new { (ref:hello_fsm_root)
-       hello = rfsm.simple_state:new{ exit=function() print("hello") end }, (ref:hello_fsm_hello)
-       world = rfsm.simple_state:new{ entry=function() print("world") end }, (ref:hello_fsm_world)
+    return rfsm.composite_state { (ref:hello_fsm_root)
+       hello = rfsm.simple_state { exit=function() print("hello") end }, (ref:hello_fsm_hello)
+       world = rfsm.simple_state { entry=function() print("world") end }, (ref:hello_fsm_world)
 
-       rfsm.transition:new{ src='initial', tgt='hello' }, (ref:hello_fsm_trans_ini)
-       rfsm.transition:new{ src='hello', tgt='world', events={ 'e_done' } }, (ref:hello_fsm_e_done)
-       rfsm.transition:new{ src='world', tgt='hello', events={ 'e_restart' } }, (ref:hello_fsm_e_restart)
+       rfsm.transition { src='initial', tgt='hello' }, (ref:hello_fsm_trans_ini)
+       rfsm.transition { src='hello', tgt='world', events={ 'e_done' } }, (ref:hello_fsm_e_done)
+       rfsm.transition { src='world', tgt='hello', events={ 'e_restart' } }, (ref:hello_fsm_e_restart)
     }
   #+end_src
 
@@ -161,10 +161,10 @@
 
    | Function                 | short alias   | description              |
    |--------------------------+---------------+--------------------------|
-   | =simple\_state:new{}=    | =sista:new{}= | create a simple state    |
-   | =composite\_state:new{}= | =csta:new{}=  | create a composite state |
-   | =connector:new{}=        | =conn:new{}=  | create a connector       |
-   | =transition:new{}=       | =trans:new{}= | create a transition      |
+   | =simple\_state{}=    | =sista{}= | create a simple state    |
+   | =composite\_state{}= | =csta{}=  | create a composite state |
+   | =connector{}=        | =conn{}=  | create a connector       |
+   | =transition{}=       | =trans{}= | create a transition      |
 
    (these functions are part of the rfsm module, thus can be called
    in Lua with =rfsm.simple\_state{}=)
@@ -257,7 +257,7 @@
       example:
 
       #+begin_src lua
-	rfsm.transition:new{ src='stateX',
+	rfsm.transition{ src='stateX',
 			     tgt='stateY',
 			     events = {"e1", "e2" },
 			     effect=function () do_this() end }
@@ -277,15 +277,15 @@
       starts with a leading dot. For example:
 
       #+begin_src lua
-	return rfsm.csta:new{
-	   operational=rfsm.csta:new{
-	      motors_on = rfsm.csta:new{
-		 moving = rfsm.sista:new{},
-		 stopped = rfsm.sista:new{},
+	return rfsm.csta{
+	   operational=rfsm.csta{
+	      motors_on = rfsm.csta{
+		 moving = rfsm.sista{},
+		 stopped = rfsm.sista{},
 	      },
 	   },
-	   off=rfsm.sista:new{},
-	   rfsm.trans:new{src='initial', tgt=".operational.motors_on.moving"}
+	   off=rfsm.sista{},
+	   rfsm.trans{src='initial', tgt=".operational.motors_on.moving"}
 	}
       #+end_src
 
@@ -346,7 +346,7 @@
      This can be worked around by using the following syntax:
 
      #+begin_src lua
-     ['end'] = rfsm.sista:new{...}
+     ['end'] = rfsm.sista{...}
      #+end_src
 
   2. Executing functions accidentially
@@ -355,14 +355,14 @@
      instead of adding references to them:
 
      #+begin_src lua
-     stateX = rfsm.sista:new{ entry = my_func() }
+     stateX = rfsm.sista{ entry = my_func() }
      #+end_src
 
      The (likely) mistake above is to execute my\_func and assigning
      the result to entry instead of assigning my\_func:
 
      #+begin_src lua
-     stateX = rfsm.sista:new{ entry = my_func }
+     stateX = rfsm.sista{ entry = my_func }
      #+end_src
 
      Of course the first example would be perfectly valid if
@@ -449,27 +449,27 @@
 
    #+begin_src lua
      -- any rFSM is always contained in a composite_state
-     return rfsm.composite_state:new {
+     return rfsm.composite_state {
        	dbg = true, -- enable debugging
 
-       	on = rfsm.composite_state:new {
+       	on = rfsm.composite_state {
 	   entry = function () print("disabling brakes") end,
 	   exit = function () print("enabling brakes") end,
 
-	   moving = rfsm.simple_state:new {
+	   moving = rfsm.simple_state {
 	      entry=function () print("starting to move") end,
 	      exit=function () print("stopping") end,
 	   },
 
-	   waiting = rfsm.simple_state:new {},
+	   waiting = rfsm.simple_state {},
 
 	   -- define some transitions
-	   rfsm.trans:new{ src='initial', tgt='waiting' },
-	   rfsm.trans:new{ src='waiting', tgt='moving', events={ 'e_start' } },
-	   rfsm.trans:new{ src='moving', tgt='waiting', events={ 'e_stop' } },
+	   rfsm.trans{ src='initial', tgt='waiting' },
+	   rfsm.trans{ src='waiting', tgt='moving', events={ 'e_start' } },
+	   rfsm.trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
        	},
 
-       	error = rfsm.simple_state:new {
+       	error = rfsm.simple_state {
 	   doo = function (fsm)
 		      print ("Error detected - trying to fix")
 		      rfsm.yield()
@@ -485,13 +485,13 @@
 		   end,
        	},
 
-       	fatal_error = rfsm.simple_state:new {},
+       	fatal_error = rfsm.simple_state {},
 
-       	rfsm.trans:new{ src='initial', tgt='on', effect=function () print("initalizing system") end },
-       	rfsm.trans:new{ src='on', tgt='error', events={ 'e_error' } },
-       	rfsm.trans:new{ src='error', tgt='on', events={ 'e_error_fixed' } },
-       	rfsm.trans:new{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
-       	rfsm.trans:new{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
+       	rfsm.trans{ src='initial', tgt='on', effect=function () print("initalizing system") end },
+       	rfsm.trans{ src='on', tgt='error', events={ 'e_error' } },
+       	rfsm.trans{ src='error', tgt='on', events={ 'e_error_fixed' } },
+       	rfsm.trans{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
+       	rfsm.trans{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
      }
    #+end_src
 
@@ -499,10 +499,10 @@
 
    This is easy! Let's assume the state machine is is a file
    "subfsm.lua" and uses the strongly recommended =return
-   rfsm.csta:new ...= syntax, it can be included as follows:
+   rfsm.csta ...= syntax, it can be included as follows:
 
    #+begin_src lua
-       	return rfsm.csta:new {
+       	return rfsm.csta {
 
 	   name_of_composite_state = rfsm.load("subfsm.lua"),
 

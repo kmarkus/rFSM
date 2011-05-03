@@ -8,16 +8,16 @@
 
 local sista, csta, trans, conn = rfsm.sista, rfsm.csta, rfsm.trans, rfsm.conn
 
-return csta:new {
-   operational = csta:new {
-      on = sista:new {},
-      off = sista:new {},
-      trans:new{ src='initial', tgt='off' },
+return csta {
+   operational = csta {
+      on = sista {},
+      off = sista {},
+      trans{ src='initial', tgt='off' },
    },
 
-   trans:new{ src='initial', tgt='operational' },
+   trans{ src='initial', tgt='operational' },
    -- not allowed, initial must always be local:
-   -- trans:new{ src='.operational.initial', tgt='.operational.off' },
-   trans:new{ src='.operational.on', tgt='.operational.off', events={'e_off'} },
-   trans:new{ src='.operational.off', tgt='.operational.on', events={'e_on'} },
+   -- trans{ src='.operational.initial', tgt='.operational.off' },
+   trans{ src='.operational.on', tgt='.operational.off', events={'e_off'} },
+   trans{ src='.operational.off', tgt='.operational.on', events={'e_on'} },
 }

@@ -36,7 +36,7 @@ function gen_monitor_state(t)
    end
    local break_first = t.breakfirst
 
-   return rfsm.sista:new{
+   return rfsm.sista {
       entry = t.entry or nil,
       exit = t.exit or nil,
       

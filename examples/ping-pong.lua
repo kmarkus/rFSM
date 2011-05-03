@@ -10,13 +10,13 @@ local function check_cnt()
 end
 
 fsm = rfsm.init( 
-   rfsm.csta:new {
-      ping = rfsm.sista:new{ entry=check_cnt },
-      pong = rfsm.sista:new{ entry=check_cnt },
+   rfsm.csta {
+      ping = rfsm.sista{ entry=check_cnt },
+      pong = rfsm.sista{ entry=check_cnt },
    
-      rfsm.trans:new{src="initial", tgt="ping" },
-      rfsm.trans:new{src="ping", tgt="pong", events={"e_done"}},
-      rfsm.trans:new{src="pong", tgt="ping", events={"e_done"}},
+      rfsm.trans{src="initial", tgt="ping" },
+      rfsm.trans{src="ping", tgt="pong", events={"e_done"}},
+      rfsm.trans{src="pong", tgt="ping", events={"e_done"}},
    })
 
 rfsm.run(fsm)

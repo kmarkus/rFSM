@@ -2,23 +2,23 @@ require "rfsm"
 
 local csta = rfsm.csta
 
-return rfsm.csta:new{
+return rfsm.csta{
 
-   operational = rfsm.sista:new{},
-   calibration = rfsm.sista:new{},
+   operational = rfsm.sista{},
+   calibration = rfsm.sista{},
 
-   error = csta:new{
-      hardware_err = rfsm.sista:new{},
-      software_err = rfsm.sista:new{},
-      err_dispatch = rfsm.conn:new{},
+   error = csta{
+      hardware_err = rfsm.sista{},
+      software_err = rfsm.sista{},
+      err_dispatch = rfsm.conn{},
 
-      rfsm.trans:new{ src='initial', tgt='err_dispatch' },
-      rfsm.trans:new{ src='err_dispatch', tgt='hardware_err', events={"e_hw_err" } },
-      rfsm.trans:new{ src='err_dispatch', tgt='software_err', events={"e_sw_err" } },
+      rfsm.trans{ src='initial', tgt='err_dispatch' },
+      rfsm.trans{ src='err_dispatch', tgt='hardware_err', events={"e_hw_err" } },
+      rfsm.trans{ src='err_dispatch', tgt='software_err', events={"e_sw_err" } },
    },
 
-   rfsm.trans:new{ src='initial', tgt='operational' },
-   rfsm.trans:new{ src='operational', tgt='error.err_dispatch', events={"e_error" } },
-   rfsm.trans:new{ src='calibration', tgt='error.err_dispatch', events={"e_error" } },
-   rfsm.trans:new{ src='error', tgt='operational', events={"e_error_reset" } },
+   rfsm.trans{ src='initial', tgt='operational' },
+   rfsm.trans{ src='operational', tgt='error.err_dispatch', events={"e_error" } },
+   rfsm.trans{ src='calibration', tgt='error.err_dispatch', events={"e_error" } },
+   rfsm.trans{ src='error', tgt='operational', events={"e_error_reset" } },
 }

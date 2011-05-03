@@ -79,7 +79,7 @@ end
 --- Lauch an rFSM statemachine in a RTT Lua Service.
 --
 -- This function launches an rfsm statemachine in the given file
--- (specified with return csta:new{}) into a service, and optionally
+-- (specified with return rfsm.csta{}) into a service, and optionally
 -- install a eehook so that it will be periodically triggerred. It
 -- also create a port "fqn" in the TC's interface where it writes the
 -- active. Todo: this could be done much nicer with cosmo, if we chose
