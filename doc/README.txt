@@ -1,8 +1,8 @@
-                  The rFSM Statecharts (v1.0-beta1)
+                  The rFSM Statecharts (v1.0-beta2)
                   =================================
 
 Author: Markus Klotzbuecher
-Date: [2011-03-18 Fri]
+Date: [2011-05-03 Tue]
 
 
 
