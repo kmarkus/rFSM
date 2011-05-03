@@ -1,7 +1,7 @@
-#+TITLE:	The rFSM Statecharts (v1.0-beta1)
+#+TITLE:	The rFSM Statecharts (v1.0-beta2)
 #+AUTHOR:	Markus Klotzbuecher
 #+EMAIL:	markus.klotzbuecher@mech.kuleuven.be
-#+DATE:		[2011-03-18 Fri]
+#+DATE:		[2011-05-03 Tue]
 #+DESCRIPTION:
 #+KEYWORDS:
 #+LANGUAGE:	en
