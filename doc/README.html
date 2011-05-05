@@ -145,7 +145,8 @@ lang="en" xml:lang="en">
 
 
 <p>
-  Make sure the rFSM folder is in your <code>LUA_PATH</code>. For example:
+  Make sure you have Lua 5.1 installed and the rFSM folder is in your
+  <code>LUA_PATH</code>. For example:
 </p>
 
 
@@ -235,16 +236,16 @@ world
 </p>
 <p>
   The next three lines define transition between these states. The
-  <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_trans_ini');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_trans_ini');">first</a> is from the initial connector to the hello state. This
+  <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_trans_ini');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_trans_ini');">first</a> is from the initial connector to the <code>hello</code> state. This
   transition will be taken the first time the state machine is
   entered. The initial connector, as an exception, need not be defined
   and will be created automatically.
 </p>
 <p>
-  The <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_done');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_done');">next transition</a> is from hello to world and is triggered by the
-  <code>e_done</code> event. This event is raised internally when the a state
-  completes, which is either the case when the states "doo" function
-  (see below) finishes or immediately if there is no doo, as is the
+  The <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_done');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_done');">next transition</a> is from <code>hello</code> to <code>world</code> and is triggered by the
+  <code>e_done</code> event. This event is raised internally when a state
+  completes, which is either the case when the states'doo' function
+  (see below) finishes or immediately if there is no <code>doo</code>, as is the
   case here. The <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_restart');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_restart');">third transition</a> is triggered by the <code>e_restart</code>
   event.
 </p>
@@ -269,8 +270,8 @@ queue:  e_done@root.hello
 <p>
   We execute <code>step()</code> to advance the state machine once. As this is
   the first step, the fsm is entered via the 'initial' connector to
-  the <code>hello</code> state. After that hello is active and <code>done</code> (because no
-  doo function is defined). Consequently an <code>e_done</code> completion event
+  the <code>hello</code> state. After that <code>hello</code> is active and <code>done</code> (because no
+  <code>doo</code> function is defined). Consequently an <code>e_done</code> completion event
   has been generated which is in the queue. So the next step&hellip;
 </p>
 
@@ -285,7 +286,7 @@ queue:  e_done@root.world
 
 
 <p>
-  &hellip; causes a transtion to done. As the 'world' state completion
+  &hellip; causes a transition to <code>world</code>. As the <code>world</code> state completion
   event does not trigger any transitons, running <code>step()</code> again does
   not cause any changes:
 </p>
@@ -369,7 +370,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 <p>
       which are called when the state is entered exited or exited
-      respectively. The argument passed in are the toplevel
+      respectively. The arguments passed in are the toplevel
       statechart, the current state and the string 'entry'
       resp. 'exit'. (The rationale behind the third argument is to
       allow one function to handle entry and exit and thus to be able
@@ -377,7 +378,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </p>
 <p>
       Simple states may additionaly define a do function (it is called
-      <code>doo</code> in to avoid clashes with the identically named Lua
+      <code>doo</code> in rFSM to avoid clashes with the identically named Lua
       keyword).
 </p>
 
@@ -398,14 +399,14 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <p>
       In many cases this function shall run for a longer period until
       some event occurs. To allow the rFSM core to check for events in
-      between and possibly execute a transition, the doo function must
+      between and possibly execute a transition, the <code>doo</code> function must
       give up control. This can be done by calling
 </p>
 <p>
       <code>rfsm.yield()</code>
 </p>
 <p>
-      (Note: this currently only an alias to <code>coroutine.yield</code>)
+      (Note: this currently is only an alias to <code>coroutine.yield</code>)
 </p>
 <p>
       The following example illustrates this:
@@ -426,16 +427,16 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <p>
-      This <code>doo</code> will check a certain condition repeadedly and raise
+      This <code>doo</code> will check a certain condition repeatedly and raise
       an event if it is true. After that control is returned to the
       rFSM core.
 </p>
 <p>
-      An boolen idle flag can be return to the rFSM core by passing it
+      A boolean idle flag can be return to the rFSM core by passing it
       as a parameter to <code>rfsm.yield</code>. If this flag is true then
-      it will cause the rfsm core to go idle if there are no other
+      it will cause the rFSM core to go idle if there are no other
       events. Otherwise, if no value or false is returned and there
-      are no other events, doo will be called in a tight loop.
+      are no other events, <code>doo</code> will be called in a tight loop.
 </p>
 </li>
 <li>connector: <code>connector</code>
@@ -449,7 +450,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
       of events and the guards of all transitions must be true.
 </p>
 <p>
-      See the examples <code>connector_simple.lua</code> and <code>connector_split.lua</code>
+      See the examples <code>connector_simple.lua</code> and <code>connector_split.lua</code>.
 </p>
 <p>
       Connectors are useful for defining common entry points which are
@@ -457,7 +458,8 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </p>
 <p>
       Note: defining cycles is possible, but dangerous, unsupported
-      and discouraged.
+      and discouraged.  It may make the yoghurt in your fridge grow
+      fine grey beards.
 </p>
 </li>
 <li>transitions: <code>transitions</code>
@@ -482,13 +484,13 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 <p>
       This defines a transition between stateX and stateY which is
-      triggered by e1 <span style="text-decoration:underline;">and</span> e2 and which will execute the given effect
+      triggered by <code>e1</code> <span style="text-decoration:underline;">and</span> <code>e2</code> and which will execute the given effect
       function when transitioning.
 </p>
 <p>
       Three ways of specifying src and target states are supported:
-      <i>local</i>, <i>relative</i> or <i>absolute</i>. In the above example 'stateX'
-      and 'stateY' are referenced locally and must therefore be
+      <i>local</i>, <i>relative</i> or <i>absolute</i>. In the above example <code>stateX</code>
+      and <code>stateY</code> are referenced locally and must therefore be
       defined within the same composite state as this transition.
 </p>
 <p>
@@ -552,14 +554,14 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <p>
-   The <code>step</code> will attempt to step the given initialized fsm for n
+   The function <code>step</code> will attempt to step the given initialized fsm for n
    times. A step can either be a transition or a single execution of
-   the doo program. Step will return either when the state machine is
+   the <code>doo</code> program. <code>step</code> will return either when the state machine is
    idle or the number of steps has been reached. The Boolean return
    value is whether the fsm is idle or not.
 </p>
 <p>
-   Invoking <code>run</code> will call step as long as the fsm is not idle. Not idle
+   Invoking <code>run</code> will call <code>step</code> as long as the fsm is not idle. Not idle
    means: there are events in the queue or there is an active <code>doo</code>
    function which is not idle.
 </p>
@@ -590,7 +592,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <tr><td class="left"><code>warn</code></td><td class="left">called to output warnings. Set to false to disable. Default stderr.</td></tr>
 <tr><td class="left"><code>err</code></td><td class="left">called to output errors. Set to false to disable. Default stderr.</td></tr>
 <tr><td class="left"><code>table getevents()</code></td><td class="left">function which returns a table of new events which have occurred</td></tr>
-<tr><td class="left"><code>dropevents(fsm, evtab)</code></td><td class="left">function is called with events which are discarded</td></tr>
+<tr><td class="left"><code>dropevents(fsm, evtab)</code></td><td class="left">function is called for events which are discarded</td></tr>
 <tr><td class="left"><code>step_hook(fsm)</code></td><td class="left">is called for each step (mostly for debugging purposes)</td></tr>
 <tr><td class="left"><code>idle_hook(fsm)</code></td><td class="left">called <b>instead</b> of returning from step/run functions</td></tr>
 </tbody>
@@ -599,7 +601,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 <p>
    The most important function is <code>getevents</code>. The purpose of this
-   function is return all events which occurred in a table. This allows
+   function is to return all events which occurred in a table. This allows
    to integrate rFSM instances into any event driven environment.
 </p>
 </div>
@@ -688,7 +690,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <p>
-    generates various representations (in examples/)
+    generates various representations (in <code>examples/</code>)
 </p>
 </li>
 <li><code>rfsm-sim</code>
@@ -706,7 +708,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <p>
-    It requires a image viewer which automatically updates once the
+    It requires an image viewer which automatically updates once the
     file displayed changes. For example <code>evince</code> works nicely.
 </p>
 </li>
@@ -731,14 +733,14 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </li>
 <li><code>fsm2tree.lua</code> module to generate the tree structure of an rFSM instance
 </li>
-<li><code>fsmpp.lua</code> Lowlevel function used to improve the debug output.
+<li><code>fsmpp.lua</code> Lowlevel function used to improve the debug output
 </li>
-<li><code>fsmtesting.lua</code> statemachine testing infrastructure.
+<li><code>fsmtesting.lua</code> statemachine testing infrastructure
 </li>
 <li><code>rfsm_rtt.lua</code> Useful functions for using rFSM with OROCOS rtt
 </li>
 <li><code>fsmdbg.lua</code> a remote debugger interface which is simply still too
-    experimental to be even documented.
+    experimental to be even documented
 </li>
 </ul>
 

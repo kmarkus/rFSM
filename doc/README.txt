@@ -44,7 +44,8 @@ Table of Contents
 2 Setup 
 --------
 
-  Make sure the rFSM folder is in your =LUA\_PATH=. For example:
+  Make sure you have Lua 5.1 installed and the rFSM folder is in your
+  =LUA\_PATH=. For example:
 
 
   export LUA_PATH=";;;/home/mk/src/git/rfsm/?.lua"
@@ -96,15 +97,15 @@ Table of Contents
   exited/entered resp.
 
   The next three lines define transition between these states. The
-  first is from the initial connector to the hello state. This
+  first is from the initial connector to the =hello= state. This
   transition will be taken the first time the state machine is
   entered. The initial connector, as an exception, need not be defined
   and will be created automatically.
 
-  The next transition is from hello to world and is triggered by the
-  =e\_done= event. This event is raised internally when the a state
-  completes, which is either the case when the states "doo" function
-  (see below) finishes or immediately if there is no doo, as is the
+  The next transition is from =hello= to =world= and is triggered by the
+  =e\_done= event. This event is raised internally when a state
+  completes, which is either the case when the states'doo' function
+  (see below) finishes or immediately if there is no =doo=, as is the
   case here. The third transition is triggered by the =e\_restart=
   event.
 
@@ -122,8 +123,8 @@ Table of Contents
 
   We execute =step()= to advance the state machine once. As this is
   the first step, the fsm is entered via the 'initial' connector to
-  the =hello= state. After that hello is active and =done= (because no
-  doo function is defined). Consequently an =e\_done= completion event
+  the =hello= state. After that =hello= is active and =done= (because no
+  =doo= function is defined). Consequently an =e\_done= completion event
   has been generated which is in the queue. So the next step...
 
 
@@ -132,7 +133,7 @@ Table of Contents
   active: root.world(done)
   queue:  e_done@root.world
 
-  ... causes a transtion to done. As the 'world' state completion
+  ... causes a transition to =world=. As the =world= state completion
   event does not trigger any transitons, running =step()= again does
   not cause any changes:
 
@@ -177,14 +178,14 @@ Table of Contents
   exit(fsm, state, 'exit')
 
       which are called when the state is entered exited or exited
-      respectively. The argument passed in are the toplevel
+      respectively. The arguments passed in are the toplevel
       statechart, the current state and the string 'entry'
       resp. 'exit'. (The rationale behind the third argument is to
       allow one function to handle entry and exit and thus to be able
       to identify which one is being called.)
 
       Simple states may additionaly define a do function (it is called
-      =doo= in to avoid clashes with the identically named Lua
+      =doo= in rFSM to avoid clashes with the identically named Lua
       keyword).
 
 
@@ -198,12 +199,12 @@ Table of Contents
 
       In many cases this function shall run for a longer period until
       some event occurs. To allow the rFSM core to check for events in
-      between and possibly execute a transition, the doo function must
+      between and possibly execute a transition, the =doo= function must
       give up control. This can be done by calling
 
       =rfsm.yield()=
 
-      (Note: this currently only an alias to =coroutine.yield=)
+      (Note: this currently is only an alias to =coroutine.yield=)
 
       The following example illustrates this:
 
@@ -217,15 +218,15 @@ Table of Contents
            end
         end
 
-      This =doo= will check a certain condition repeadedly and raise
+      This =doo= will check a certain condition repeatedly and raise
       an event if it is true. After that control is returned to the
       rFSM core.
 
-      An boolen idle flag can be return to the rFSM core by passing it
+      A boolean idle flag can be return to the rFSM core by passing it
       as a parameter to =rfsm.yield=. If this flag is true then
-      it will cause the rfsm core to go idle if there are no other
+      it will cause the rFSM core to go idle if there are no other
       events. Otherwise, if no value or false is returned and there
-      are no other events, doo will be called in a tight loop.
+      are no other events, =doo= will be called in a tight loop.
 
    2. connector: =connector=
 
@@ -236,13 +237,14 @@ Table of Contents
       events specified on all transitions must match the current set
       of events and the guards of all transitions must be true.
 
-      See the examples =connector\_simple.lua= and =connector\_split.lua=
+      See the examples =connector\_simple.lua= and =connector\_split.lua=.
 
       Connectors are useful for defining common entry points which are
       later dispatched to various internal states.
 
       Note: defining cycles is possible, but dangerous, unsupported
-      and discouraged.
+      and discouraged.  It may make the yoghurt in your fridge grow
+      fine grey beards.
 
    3. transitions: =transitions=
 
@@ -258,12 +260,12 @@ Table of Contents
                        effect=function () do_this() end }
 
       This defines a transition between stateX and stateY which is
-      triggered by e1 _and_ e2 and which will execute the given effect
+      triggered by =e1= _and_ =e2= and which will execute the given effect
       function when transitioning.
 
       Three ways of specifying src and target states are supported:
-      /local/, /relative/ or /absolute/. In the above example 'stateX'
-      and 'stateY' are referenced locally and must therefore be
+      /local/, /relative/ or /absolute/. In the above example =stateX=
+      and =stateY= are referenced locally and must therefore be
       defined within the same composite state as this transition.
 
       Relative references specify states which are, relative to the
@@ -301,13 +303,13 @@ Table of Contents
      =rfsm.send\_events(fsm, ...)=   send one or more events to internal rfsm event queue  
 
 
-   The =step= will attempt to step the given initialized fsm for n
+   The function =step= will attempt to step the given initialized fsm for n
    times. A step can either be a transition or a single execution of
-   the doo program. Step will return either when the state machine is
+   the =doo= program. =step= will return either when the state machine is
    idle or the number of steps has been reached. The Boolean return
    value is whether the fsm is idle or not.
 
-   Invoking =run= will call step as long as the fsm is not idle. Not idle
+   Invoking =run= will call =step= as long as the fsm is not idle. Not idle
    means: there are events in the queue or there is an active =doo=
    function which is not idle.
 
@@ -325,12 +327,12 @@ Table of Contents
      =warn=                     called to output warnings. Set to false to disable. Default stderr.               
      =err=                      called to output errors. Set to false to disable. Default stderr.                 
      =table getevents()=        function which returns a table of new events which have occurred                  
-     =dropevents(fsm, evtab)=   function is called with events which are discarded                                
+     =dropevents(fsm, evtab)=   function is called for events which are discarded                                 
      =step\_hook(fsm)=          is called for each step (mostly for debugging purposes)                           
      =idle\_hook(fsm)=          called *instead* of returning from step/run functions                             
 
    The most important function is =getevents=. The purpose of this
-   function is return all events which occurred in a table. This allows
+   function is to return all events which occurred in a table. This allows
    to integrate rFSM instances into any event driven environment.
 
 6 Common pitfalls 
@@ -374,7 +376,7 @@ Table of Contents
 
   $ tools/rfsm-viz all examples/composite_nested.lua
 
-    generates various representations (in examples/)
+    generates various representations (in =examples/=)
 
   - =rfsm-sim=
 
@@ -384,7 +386,7 @@ Table of Contents
 
   $ tools/rfsm-sim all examples/ball_tracker_scope.lua
 
-    It requires a image viewer which automatically updates once the
+    It requires an image viewer which automatically updates once the
     file displayed changes. For example =evince= works nicely.
 
   - =rfsm2json= converts an lua fsm to a json representation. Requires
@@ -396,11 +398,11 @@ Table of Contents
 -----------------
   - =fsm2uml.lua= module to generate UML like figures from rFSM
   - =fsm2tree.lua= module to generate the tree structure of an rFSM instance
-  - =fsmpp.lua= Lowlevel function used to improve the debug output.
-  - =fsmtesting.lua= statemachine testing infrastructure.
+  - =fsmpp.lua= Lowlevel function used to improve the debug output
+  - =fsmtesting.lua= statemachine testing infrastructure
   - =rfsm\_rtt.lua= Useful functions for using rFSM with OROCOS rtt
   - =fsmdbg.lua= a remote debugger interface which is simply still too
-    experimental to be even documented.
+    experimental to be even documented
 
 9 More examples, tips and tricks 
 ---------------------------------
