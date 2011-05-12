@@ -299,17 +299,20 @@
       as it breaks compositionality: if a state machine is used within
       a larger statemachine the absolute reference is broken.
 
-      Transitions support also support priority numbers. Priority
-      numbers serve to resolve conflicts within one hierarchical
-      level. In case two transitions are enabled by a set of events,
-      the transition with the higher priority number will be
-      executed. Priority numbers are assigned by the =pn= keyword for
+      Transitions also support /priority numbers/. Priority numbers
+      serve to resolve conflicts within one hierarchical level. In
+      case two transitions are enabled by a set of events, the
+      transition with the higher priority number will be
+      executed. Priority numbers are assigned by the =pn= keyword on
       transitions, as seen below. Transitions without priority numbers
       are assumed to have priority 0.
 
       #+begin_src lua
       rfsm.trans{ src='following', tgt='hitting', pn=10, events={ 't6' } },
       #+end_src
+
+      If possible, statecharts should be designed not to depend on
+      priority numbers and introduce these rather as an optimization.
 
 
 ** Operational API
@@ -384,16 +387,16 @@
      my\_func() returned a function as a result!
 
   3. Why doesn't my statemachine react if I send a completion event
-     'e_done' from the outside?
+     =e\_done= from the outside?
 
-     Short anwer: because it is a syntactic shortcut for a completion
-     event *of* the source state of this transition. During
-     initalization it is transformed to =e\_done@fqn=
-     (e.g. =e\_root@root.stateA.stateB=) If you send in the expanded
-     completion event it will work.
+     Short anwer: because it is a syntactic shortcut for the
+     completion event *of the source state* of the transition which it
+     is defined on. During initalization it is transformed to
+     =e\_done@fqn= (e.g. =e\_root@root.stateA.stateB=) If you send in
+     the expanded completion event it will work.
 
      Explanation: a completion event only makes sense in the context
-     of a state which completed. Making the state which completed
+     of a state which completed. Making the state which has completed
      explicit in the event avoids accidentially triggering a
      transition labeled with a higher priority completion event that
      has nothing to do with the current one.

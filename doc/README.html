@@ -526,11 +526,11 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
       a larger statemachine the absolute reference is broken.
 </p>
 <p>
-      Transitions support also support priority numbers. Priority
-      numbers serve to resolve conflicts within one hierarchical
-      level. In case two transitions are enabled by a set of events,
-      the transition with the higher priority number will be
-      executed. Priority numbers are assigned by the <code>pn</code> keyword for
+      Transitions also support <i>priority numbers</i>. Priority numbers
+      serve to resolve conflicts within one hierarchical level. In
+      case two transitions are enabled by a set of events, the
+      transition with the higher priority number will be
+      executed. Priority numbers are assigned by the <code>pn</code> keyword on
       transitions, as seen below. Transitions without priority numbers
       are assumed to have priority 0.
 </p>
@@ -541,7 +541,11 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </pre>
 
 
-</li>
+
+<p>
+      If possible, statecharts should be designed not to depend on
+      priority numbers and introduce these rather as an optimization.
+</p></li>
 </ol>
 </div>
 
@@ -678,18 +682,18 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </p>
 </li>
 <li>Why doesn't my statemachine react if I send a completion event
-     'e<sub>done'</sub> from the outside?
+     <code>e_done</code> from the outside?
 
 <p>
-     Short anwer: because it is a syntactic shortcut for a completion
-     event <b>of</b> the source state of this transition. During
-     initalization it is transformed to <code>e_done@fqn</code>
-     (e.g. <code>e_root@root.stateA.stateB</code>) If you send in the expanded
-     completion event it will work.
+     Short anwer: because it is a syntactic shortcut for the
+     completion event <b>of the source state</b> of the transition which it
+     is defined on. During initalization it is transformed to
+     <code>e_done@fqn</code> (e.g. <code>e_root@root.stateA.stateB</code>) If you send in
+     the expanded completion event it will work.
 </p>
 <p>
      Explanation: a completion event only makes sense in the context
-     of a state which completed. Making the state which completed
+     of a state which completed. Making the state which has completed
      explicit in the event avoids accidentially triggering a
      transition labeled with a higher priority completion event that
      has nothing to do with the current one.
