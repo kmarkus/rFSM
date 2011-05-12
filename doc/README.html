@@ -242,10 +242,10 @@ world
   and will be created automatically.
 </p>
 <p>
-  The <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_done');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_done');">next transition</a> is from <code>hello</code> to <code>world</code> and is triggered by the
-  <code>e_done</code> event. This event is raised internally when a state
-  completes, which is either the case when the states'doo' function
-  (see below) finishes or immediately if there is no <code>doo</code>, as is the
+  The <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_done');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_done');">next transition</a> is from <code>hello</code> to <code>world</code> and is triggered by
+  the <code>e_done</code> event. This event is raised internally when a state
+  completes, which is either the case when the states 'doo' function
+  (see below) finishes or immediately, if there is no <code>doo</code>, as is the
   case here. The <a href="coderef:" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_e_restart');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_e_restart');">third transition</a> is triggered by the <code>e_restart</code>
   event.
 </p>
@@ -524,9 +524,25 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
       syntax is strongly discouraged for anything other than testing,
       as it breaks compositionality: if a state machine is used within
       a larger statemachine the absolute reference is broken.
-</p></li>
-</ol>
+</p>
+<p>
+      Transitions support also support priority numbers. Priority
+      numbers serve to resolve conflicts within one hierarchical
+      level. In case two transitions are enabled by a set of events,
+      the transition with the higher priority number will be
+      executed. Priority numbers are assigned by the <code>pn</code> keyword for
+      transitions, as seen below. Transitions without priority numbers
+      are assumed to have priority 0.
+</p>
 
+
+
+<pre class="src src-lua">rfsm.trans{ src=<span style="color: #00cd00;">'following'</span>, tgt=<span style="color: #00cd00;">'hitting'</span>, pn=10, events={ <span style="color: #00cd00;">'t6'</span> } },
+</pre>
+
+
+</li>
+</ol>
 </div>
 
 </div>
@@ -659,6 +675,24 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <p>
      Of course the first example would be perfectly valid if
      my_func() returned a function as a result!
+</p>
+</li>
+<li>Why doesn't my statemachine react if I send a completion event
+     'e<sub>done'</sub> from the outside?
+
+<p>
+     Short anwer: because it is a syntactic shortcut for a completion
+     event <b>of</b> the source state of this transition. During
+     initalization it is transformed to <code>e_done@fqn</code>
+     (e.g. <code>e_root@root.stateA.stateB</code>) If you send in the expanded
+     completion event it will work.
+</p>
+<p>
+     Explanation: a completion event only makes sense in the context
+     of a state which completed. Making the state which completed
+     explicit in the event avoids accidentially triggering a
+     transition labeled with a higher priority completion event that
+     has nothing to do with the current one.
 </p></li>
 </ol>
 

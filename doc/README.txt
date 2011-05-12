@@ -102,10 +102,10 @@ Table of Contents
   entered. The initial connector, as an exception, need not be defined
   and will be created automatically.
 
-  The next transition is from =hello= to =world= and is triggered by the
-  =e\_done= event. This event is raised internally when a state
-  completes, which is either the case when the states'doo' function
-  (see below) finishes or immediately if there is no =doo=, as is the
+  The next transition is from =hello= to =world= and is triggered by
+  the =e\_done= event. This event is raised internally when a state
+  completes, which is either the case when the states 'doo' function
+  (see below) finishes or immediately, if there is no =doo=, as is the
   case here. The third transition is triggered by the =e\_restart=
   event.
 
@@ -292,6 +292,18 @@ Table of Contents
       as it breaks compositionality: if a state machine is used within
       a larger statemachine the absolute reference is broken.
 
+      Transitions support also support priority numbers. Priority
+      numbers serve to resolve conflicts within one hierarchical
+      level. In case two transitions are enabled by a set of events,
+      the transition with the higher priority number will be
+      executed. Priority numbers are assigned by the =pn= keyword for
+      transitions, as seen below. Transitions without priority numbers
+      are assumed to have priority 0.
+
+
+  rfsm.trans{ src='following', tgt='hitting', pn=10, events={ 't6' } },
+
+
 5.2 Operational API 
 ====================
 
@@ -362,6 +374,21 @@ Table of Contents
 
      Of course the first example would be perfectly valid if
      my\_func() returned a function as a result!
+
+  3. Why doesn't my statemachine react if I send a completion event
+     'e_done' from the outside?
+
+     Short anwer: because it is a syntactic shortcut for a completion
+     event *of* the source state of this transition. During
+     initalization it is transformed to =e\_done@fqn=
+     (e.g. =e\_root@root.stateA.stateB=) If you send in the expanded
+     completion event it will work.
+
+     Explanation: a completion event only makes sense in the context
+     of a state which completed. Making the state which completed
+     explicit in the event avoids accidentially triggering a
+     transition labeled with a higher priority completion event that
+     has nothing to do with the current one.
 
 7 Tools 
 --------
