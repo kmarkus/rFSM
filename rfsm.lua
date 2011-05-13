@@ -42,6 +42,7 @@ local math = math
 local coroutine = coroutine
 local pairs = pairs
 local ipairs = ipairs
+local pcall = pcall
 local print = print
 local tostring = tostring
 local string = string
@@ -356,8 +357,8 @@ local function expand_e_done(fsm)
 		if tr.events[i] == 'e_done' then
 		   tr.events[i] = 'e_done' .. '@' .. tr.src._fqn
 		end
-	  end
-       end, fsm, is_trans)
+	     end
+	  end, fsm, is_trans)
 end
 
 ----------------------------------------
@@ -454,7 +455,7 @@ local function resolve_trans(fsm)
 	 if is_csta(tgt) then
 	    if tgt.initial == nil then
 	       fsm.err("ERROR: transition " .. tostring(tr) ..
-		      " ends on cstate without initial connector")
+		    " ends on cstate without initial connector")
 	       return false
 	    else
 	       tr.tgt = tgt.initial
@@ -802,8 +803,11 @@ local function run_doos(fsm)
       if state._doo_co and  coroutine.status(state._doo_co) == 'suspended' then
 	 local cr_stat, cr_ret = coroutine.resume(state._doo_co, fsm, state, 'doo')
 	 if not cr_stat then
-	    fsm.err("DOO", "doo program of state '" .. state._fqn .. "' failed:")
-	    error(cr_ret, 0)
+	    fsm.err("DOO", "doo program of state '" .. state._fqn .. "' failed: ", cr_ret)
+	    doo_done = true
+	    state._doo_co = nil
+	    set_sta_mode(state, 'done')
+	    -- tbd: raise event
 	 else
 	    doo_idle = cr_ret or doo_idle -- this allows to provide a default, see above.
 	    if coroutine.status(state._doo_co) == 'dead' then
@@ -827,7 +831,13 @@ local function enter_one_state(fsm, state, hot)
 
    if not is_sta(state) then return end
    set_sta_mode(state, 'active')
-   if state.entry then state.entry(fsm, state, 'entry') end
+   if state.entry then
+      local succ, err = pcall(state.entry, fsm, state, 'entry')
+      if not succ then
+	 fsm.err('ENTRY', "error executing entry of " ..  state._fqn .. ": ", err)
+	 -- tbd: raise event
+      end
+   end
 
    if is_sista(state) then
       fsm._act_leaf = state
@@ -854,7 +864,14 @@ local function exit_state(fsm, state)
       state._parent._last_active_mode = get_sta_mode(state)
 
       set_sta_mode(state, 'inactive')
-      if state.exit then state.exit(fsm, state, 'exit') end
+
+      if state.exit then
+	 local succ, err = pcall(state.exit, fsm, state, 'exit')
+	 if not succ then
+	    fsm.err('EXIT', "error executing exit of " ..  state._fqn .. ": ", err)
+	    -- tbd: raise event
+	 end
+      end
 
       -- don't cleanup coroutine, could be used later
       if is_sista(state) then fsm._act_leaf = false end
@@ -876,6 +893,7 @@ local function exec_trans_check(fsm, tr)
    local res = true
    if tr.tgt._mode ~= 'inactive' then
       fsm.err("ERROR", "transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt._mode .. "'")
+      -- tbd: raise event
       res = false
    end
    return res
@@ -927,7 +945,11 @@ local function exec_trans_effect(fsm, tr)
    -- run effect
    fsm.dbg("EFFECT", tostring(tr))
    if tr.effect then
-      tr.effect(tr) -- todo: should probably be: fsm, tr, 'effect', events
+      local succ, err = pcall(tr.effect, fsm, tr, 'effect', events)
+      if not succ then
+	 fsm.err('EFFECT', "error executing effect of " ..  tostring(tr) .. ": ", err)
+	 -- tbd: raise event
+      end
    end
 end
 
@@ -1053,7 +1075,7 @@ end
 --
 -- tbd: allow more complex events: '+', '*', or functions
 -- important: no events is "null event"
-local function is_enabled(tr, events)
+local function is_enabled(fsm, tr, events)
 
    local function is_member(list, e)
       for _,v in ipairs(list) do
@@ -1064,21 +1086,28 @@ local function is_enabled(tr, events)
 
    local function is_triggered(tr_ev, evq)
       for _,v in ipairs(evq) do
-	 if is_member(tr_ev, v) then
-	    return true
-	 end
+	 if is_member(tr_ev, v) then return true end
       end
       return false
    end
 
-   -- is transition enabled by current events?
-   if not tr.events or #tr.events == 0 then return true
-   else if not is_triggered(tr.events, events) then return false end end
-
    -- guard condition?
-   if not tr.guard then return true end
-   local ret = tr.guard(tr, events)
-   return ret
+   if tr.guard then
+      local succ, ret = pcall(tr.guard, tr, events)
+      if succ == false then
+	 fsm.err('GUARD', "error executing guard of " ..  tostring(tr) .. ": ", ret)
+	 -- tdb: raise event
+	 return false
+      end
+      if ret == false then return false end
+   end
+
+   -- Is transition enabled by current events?
+   if tr.events and #tr.events > 0 then
+      return is_triggered(tr.events, events)
+   end
+
+   return true
 end
 
 ----------------------------------------
@@ -1104,7 +1133,7 @@ function node_find_enabled(fsm, start, events)
 
       -- check all outgoing transitions from nde
       for k,tr in pairs(nde._otrs) do
- 	 if is_enabled(tr, events) then
+	 if is_enabled(fsm, tr, events) then
 	    -- find continuation
 	    local tgt = tr.tgt
 	    local tail
