@@ -67,15 +67,18 @@
   #+begin_src ditaa :file example1.png :cmdline -o
 
     /-----------------------------------------\
-    |       +---------+  e_done   /---------\ |
+    |       /---------\  e_done   /---------\ |
     | *---> |  hello  | --------> |  world  | |
-    |       +---------+           \---------/ |
+    |       \---------/           \---------/ |
     |           ^                      |      |
     |           |      e_restart       |      |
     | cDEF      +----------------------+      |
     \-----------------------------------------/
 
   #+end_src
+
+  #+results:
+  [[file:example1.png]]
 
   #+begin_src lua -n -r
     return rfsm.composite_state { (ref:hello_fsm_root)
