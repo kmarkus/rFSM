@@ -61,6 +61,8 @@ module("rfsm")
 local map = utils.map
 local foreach = utils.foreach
 
+preproc = {}
+
 --------------------------------------------------------------------------------
 -- Model Elements and generic helper functions
 --------------------------------------------------------------------------------
@@ -229,7 +231,7 @@ end
 function map_from_to(fsm, func, from, to)
    local walker = from
    local res = {}
-   while from ~= to do
+   while walker ~= to do
       res[#res+1] = func(fsm, walker)
       walker = walker._parent
    end
@@ -649,6 +651,9 @@ function init(fsm_templ)
 	 function (fsm, events)
 	    if #events>0 then fsm.dbg("DROPPING_EVENTS", events2str(events)) end end
    end
+
+   -- run user preproc hooks
+   for k,f in ipairs(preproc) do f(fsm) end
 
    -- All OK!
    fsm._initialized = true

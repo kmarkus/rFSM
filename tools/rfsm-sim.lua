@@ -127,7 +127,7 @@ _fsm=rfsm.load(file)
 ret, fsm = pcall(rfsm.init, _fsm)
 
 if not ret or not fsm then
-   print("rfsm-sim: failed to initialize fsm")
+   print("rfsm-sim: failed to initialize fsm:", fsm)
    os.exit(1)
 end
 

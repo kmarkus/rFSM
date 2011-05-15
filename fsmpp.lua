@@ -102,7 +102,8 @@ local ctab = {
    EXEC_PATH = ac.cyan,
    ERROR = ac.red .. ac.bright,
    HIBERNATING = ac.magenta,
-   RAISED = ac.white .. ac.bright
+   RAISED = ac.white .. ac.bright,
+   TIMEEVENT = ac.yellow .. ac.bright
 }
 
 -- colorized dbg replacement function
@@ -133,10 +134,7 @@ end
 -- generate a debugcolor printer function which prints the name
 function gen_dbgcolor2(name)
    name = name or "<unnamed SM>"
-   return function (...)
-	     arg.n=nil
-	     dbgcolor(name, unpack(arg))
-	  end
+   return function (...) dbgcolor(name, ...) end
 end
 
 -- generate a dbgcolor function
