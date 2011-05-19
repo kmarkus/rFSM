@@ -39,8 +39,14 @@
 -- statecharts together with OROCOS RTT.
 --
 
+require "rttlib"
+require "utils"
+
 local rtt = rtt
+local rttlib = rttlib
 local string = string
+local utils = utils
+local print = print
 local assert, ipairs, pairs, type, error = assert, ipairs, pairs, type, error
 
 module("rfsm_rtt")
@@ -132,7 +138,7 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
    end
 
    s[#s+1] = [[
-	 fqn = rtt.OutputPort.new("string", "fqn", "fsm fqn status")
+	 fqn = rtt.OutputPort("string", "fqn", "rFSM currently active fully qualified state name")
 	 rtt.getTC():addPort(fqn)
 	 setfqn = rfsm_rtt.gen_write_fqn(fqn)
    ]]
@@ -147,7 +153,7 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
 		end ]]
 
    if eehook then
-      s[#s+1] = 'eehook = rtt.EEHook.new("trigger")'
+      s[#s+1] = 'eehook = rtt.EEHook("trigger")'
       s[#s+1] = "eehook:enable()"
    end
 
@@ -155,4 +161,78 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
       assert(execstr_f(str), "Error launching rfsm: executing " .. str .. " failed")
    end
 
+end
+
+
+--- Launch a rFSM in a component
+-- Will instantiate a Lua rFSM Component.
+-- This is done in the following order: require "rttlib" and "rFSM",
+-- set environment variable, execute prefile, setup outport for FSM
+-- status, load rFSM, define updateHook and finally execute postfile.
+-- @param argtab table with the some or more of the following fields:
+--    - fsmfile rFSM file (required)
+--    - name of component to be create (required)
+--    - deployer deployer to use for creating LuaComponent (required)
+--    - sync boolean flag. If true rfsm.step() will be called in updateHook, otherwise rfsm.run(). default=false.
+--    - prefile Lua script file executed before loading rFSM for preparing the environment.
+--    - postfile Lua script file executed after loading rFSM.
+--    - env environment table of key-value pairs which are initalized in the new component. Used for parametrization.
+function component_launch_rfsm(argtab)
+   assert(argtab and type(argtab) == 'table', "No argument table given")
+   assert(type(argtab.name) == 'string', "No 'name' specified")
+   assert(type(argtab.fsmfile) == 'string', "No 'fsmfile' specified")
+   assert(type(argtab.deployer) == 'userdata', "No 'deployer' provided")
+
+   local depl=argtab.deployer
+   local name=argtab.name
+   local fsmfile=argtab.fsmfile
+
+   if not depl:loadComponent(name, "OCL::LuaComponent") then
+      error("Failed to create LuaComponent")
+   end
+
+   comp=depl:getPeer(name)
+   comp:addPeer(depl)
+   exec_str = comp:provides():getOperation("exec_str")
+   exec_file = comp:provides():getOperation("exec_file")
+
+   local s = {}
+   s[#s+1] = "require 'rttlib'"
+   s[#s+1] = "require 'rfsm'"
+   s[#s+1] = "require 'rfsm_rtt'"
+
+   if env and type(env) == 'table' then
+      for k,v in pairs(env) do s[#s+1] = k .. '=' .. '"' .. v .. '"' end
+   end
+
+   for _,str in ipairs(s) do
+      assert(exec_str(str), "Error launching rfsm: executing " .. str .. " failed")
+   end
+   s={}
+
+   if argtab.prefile then exec_file(argtab.prefile) end
+
+   s[#s+1] = [[fqn = rtt.OutputPort("string", "fqn", "rFSM currently active fully qualified state name")
+	 rtt.getTC():addPort(fqn)
+	 setfqn = rfsm_rtt.gen_write_fqn(fqn)
+   ]]
+
+   s[#s+1] = ([[_fsm = rfsm.load('%s')
+		    fsm = rfsm.init(_fsm)
+		    fsm.step_hook = setfqn]]):format(fsmfile)
+
+   if argtab.sync then
+      s[#s+1] = "function updateHook() rfsm.step(fsm) end"
+   else
+      s[#s+1] = "function updateHook() rfsm.run(fsm) end"
+   end
+
+   for _,str in ipairs(s) do
+      assert(exec_str(str), "Error launching rfsm: executing " .. str .. " failed")
+   end
+   s={}
+
+   if argtab.postfile then exec_file(argtab.postfile) end
+
+   return comp
 end
