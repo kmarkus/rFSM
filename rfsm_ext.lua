@@ -125,11 +125,12 @@ function seqand:new(t)
    t.entry=function(fsm)
 	      sh_saved=fsm.stephook
 	      fsm.step_hook=function(fsm, events)
-			       print("stephook intercepted events: ", utils.tab2str(events))
 			       if sh_saved then sh_saved() end
-			       rfsm.mapfsm(function (subfsm)
-					      rfsm.send_events(subfsm, unpack(events))
-					   end, t, rfsm.is_csta, 1)
+			       if #events > 0 then
+				  rfsm.mapfsm(function (subfsm)
+						 rfsm.send_events(subfsm, unpack(events))
+					      end, t, rfsm.is_csta, 1)
+			       end
 			    end
 	      rfsm.mapfsm(function (subfsm) rfsm.step(subfsm, t.step) end, t, rfsm.is_csta, 1)
 	   end
