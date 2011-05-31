@@ -668,9 +668,9 @@ end
 -- run will enter via root initial again.
 -- @param fsm root fsm.
 function reset(fsm)
-   assert(fsm._initalized, "Can't reset an uninitalized fsm")
+   assert(fsm._initialized, "Can't reset an uninitalized fsm")
    fsm._intq = { 'e_init_fsm' }
-   fsm._curq = { 'e_init_fsm' }
+   fsm._curq = {}
    fsm._act_leaf = false
    mapfsm(function (c) c._actchild = nil end, fsm, is_csta)
 end
@@ -767,10 +767,6 @@ local function actchild_add(parent, child)
 end
 
 local function actchild_rm(parent, child)
-   if parent._actchild ~= child then
-      error("actchild_rm: error " .. child._fqn .. " not a child of parent " ..
-	    parent._fqn .. " (actchild=)" .. parent._actchild)
-   end
    parent._actchild = nil
 end
 
