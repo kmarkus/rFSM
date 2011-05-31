@@ -202,8 +202,14 @@ local function is_connected(src, tgt)
    return false
 end
 
--- apply func to all fsm elements for which pred returns true
--- depth is maxdepth to enter (nil
+--- Apply func to all fsm elements for which pred is true
+-- func accepts three arguments: the model element, its fsm parent and
+-- its name.
+-- @param func function to apply to fsm elements
+-- @param fsm root of fsm to start with
+-- @param pred predicate function
+-- @depth depth maximum depth to enter (default: no limit)
+-- @return flat table with results of function application
 function mapfsm(func, fsm, pred, depth)
    local res = {}
    local depth = depth or -1
@@ -657,6 +663,17 @@ function init(fsm_templ)
    return fsm
 end
 
+--- Reset a fsm.
+-- This clears all events, and makes it inactive so the next step or
+-- run will enter via root initial again.
+-- @param fsm root fsm.
+function reset(fsm)
+   assert(fsm._initalized, "Can't reset an uninitalized fsm")
+   fsm._intq = { 'e_init_fsm' }
+   fsm._curq = { 'e_init_fsm' }
+   fsm._act_leaf = false
+   mapfsm(function (c) c._actchild = nil end, fsm, is_csta)
+end
 
 
 --------------------------------------------------------------------------------
@@ -853,9 +870,12 @@ local function enter_one_state(fsm, state, hot)
    fsm.dbg("STATE_ENTER", state._fqn)
 end
 
-----------------------------------------
--- exit a state (incl all substates)
-local function exit_state(fsm, state)
+
+
+--- Exit a state including its substates
+-- @param fsm root fsm
+-- @param state state to exit
+function exit_state(fsm, state)
 
    -- if composite exit child states first
    if is_csta(state) then exit_state(fsm, actchild_get(state)) end
@@ -1232,7 +1252,6 @@ function step(fsm, n)
    local n = n or 1
 
    local curq = get_events(fsm) -- return table with all current events
-   fsm._oldevents=curq
 
    -- entering fsm for the first time: it is impossible to exit it
    -- again, as there exist no transition targets outside of the
@@ -1259,7 +1278,7 @@ function step(fsm, n)
    end
 
    -- low level control hook: better ._step_hook
-   if fsm.step_hook then fsm.step_hook(fsm) end
+   if fsm.step_hook then fsm.step_hook(fsm, curq) end
 
    n = n - 1
    if n < 1 then return idle
