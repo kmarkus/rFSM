@@ -646,11 +646,8 @@ function init(fsm_templ)
       fsm.getevents = function () return {} end
    end
 
-   if not fsm.dropevents then
-      fsm.dropevents =
-	 function (fsm, events)
-	    if #events>0 then fsm.dbg("DROPPING_EVENTS", events2str(events)) end end
-   end
+   -- old events are stored here for one step
+   fsm._oldevents={}
 
    -- run user preproc hooks
    for k,f in ipairs(preproc) do f(fsm) end
@@ -1235,6 +1232,7 @@ function step(fsm, n)
    local n = n or 1
 
    local curq = get_events(fsm) -- return table with all current events
+   fsm._oldevents=curq
 
    -- entering fsm for the first time: it is impossible to exit it
    -- again, as there exist no transition targets outside of the
@@ -1244,12 +1242,10 @@ function step(fsm, n)
 	 fsm.err("ERROR: failed to enter fsm root " .. fsm._id .. ", no valid path from root.initial")
 	 return false
       end
-      if fsm.dropevents then fsm.dropevents(fsm, curq) end
       idle = false
    elseif #curq > 0 then
       -- received events, attempt to transition
       transition(fsm, curq)
-      if fsm.dropevents then fsm.dropevents(fsm, curq) end
       idle = false
    else
       -- no events, run doo
