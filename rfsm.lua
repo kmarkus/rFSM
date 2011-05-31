@@ -1205,7 +1205,9 @@ local function transition(fsm, events)
    if not path then
       fsm.dbg("TRANSITION", "no enabled paths found")
       return false
-   else return exec_path(fsm, path) end
+   end
+   exec_path(fsm, path)
+   return true
 end
 
 ----------------------------------------
@@ -1250,7 +1252,7 @@ function step(fsm, n)
 
    local idle = true
    local n = n or 1
-
+   local do_dec = true		-- if false n will not be decremented
    local curq = get_events(fsm) -- return table with all current events
 
    -- entering fsm for the first time: it is impossible to exit it
@@ -1262,9 +1264,8 @@ function step(fsm, n)
 	 return false
       end
       idle = false
-   elseif #curq > 0 then
-      -- received events, attempt to transition
-      transition(fsm, curq)
+   elseif #curq > 0 then	-- received events, attempt to transition
+      do_dec = transition(fsm, curq)
       idle = false
    else
       -- no events, run doo
@@ -1280,8 +1281,11 @@ function step(fsm, n)
    -- low level control hook: better ._step_hook
    if fsm.step_hook then fsm.step_hook(fsm, curq) end
 
-   n = n - 1
-   if n < 1 then return idle
+   -- do not dec if no transition executed.
+   if do_dec then n = n - 1 end
+
+   if n < 1 then
+      return idle
    else
       if idle then
 	 if fsm.idle_hook then fsm.idle_hook(fsm); idle = false  -- call idle hook
