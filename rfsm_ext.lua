@@ -39,9 +39,13 @@
 --
 
 local rfsm = require("rfsm")
+local utils = require("utils")
 local pairs = pairs
 local error = error
 local type = type
+local unpack = unpack
+local setmetatable = setmetatable
+local print = print
 
 module("rfsm_ext")
 
@@ -90,3 +94,62 @@ function gen_monitor_state(t)
 	    end
    }
 end
+
+
+--- Sequential AND state
+seqand = {}
+function seqand:type() return 'simple' end
+
+--- Sequential AND state constructor.
+-- parameters:
+--   t.idle_doo: returned in rfsm.yield(idle_doo) of seqand state.
+--   t.step: number of steps to advance each subfsm
+-- @param t initalized sub rfsm
+function seqand:new(t)
+   setmetatable(t, self)
+   self.__index = self
+
+   if t.run and t.step then
+      error("Sequential AND state must define step or run")
+   end
+
+   if t.step and (type(t.step) ~= 'number' or t.step <= 0) then
+      error("step must be a positive number")
+   end
+
+   if t.idle_doo == nil then t.idle_doo = true end
+
+   local sh_saved
+   -- entry install a new step hook (removed in exit) that intercepts
+   -- and forward the current events to the child fsms.
+   t.entry=function(fsm)
+	      sh_saved=fsm.stephook
+	      fsm.step_hook=function(fsm, events)
+			       print("stephook intercepted events: ", utils.tab2str(events))
+			       if sh_saved then sh_saved() end
+			       rfsm.mapfsm(function (subfsm)
+					      rfsm.send_events(subfsm, unpack(events))
+					   end, t, rfsm.is_csta, 1)
+			    end
+	      rfsm.mapfsm(function (subfsm) rfsm.step(subfsm, t.step) end, t, rfsm.is_csta, 1)
+	   end
+
+   t.doo=function(fsm)
+	    while true do
+	       rfsm.mapfsm(function (subfsm)
+			      rfsm.step(subfsm, t.step)
+			   end, t, rfsm.is_csta, 1)
+	       rfsm.yield(t.idle_doo)
+	    end
+	 end
+
+   t.exit=function(fsm)
+	     fsm.stephook=sh_saved
+	     rfsm.mapfsm(function (subfsm)
+			    rfsm.exit_state(subfsm, subfsm)
+			    rfsm.reset(subfsm)
+			 end, t, rfsm.is_csta, 1) end
+   return t
+end
+
+setmetatable(seqand, {__call=seqand.new})
