@@ -18,7 +18,7 @@ return rfsm.csta {
 	    rfsm.trans{src="s11", tgt="s12", events={"e_one"}},
 	    rfsm.trans{src="s12", tgt="s11", events={"e_two"}},
 	 }),
-      
+
       -- subfsm 2
       s2=rfsm.init(
 	 rfsm.csta {
@@ -27,14 +27,14 @@ return rfsm.csta {
 	       doo = function(fsm)
 			while true do
 			   print("hi from s2 doo!")
-			   rfsm.yield(true) 
+			   rfsm.yield(true)
 			end
 		     end
 	    },
 	    rfsm.trans{src="initial", tgt="s21" },
 	 }),
    },
-   
+
    off = rfsm.sista{},
    rfsm.trans{src="initial", tgt="off"},
    rfsm.trans{src="off", tgt="and_state", events={"e_on"}},
