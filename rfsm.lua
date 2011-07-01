@@ -158,12 +158,9 @@ load = dofile
 
 -- usefull predicates
 function is_fsmobj(s)
-   if type(s) ~= 'table' then
-      return false
-   end
+   if type(s) ~= 'table' then return false end
    local mt = getmetatable(s)
-   if mt and  mt.__index then
-      return true
+   if mt and  mt.__index then return true
    else
       print("ERROR: no fsmobj: " .. table.concat(s, ',') .. " (interesting!)")
       return false
@@ -213,7 +210,6 @@ end
 function mapfsm(func, fsm, pred, depth)
    local res = {}
    local depth = depth or -1
-
    local function __mapfsm(states, depth)
       if depth == 0 then return end
       map(function (s, k)
