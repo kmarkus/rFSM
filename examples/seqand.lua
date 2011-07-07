@@ -9,7 +9,12 @@ return rfsm.csta {
    dbg=fsmpp.gen_dbgcolor2("parent"),
    and_state = rfsm_ext.seqand {
       seqanddbg=true,
-      order = {'s2' },
+
+      -- define the order in which the subfsm shall be step'ed. The
+      -- list must not be exhaustive; all not mentioned states will be
+      -- after the ones listed in 'order' executed in arbitrary
+      -- ordering.
+      order = {'s2', 's1'},
 
       -- subfsm 1
       s1=rfsm.init(
