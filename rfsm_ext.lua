@@ -40,12 +40,17 @@
 
 local rfsm = require("rfsm")
 local utils = require("utils")
+local math = math
 local pairs = pairs
+local ipairs = ipairs
 local error = error
 local type = type
 local unpack = unpack
 local setmetatable = setmetatable
 local print = print
+local assert = assert
+local error = error
+local tostring = tostring
 
 module("rfsm_ext")
 
@@ -100,11 +105,22 @@ end
 seqand = {}
 function seqand:type() return 'simple' end
 
---- Sequential AND state constructor.
+--- Sequential AND state (experimental)
+-- Permits declaration of multiple subfsm which are executed
+-- sequentially. Events of the toplevel are forwarded to the subfsm
+-- (but currently not back again).
+--
 -- parameters:
+--   t.andseqdbg: if true print dbg information
 --   t.idle_doo: returned in rfsm.yield(idle_doo) of seqand state.
 --   t.step: number of steps to advance each subfsm
--- @param t initalized sub rfsm
+--   t.run: if true, don't step but run.
+--   t.order: table of substate names that indicate the desired
+--            execution order. Not mentioned states will be executed
+--            after the ordered ones in arbitrary order.
+--
+-- @param t table initalized sub rfsms + above parameters
+-- @return new seqand state
 function seqand:new(t)
    setmetatable(t, self)
    self.__index = self
@@ -117,7 +133,43 @@ function seqand:new(t)
       error("step must be a positive number")
    end
 
+   if t.run then t.step = math.huge end
    if t.idle_doo == nil then t.idle_doo = true end
+
+   -- create a regions table with all substates. Used to keep track
+   -- which substates were already added to order.
+   local regions = {}
+   rfsm.mapfsm(function (cs, p, n) regions[n] = true end, t, rfsm.is_csta, 1)
+
+   local exorder = {}
+
+   -- first add states mentioned in t.order...
+   if t.order then
+      assert(type(t.order) == 'table', "seqand: t.order must be a table of string substate names.")
+      local uniq_order = utils.table_unique(t.order);
+      t.order=nil; -- not required anymore
+
+      for _,name in ipairs(uniq_order) do
+	 if not rfsm.is_csta(t[name]) then
+	    error("andseq, 'order' field specifies non-existing state " .. name)
+	 end
+	 exorder[#exorder+1] = t[name]
+	 regions[name]=nil
+      end
+   end
+
+   -- ... then add the remaining at the end.
+   for name,_ in pairs(regions) do exorder[#exorder+1] = t[name] end
+
+   -- print some debug information
+   if t.seqanddbg then
+      print("andseq, found " .. #exorder .. " substates")
+      -- build a state->name lookup tab
+      local reg_lt = {}
+      rfsm.mapfsm(function (cs, p, n) reg_lt[cs] = n end, t, rfsm.is_csta, 1)
+      print("andseq, execution order:")
+      for i,st in ipairs(exorder) do print("\t", tostring(i) ..". " .. reg_lt[st]) end
+   end
 
    local sh_saved
    -- entry install a new step hook (removed in exit) that intercepts
@@ -127,30 +179,30 @@ function seqand:new(t)
 	      fsm.step_hook=function(fsm, events)
 			       if sh_saved then sh_saved() end
 			       if #events > 0 then
-				  rfsm.mapfsm(function (subfsm)
-						 rfsm.send_events(subfsm, unpack(events))
-					      end, t, rfsm.is_csta, 1)
+				  for _,subfsm in ipairs(exorder) do
+				     rfsm.send_events(subfsm, unpack(events))
+				  end
 			       end
 			    end
-	      rfsm.mapfsm(function (subfsm) rfsm.step(subfsm, t.step) end, t, rfsm.is_csta, 1)
+	      for _,subfsm in ipairs(exorder) do rfsm.step(subfsm, t.step) end
 	   end
 
    t.doo=function(fsm)
 	    while true do
-	       rfsm.mapfsm(function (subfsm)
-			      rfsm.step(subfsm, t.step)
-			   end, t, rfsm.is_csta, 1)
+	       for _,subfsm in ipairs(exorder) do rfsm.step(subfsm, t.step) end
 	       rfsm.yield(t.idle_doo)
 	    end
 	 end
 
    t.exit=function(fsm)
 	     fsm.stephook=sh_saved
-	     rfsm.mapfsm(function (subfsm)
-			    rfsm.exit_state(subfsm, subfsm)
-			    rfsm.reset(subfsm)
-			 end, t, rfsm.is_csta, 1) end
+	     for _,subfsm in ipairs(exorder) do
+		rfsm.exit_state(subfsm, subfsm)
+		rfsm.reset(subfsm)
+	     end
+	  end
    return t
 end
 
+-- nice constructor
 setmetatable(seqand, {__call=seqand.new})

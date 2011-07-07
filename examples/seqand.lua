@@ -8,6 +8,9 @@ require "fsmpp"
 return rfsm.csta {
    dbg=fsmpp.gen_dbgcolor2("parent"),
    and_state = rfsm_ext.seqand {
+      seqanddbg=true,
+      order = {'s2' },
+
       -- subfsm 1
       s1=rfsm.init(
 	 rfsm.csta {
