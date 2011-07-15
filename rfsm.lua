@@ -1248,6 +1248,9 @@ function step(fsm, n)
    local do_dec = true		-- if false n will not be decremented
    local curq = get_events(fsm) -- return table with all current events
 
+   -- low level pre-step hook
+   if fsm.pre_step_hook then fsm.pre_step_hook(fsm, curq) end
+
    -- entering fsm for the first time: it is impossible to exit it
    -- again, as there exist no transition targets outside of the
    -- FSM. What about root self transition?
