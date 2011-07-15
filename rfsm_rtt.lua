@@ -84,6 +84,23 @@ function gen_read_events(...)
 	  end
 end
 
+--- Generate an event raising function.
+--
+-- The generated function accepts zero to many arguments and writes
+-- them to the given port (and if the fsm argument is provided) to the
+-- internal queue of fsm.
+-- @param port outport to write events to
+-- @param fsm events are sent to this fsm's internal queue (optional)
+-- @return function to send events to the port
+function gen_raise_event(port, fsm)
+   assert(port, "No port specified")
+   return function (...) for
+	  _,e in ipairs{...} do port:write(e) end
+       if fsm then rfsm.send_events(fsm, ...) end
+    end
+end
+
+
 --- Generate a function which writes the fsm fqn to a port.
 --
 -- This function returns a function which takes a rfsm instance as the
