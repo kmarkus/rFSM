@@ -58,6 +58,7 @@ module("rfsm_rtt")
 -- dataports and return them in a table.
 --
 -- @param ... list of ports to read events from
+-- @return getevent function
 function gen_read_events(...)
 
    local function read_events(tgttab, port)
@@ -181,9 +182,10 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
 end
 
 
---- Launch a rFSM in a component
--- Will instantiate a Lua rFSM Component.
--- This is done in the following order: require "rttlib" and "rFSM",
+--- Launch a rFSM in a component.
+--
+-- Will first create a Lua rFSM Component.
+-- Next the following is done: require "rttlib" and "rFSM",
 -- set environment variable, execute prefile, setup outport for FSM
 -- status, load rFSM, define updateHook and finally execute postfile.
 -- @param argtab table with the some or more of the following fields:

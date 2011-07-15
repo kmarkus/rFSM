@@ -168,6 +168,10 @@ function is_fsmobj(s)
 end
 
 -- type predicates
+
+--- Check if state is of type simple/
+-- @param state
+-- @return true if yes, false otherwise
 function is_sista(s) return is_fsmobj(s) and s:type() == 'simple' end
 function is_csta(s)  return is_fsmobj(s) and s:type() == 'composite' end
 function is_trans(s) return is_fsmobj(s) and s:type() == 'transition' end
