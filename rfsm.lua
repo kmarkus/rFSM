@@ -648,9 +648,6 @@ function init(fsm_templ)
       fsm.getevents = function () return {} end
    end
 
-   -- old events are stored here for one step
-   fsm._oldevents={}
-
    -- run user preproc hooks
    for k,f in ipairs(preproc) do f(fsm) end
 
