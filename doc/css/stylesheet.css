@@ -1,9 +1,10 @@
 
 body
 {
-    margin:		0px;
+    margin:		auto;
     padding:		0px;
     font-family:	arial, sans-serif;
+    width: 99%; max-width:74.92em;
 }
 
 th
