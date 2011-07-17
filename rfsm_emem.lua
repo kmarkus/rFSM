@@ -1,12 +1,16 @@
---- rFSM memory extension.
--- This extensions adds "memory" to an rFSM chart. This is done by
--- adding a table <code>emem</code> to states.
+--- rFSM event memory extension.
+-- This extension adds "memory" of occured events to an rFSM
+-- chart. This is done maintaining a table <code>emem</code> for every
+-- state. The <code>emem</code> table is cleared when a state is
+-- exited by setting all values to 0.
 --
 -- Implementationwise a pre_step handler is installed that runs
 -- through the current active list and for each state sets
--- emem[event]+=1 .
--- Moreover, the exit function is extended to clear the
--- emem table of the state that is left.
+-- emem[event]+=1.  Moreover, the exit function is extended to clear
+-- the emem table of the state that is left. Event memory will
+-- automatically be used when this module is loaded. The only public
+-- function is <code>rfsm_emem.emem_reset>, which can be used to
+-- manually reset the event counters of the given state.
 --
 
 local rfsm = require("rfsm")
@@ -63,6 +67,8 @@ local function setup_emem(fsm)
       fsm.pre_step_hook=function (fsm) oldfun(fsm); update_emem_tabs(fsm); end
    end
 
+   -- clear emem counters in exit hooks
+   -- todo: this should also happen for root!
    rfsm.mapfsm(function (s, p)
 		  if s.exit then
 		     local oldexit = s.exit
@@ -74,12 +80,8 @@ local function setup_emem(fsm)
 		     s.exit = function (fsm, state, type) emem_reset(state) end
 		  end
 	       end, fsm, rfsm.is_sta)
-
-
-   -- install clearing of emem contents in exit hooks
-   -- todo!
-
 end
 
 
+-- install setup_emem as preproc hook
 rfsm.preproc[#rfsm.preproc+1] = setup_emem
