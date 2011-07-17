@@ -162,7 +162,7 @@ function is_fsmobj(s)
    local mt = getmetatable(s)
    if mt and  mt.__index then return true
    else
-      print("ERROR: no fsmobj: " .. table.concat(s, ',') .. " (interesting!)")
+      print("INFO: no fsmobj: " .. table.concat(s, ',') .. " (interesting!)")
       return false
    end
 end
@@ -237,8 +237,9 @@ end
 function map_from_to(fsm, func, from, to)
    local walker = from
    local res = {}
-   while walker ~= to do
+   while true do
       res[#res+1] = func(fsm, walker)
+      if walker == to then break end
       walker = walker._parent
    end
    return res
