@@ -72,6 +72,8 @@ preproc = {}
 -- required: -
 -- optional: entry, doo, exit
 sista = {}
+sista.rfsm=true
+
 function sista:type() return 'simple' end
 function sista:new(t)
    setmetatable(t, self)
@@ -88,6 +90,8 @@ setmetatable(sista, {__call=sista.new})
 -- disallowed: doo
 -- 'root' is a composite state which requires an 'initial' connector
 csta = {}
+csta.rfsm=true
+
 function csta:type() return 'composite' end
 function csta:new(t)
    setmetatable(t, self)
@@ -107,6 +111,8 @@ local function events2str(ev)
 end
 
 trans = {}
+trans.rfsm=true
+
 function trans:new(t)
    setmetatable(t, self)
    self.__index = self
@@ -140,6 +146,8 @@ end
 -- connector
 --
 conn = {}
+conn.rfsm=true
+
 function conn:type() return 'connector' end
 function conn:new(t)
    setmetatable(t, self)
@@ -158,13 +166,9 @@ load = dofile
 
 -- usefull predicates
 function is_fsmobj(s)
-   if type(s) ~= 'table' then return false end
    local mt = getmetatable(s)
-   if mt and  mt.__index then return true
-   else
-      print("INFO: no fsmobj: " .. table.concat(s, ',') .. " (interesting!)")
-      return false
-   end
+   if mt and mt.rfsm then return true
+   else return false end
 end
 
 -- type predicates
@@ -181,9 +185,7 @@ function is_sta(s)   return is_sista(s) or is_csta(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
 
 -- check for valid and initalized 'root'
-function is_root(s)
-   return is_csta(s) and s._id == 'root' and s._initialized
-end
+function is_root(s) return is_csta(s) and s._id == 'root' and s._initialized end
 
 -- type->char, e.g. 'Composite'-> 'C'
 function fsmobj_tochar(obj)
