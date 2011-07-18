@@ -139,8 +139,7 @@ function trans:__tostring()
 
    if self.pn then pn = ', pn=' .. tostring(self.pn) end
 
-   return "T={ src='" .. src .. "', tgt='" .. tgt .. pn .. "', events='" .. events2str(self.events) .. "' }"
-end
+   return "T={ src='" .. tostring(src) .. "', tgt='" .. tostring(tgt) .. pn .. "', events='" .. events2str(self.events) .. "' }" end
 
 --
 -- connector
