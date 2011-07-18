@@ -103,6 +103,7 @@ end
 
 --- Sequential AND state
 seqand = {}
+seqand.rfsm=true
 function seqand:type() return 'simple' end
 
 --- Sequential AND state (experimental)
