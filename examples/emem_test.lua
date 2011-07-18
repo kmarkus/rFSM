@@ -65,7 +65,7 @@ return rfsm.csta {
    rfsm.trans{ src='pong', tgt='ping',
 	       guard=function (tr)
 			local x = tr.src.emem.e_pong
-			if x and x > 40000 then return true end
+			if x and x > pong_max then return true end
 			return false
 		     end,
 	       effect=function() print("to ping") end },
