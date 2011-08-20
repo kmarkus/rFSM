@@ -107,7 +107,12 @@ setmetatable(csta, {__call=csta.new})
 --
 
 local function events2str(ev)
-   return table.concat(map(tostring, ev), ", ")
+   if not ev then return "{}"
+   elseif type(ev) == 'table' then
+      return table.concat(map(tostring, ev), ", ")
+   else
+      return tostring(ev)
+   end
 end
 
 trans = {}
@@ -186,6 +191,9 @@ function is_node(s)  return is_sta(s) or is_conn(s) end
 -- check for valid and initalized 'root'
 function is_root(s) return is_csta(s) and s._id == 'root' and s._initialized end
 
+-- a not but not root
+function is_nr_node(s) return is_node(s) and not is_root(s) end
+
 -- type->char, e.g. 'Composite'-> 'C'
 function fsmobj_tochar(obj)
    if not is_fsmobj(obj) then return end
@@ -229,6 +237,7 @@ function mapfsm(func, fsm, pred, depth)
 	     end
 	  end, states)
    end
+   if pred(fsm) then res[#res+1] = func(fsm, fsm, "root") end
    __mapfsm(fsm, depth)
    return res
 end
@@ -319,11 +328,13 @@ local function add_fqns(fsm)
    function __add_fqn(s, p)
       if not s._id then
 	 fsm.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p._fqn)
+      elseif s._id == 'root' and s._parent == s then
+	 s._fqn='root'
+      else
+	 s._fqn = p._fqn .. "." .. s._id
       end
-      s._fqn = p._fqn .. "." .. s._id
    end
 
-   fsm._fqn = fsm._id
    mapfsm(__add_fqn, fsm, is_node)
 end
 
@@ -515,10 +526,7 @@ function verify_early(fsm)
 	 fsm.err("ERROR: in composite " .. s.initial._fqn .. " is not of type connector but " .. s.initial:type())
 	 ret = false
       end
-      if s.final and not is_conn(s.final) then
-	 fsm.err("ERROR: in composite " .. s.final._fqn .. " is not of type connector but " .. s.initial:type())
-	 ret = false
-      end
+
       if s.doo then
 	 mes[#mes+1] = "WARNING: " .. s .. " 'doo' function in csta will never run"
       end
@@ -538,7 +546,7 @@ function verify_early(fsm)
 	 ret = false
       end
 
-      if not type(t.events) == 'table' then
+      if t.events and type(t.events) ~= 'table' then
 	 mes[#mes+1] = "ERROR: " .. tostring(t) .." 'events' field must be a table"
 	 ret = false
       end

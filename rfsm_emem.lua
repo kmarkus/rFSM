@@ -49,10 +49,6 @@ end
 --- Setup event memory for the given fsm.
 -- @param fsm initialized root fsm.
 local function setup_emem(fsm)
-
-   -- mapfsm does not call f() on the root itself.
-   fsm.emem={}
-
    -- create emem tables
    rfsm.mapfsm(function (s, p)
 		  print("setting emem tab in state " .. s._fqn)

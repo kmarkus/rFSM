@@ -79,7 +79,7 @@ function encode(fsm)
       elseif is_csta(s) then
 	 local tab = { id=s._id, type='composite' }
 	 tab.transitions = mapfsm(trans2tab, s, is_trans, 1)
-	 tab.subnodes = mapfsm(__rfsm2json, s, is_node, 1)
+	 tab.subnodes = mapfsm(__rfsm2json, s, rfsm.is_nr_node, 1)
 	 return tab
       end
    end

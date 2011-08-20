@@ -299,7 +299,10 @@ end
 --
 local function fsm2gh(root, caption)
    gh = new_gra(root._id, caption)
-   rfsm.mapfsm(function (s) proc_node(gh, s) end, root, rfsm.is_node)
+   rfsm.mapfsm(function (s)
+		  if rfsm.is_root(s) then return end
+		  proc_node(gh, s)
+	       end, root, rfsm.is_node)
    rfsm.mapfsm(function (t, p) proc_trans(gh, t, p) end, root, rfsm.is_trans)
    return gh
 end
