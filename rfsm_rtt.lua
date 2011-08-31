@@ -151,6 +151,10 @@ end
 function service_launch_rfsm(file, execstr_f, eehook, env)
    local s = {}
 
+   s[#s+1] = "require 'rttlib'"
+   s[#s+1] = "require 'rfsm'"
+   s[#s+1] = "require 'rfsm_rtt'"
+
    if env and type(env) == 'table' then
       for k,v in pairs(env) do s[#s+1] = k .. '=' .. '"' .. v .. '"' end
    end
