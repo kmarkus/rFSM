@@ -10,7 +10,7 @@ module('utils')
 
 -- increment major on API breaks
 -- increment minor on non breaking changes
-VERSION=0.7
+VERSION=0.8
 
 function append(car, ...)
    assert(type(car) == 'table')
@@ -86,7 +86,7 @@ end
 
 
 function pp(val)
-   if type(val) == 'table' then print(tab2str(val)) 
+   if type(val) == 'table' then print(tab2str(val))
    else print(val) end
 end
 
@@ -302,4 +302,26 @@ function proc_args(args)
       end
    end
    return res
+end
+
+--- Simple advice functionality
+-- If oldfun is not nil then returns a closure that invokes both
+-- oldfun and newfun. If newfun is called before or after oldfun
+-- depends on the where parameter, that can take the values of
+-- 'before' or 'after'.
+-- If oldfun is nil, newfun is returned.
+-- @param where string <code>before</code>' or <code>after</code>
+-- @param oldfun (can be nil)
+-- @param newfunc
+function advise(where, oldfun, newfun)
+   assert(where == 'before' or where == 'after',
+	  "advise: Invalid value " .. tostring(where) .. " for where")
+
+   if oldfun == nil then return newfun end
+
+   if where == 'before' then
+      return function (...) newfun(...); oldfun(...); end
+   else
+      return function (...) oldfun(...); newfun(...); end
+   end
 end
