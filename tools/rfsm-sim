@@ -3,4 +3,8 @@
 SCRIPT=$(readlink -f $0)
 SCRIPTPATH=`dirname $SCRIPT`
 
-env lua -i $SCRIPTPATH/rfsm-sim.lua $1
+if [ "x$LUA" = "x" ]; then
+    LUA=lua
+fi
+
+env $LUA -i $SCRIPTPATH/rfsm-sim.lua $1
