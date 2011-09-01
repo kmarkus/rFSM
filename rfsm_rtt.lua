@@ -154,6 +154,7 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
    s[#s+1] = "require 'rttlib'"
    s[#s+1] = "require 'rfsm'"
    s[#s+1] = "require 'rfsm_rtt'"
+   s[#s+1] = "require 'utils'"
 
    if env and type(env) == 'table' then
       for k,v in pairs(env) do s[#s+1] = k .. '=' .. '"' .. v .. '"' end
@@ -168,7 +169,7 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
 
    s[#s+1] = '_fsm = rfsm.load("' .. file .. '")'
    s[#s+1] = "fsm = rfsm.init(_fsm)"
-   s[#s+1] = "fsm.step_hook = setfqn"
+   s[#s+1] = "fsm.step_hook = utils.advise('after', fsm.step_hook, setfqn)"
    s[#s+1] = [[ function trigger()
 		   rfsm.step(fsm)
 		   return true
