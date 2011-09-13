@@ -357,6 +357,16 @@ local function add_defconn(fsm)
    mapfsm(__add_trans_defconn, fsm, is_trans)
 end
 
+--- Set event table t[event]=true of each event.
+-- @param fsm initialized root fsm.
+local function index_events(fsm)
+   mapfsm(function (tr, p)
+	     if tr.events then
+		for i,e in ipairs(tr.events) do tr.events[e]=true end
+	     end
+	  end, fsm, is_trans)
+end
+
 ----------------------------------------
 -- build a table for each node of all outgoing transitions in node._otrs
 local function add_otrs(fsm)
@@ -664,6 +674,10 @@ function init(fsm_templ)
 
    -- run user preproc hooks
    for k,f in ipairs(preproc) do f(fsm) end
+
+   -- This has to take place so late because some preproc hooks might
+   -- transform events (e.g. timeevent)
+   index_events(fsm)
 
    -- All OK!
    fsm._initialized = true
@@ -1102,17 +1116,8 @@ end
 -- important: no events is "null event"
 local function is_enabled(fsm, tr, events)
 
-   local function is_member(list, e)
-      for _,v in ipairs(list) do
-	 if v==e then return true end
-      end
-      return false
-   end
-
    local function is_triggered(tr_ev, evq)
-      for _,v in ipairs(evq) do
-	 if is_member(tr_ev, v) then return true end
-      end
+      for _,e in ipairs(evq) do if tr_ev[e] then return true end end
       return false
    end
 
