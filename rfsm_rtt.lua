@@ -191,12 +191,13 @@ end
 --
 -- Will first create a Lua rFSM Component.
 -- Next the following is done: require "rttlib" and "rFSM",
--- set environment variable, execute prefile, setup outport for FSM
+-- set environment variables, execute prefile, setup outport for FSM
 -- status, load rFSM, define updateHook and finally execute postfile.
 -- @param argtab table with the some or more of the following fields:
 --    - fsmfile rFSM file (required)
 --    - name of component to be create (required)
 --    - deployer deployer to use for creating LuaComponent (required)
+--    - luatype type of lua component to create. (default: OCL::LuaComponent)
 --    - sync boolean flag. If true rfsm.step() will be called in updateHook, otherwise rfsm.run(). default=false.
 --    - prefile Lua script file executed before loading rFSM for preparing the environment.
 --    - postfile Lua script file executed after loading rFSM.
@@ -207,12 +208,16 @@ function component_launch_rfsm(argtab)
    assert(type(argtab.fsmfile) == 'string', "No 'fsmfile' specified")
    assert(type(argtab.deployer) == 'userdata', "No 'deployer' provided")
 
+   if not argtab.luatype then
+      argtab.luatype = "OCL::LuaComponent"
+   end
+
    local depl=argtab.deployer
    local name=argtab.name
    local fsmfile=argtab.fsmfile
 
-   if not depl:loadComponent(name, "OCL::LuaComponent") then
-      error("Failed to create LuaComponent")
+   if not depl:loadComponent(name, argtab.luatype) then
+      error("Failed to create lua component (" .. argtab.luatype .. ")")
    end
 
    comp=depl:getPeer(name)
@@ -224,6 +229,7 @@ function component_launch_rfsm(argtab)
    s[#s+1] = "require 'rttlib'"
    s[#s+1] = "require 'rfsm'"
    s[#s+1] = "require 'rfsm_rtt'"
+   s[#s+1] = "require 'utils'"
 
    if env and type(env) == 'table' then
       for k,v in pairs(env) do s[#s+1] = k .. '=' .. '"' .. v .. '"' end
@@ -243,7 +249,8 @@ function component_launch_rfsm(argtab)
 
    s[#s+1] = ([[_fsm = rfsm.load('%s')
 		    fsm = rfsm.init(_fsm)
-		    fsm.step_hook = setfqn]]):format(fsmfile)
+		    fsm.step_hook = utils.advise('after', fsm.step_hook, setfqn)
+	      ]]):format(fsmfile)
 
    if argtab.sync then
       s[#s+1] = "function updateHook() rfsm.step(fsm) end"
