@@ -53,4 +53,4 @@ local test = {
 
 fsm = rfsm.init(testfsm, "composite_nested_tests")
 
-fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, true))
+fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, false))

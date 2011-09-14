@@ -45,4 +45,4 @@ if not jc then
    os.exit(1)
 end
 
-fsmtesting.print_stats(fsmtesting.test_fsm(jc, test, true))
+fsmtesting.print_stats(fsmtesting.test_fsm(jc, test, false))

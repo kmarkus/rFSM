@@ -54,7 +54,7 @@ local csta = sista
 
 module("fsmtesting", package.seeall)
 
-local verbose = false
+verbose = false
 
 -- output
 local function stdout(...)
@@ -62,7 +62,7 @@ local function stdout(...)
 end
 
 local function stderr(...)
-   utils.stderr(unpack(arg))
+   utils.stderr(...)
 end
 
 function activate_sista(fsm, node, mode)

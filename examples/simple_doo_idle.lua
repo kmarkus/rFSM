@@ -2,8 +2,6 @@
 
 return  rfsm.csta{
 
-   dbg = fsmpp.gen_dbgcolor("fsmtest_simple"),
-
    on = rfsm.sista{},
    off = rfsm.sista{},
    busy = rfsm.sista{ doo=function() rfsm.yield(true) end },

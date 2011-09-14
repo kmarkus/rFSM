@@ -42,4 +42,4 @@ local test = {
 
 
 fsm = rfsm.init(testfsm, "simple_test")
-fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, true))
+fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, false))
