@@ -166,7 +166,6 @@ composite_state = csta
 connector = conn
 transition = trans
 yield = coroutine.yield
-load = dofile
 
 -- usefull predicates
 function is_fsmobj(s)
@@ -211,6 +210,20 @@ local function is_connected(src, tgt)
    end
    return false
 end
+
+
+--- Load fsm from file.
+-- The file must contain an rfsm simple or composite state that is returned.
+-- @param file name of file
+-- @return uninitalized fsm.
+function load(file)
+   local fsm = dofile(file)
+   if not is_sta(fsm) then
+      error("rfsm.load: no valid rfsm in file '" .. tostring(file) .. "'")
+   end
+   return fsm
+end
+
 
 --- Apply func to all fsm elements for which pred is true
 -- func accepts three arguments: the model element, its fsm parent and
@@ -533,7 +546,7 @@ function verify_early(fsm)
    local function check_csta(s, p)
       local ret = true
       if s.initial and not is_conn(s.initial) then
-	 fsm.err("ERROR: in composite " .. s.initial._fqn .. " is not of type connector but " .. s.initial:type())
+	 fsm.err("ERROR: in composite " .. p._fqn .. ".initial is not of type connector but " .. s.initial:type())
 	 ret = false
       end
 
