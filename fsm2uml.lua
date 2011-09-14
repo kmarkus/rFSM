@@ -57,7 +57,6 @@ param.err = print
 param.warn = print
 param.dbg = function () return true end
 
-
 -- setup common properties
 local function set_props(h)
    gv.setv(h, "fixedsize", "false")
@@ -150,7 +149,7 @@ local function new_conn(gh, conn)
    gv.setv(nh, "label", conn._id)
    gv.setv(nh, "fixedsize", "true")
 
-   param.dbg("creating new conntion " .. conn._fqn)
+   param.dbg("creating new connector " .. conn._fqn)
    return nh
 end
 
