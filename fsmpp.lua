@@ -94,6 +94,7 @@ function fsm2str(fsm, ind)
 end
 
 
+--- Debug message colors.
 local ctab = {
    STATE_ENTER = ac.green,
    STATE_EXIT = ac.red,
@@ -106,21 +107,15 @@ local ctab = {
    TIMEEVENT = ac.yellow .. ac.bright
 }
 
--- colorized dbg replacement function
+--- Colorized fsm.dbg hook replacement.
 function dbgcolor(name, ...)
    local str = ""
-
-   if not type(arg) == 'table' then
-      return
-   end
+   local args = { ... }
 
    if name then str = ac.cyan .. ac.bright .. name .. ":" .. ac.reset .. '\t' end
 
-   arg.n = nil -- argh !
-
    -- convert nested tables to strings
-   ptab = utils.map(function (e) return utils.tab2str(e) end, arg)
-
+   ptab = utils.map(utils.tab2str, args)
    col = ctab[ptab[1]]
 
    if col ~= nil then
@@ -131,26 +126,18 @@ function dbgcolor(name, ...)
    print(str)
 end
 
--- generate a debugcolor printer function which prints the name
-function gen_dbgcolor2(name)
+--- Generate a configurable dbgcolor function.
+-- @param name string name to prepend to printed message.
+-- @param ftab table of the dbg ids to print.
+-- @param defshow if false fields not mentioned in ftab are not shown. If true they are.
+function gen_dbgcolor(name, ftab, defshow)
    name = name or "<unnamed SM>"
-   return function (...) dbgcolor(name, ...) end
-end
+   ftab = ftab or {}
+   if defshow == nil then defshow = true end
 
--- generate a dbgcolor function
-function gen_dbgcolor(ftab, defshow)
-
-   return function (...)
-	     local tag = arg[1]
-	     arg.n = nil
-	     if ftab[tag] == true then
-		dbgcolor(unpack(arg))
-	     elseif ftab[tag] == false then
-		return
-	     else
-		if ftab['*'] then
-		   dbgcolor(unpack(arg))
-		end
-	     end
+   return function (tag, ...)
+	     if ftab[tag] == true then dbgcolor(name, tag, ...)
+	     elseif ftab[tag] == false then return
+	     else if defshow then dbgcolor(name, tag, ...) end end
 	  end
 end

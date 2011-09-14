@@ -4,6 +4,7 @@
 
 require "rfsm"
 require "rfsm_timeevent"
+require "rtp"
 
 if rtt then
    require "rttlib"
@@ -17,13 +18,17 @@ else
       print("falling back on low resolution Lua time")
       function gettime() return os.time(), 0 end
    end
+
+
+function gettime()
+   return rtp.clock.gettime("CLOCK_MONOTONIC")
 end
 
 rfsm_timeevent.set_gettime_hook(gettime)
 
 return rfsm.csta {
-   -- only for rfsm-sim
    dbg=true,
+   -- only for rfsm-sim
    idle_hook=function() uml(); os.execute("sleep 0.5") end,
 
    one = rfsm.sista{},
@@ -39,4 +44,3 @@ return rfsm.csta {
    rfsm.trans{ src='four', tgt='five', events={ 'e_after(3)' } },
    rfsm.trans{ src='five', tgt='one', events={ 'e_after(4.5)' } },
 }
-

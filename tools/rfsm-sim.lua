@@ -26,7 +26,7 @@ end
 -- debugging
 function dbg(on_off)
    if not on_off then fsm.dbg=function(...) return end
-   else fsm.dbg=fsmpp.gen_dbgcolor2(file) end
+   else fsm.dbg=fsmpp.gen_dbgcolor(file) end
 end
 
 -- operational
