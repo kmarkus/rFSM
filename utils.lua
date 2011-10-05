@@ -10,7 +10,7 @@ module('utils')
 
 -- increment major on API breaks
 -- increment minor on non breaking changes
-VERSION=0.8
+VERSION=0.9
 
 function append(car, ...)
    assert(type(car) == 'table')
@@ -98,6 +98,21 @@ end
 function rpad(str, len, char)
    if char == nil then char = ' ' end
    return str .. string.rep(char, len - #str)
+end
+
+--- Convert string to string of fixed lenght.
+-- Will either pad with whitespace if too short or will cut of tail if
+-- too long. If dots is true add '...' to truncated string.
+-- @param str string
+-- @param len lenght to set to.
+-- @param dots boolean, if true append dots to truncated strings.
+-- @return processed string.
+function strsetlen(str, len, dots)
+   if string.len(str) > len and dots then
+      return string.sub(str, len - 3) .. "..."
+   elseif string.len(str) > len then
+      return string.sub(str, len)
+   else return rpad(str, len, ' ') end
 end
 
 function stderr(...)
