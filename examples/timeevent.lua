@@ -18,7 +18,7 @@ else
       print("falling back on low resolution Lua time")
       function gettime() return os.time(), 0 end
    end
-
+end
 
 function gettime()
    return rtp.clock.gettime("CLOCK_MONOTONIC")
