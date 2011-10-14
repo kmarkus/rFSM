@@ -907,6 +907,8 @@ end
 -- @param state state to exit
 function exit_state(fsm, state)
 
+   if not is_sta(state) then return end  -- don't try to exit connectors.
+
    -- if composite exit child states first
    if is_csta(state) then exit_state(fsm, actchild_get(state)) end
 
@@ -928,7 +930,6 @@ function exit_state(fsm, state)
       -- don't cleanup coroutine, could be used later
       if is_sista(state) then fsm._act_leaf = false end
    end
-
    fsm.dbg("STATE_EXIT", state._fqn)
 end
 
