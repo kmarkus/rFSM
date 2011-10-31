@@ -1,11 +1,11 @@
-#+TITLE:	@<img src="./rFSM\_logo.jpg" width="50%" height="50%" alt="rFSM logo" /@> @<br/@>@<br/@>v1.0-beta3
+#+TITLE:	@<img src="./rFSM\_logo.jpg" width="50%" height="50%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta3
 #+AUTHOR:	Markus Klotzbuecher
 #+EMAIL:	markus.klotzbuecher@mech.kuleuven.be
 #+DATE:		[2011-10-31 Mon]
-#+DESCRIPTION:
-#+KEYWORDS:
+#+DESCRIPTION:  Documentation of rFSM Statecharts.
+#+KEYWORDS:	Coordination, Statcharts, Robotics, Real-Time, Lua,
 #+LANGUAGE:	en
-#+OPTIONS:	H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:	H:3 num:t toc:t \n:nil @:t ::t |:t ^:f -:t f:t *:t <:t
 #+OPTIONS:	TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
 #+INFOJS_OPT:	view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 #+EXPORT_SELECT_TAGS: export
@@ -462,7 +462,7 @@
 
    Functions to define rFSM:
 
-   | *Function*           | *short alias* | *description*            |
+   | *Function*           | *Short alias* | *Description*            |
    |----------------------+---------------+--------------------------|
    | =simple\_state{}=    | =sista{}=     | create a simple state    |
    | =composite\_state{}= | =csta{}=      | create a composite state |
@@ -473,7 +473,7 @@
 
 ** Operational functions
    
-   | Function                      | description                                          |
+   | *Function*                    | *Description*                                        |
    |-------------------------------+------------------------------------------------------|
    | =fsm rfsm.init(fsmmodel)=     | create an inialized rfsm instance from model         |
    | =idle rfsm.step(fsm, n)=      | attempt to transition FSM n times. Default: once     |
@@ -487,7 +487,7 @@
    composite state and allow to refine various behavior of the state
    machine.
    
-   | function            | description                                                                      |
+   | *Function*          | *Description*                                                                    |
    |---------------------+----------------------------------------------------------------------------------|
    | =dbg=               | called to output debug information. Set to false to disable. Default false.      |
    | =info=              | called to output informational messages. Set to false to disable. Default stdout |
@@ -498,7 +498,7 @@
 
    Low level hooks (not for normal use):
 
-   | function               | description                                             |
+   | *Function*             | *Description*                                           |
    |------------------------+---------------------------------------------------------|
    | =pre\_step\_hook(fsm)= | is called for each step (mostly for debugging purposes) |
    | =step\_hook(fsm)=      | called before for each step                             |
@@ -662,35 +662,35 @@
      The =rfsm-viz= command line uses these modules to generate
      pictures.
 
-*** =rfsm-viz=: command line front end to fsm2uml/fsm2tree
+** =rfsm-viz=: command line front end to fsm2uml/fsm2tree
 
-      to generate all possible formats run:
+     to generate all possible formats run:
 
-      #+begin_src sh
-      $ tools/rfsm-viz all examples/composite_nested.lua
-      #+end_src
+     #+begin_src sh
+     $ tools/rfsm-viz all examples/composite_nested.lua
+     #+end_src
 
-      generates various representations (in =examples/=)
+     generates various representations (in =examples/=)
 
-*** =rfsm-sim= simple rfsm simulator
+** =rfsm-sim= simple rfsm simulator
 
-      small command line simulator for running a fsm
-      interactively.
+     small command line simulator for running a fsm
+     interactively.
 
-      #+begin_src sh
-      $ tools/rfsm-sim all examples/ball_tracker_scope.lua
-      #+end_src
+     #+begin_src sh
+     $ tools/rfsm-sim all examples/ball_tracker_scope.lua
+     #+end_src
 
-      It requires an image viewer which automatically updates once the
-      file displayed changes. For example =evince= works nicely.
+     It requires an image viewer which automatically updates once the
+     file displayed changes. For example =evince= works nicely.
 
-*** Lua fsm to json conversion (=rfsm2json= command line tool)
+** Lua fsm to json conversion (=rfsm2json= command line tool)
 
-    Based on =rfsm2json.lua= module and requires lua-json.
+   Based on =rfsm2json.lua= module and requires lua-json.
 
-*** =rfsm\_rtt= Useful functions for using rFSM with OROCOS rtt
-    
-    See the Orocos [[http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook][LuaCookbook]] for more details.
+** =rfsm\_rtt= Useful functions for using rFSM with OROCOS rtt
+   
+   See the Orocos [[http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook][LuaCookbook]] for more details.
 
 * More examples, tips and tricks
 ** A more complete example

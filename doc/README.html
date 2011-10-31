@@ -4,13 +4,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
 lang="en" xml:lang="en">
 <head>
-<title><img src="./rFSM_logo.jpg" width="50%" height="50%" alt="rFSM logo" /@> <br/@><br/@>v1.0-beta3</title>
+<title><img src="./rFSM_logo.jpg" width="50%" height="50%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta3</title>
 <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
 <meta name="generator" content="Org-mode"/>
 <meta name="generated" content="[2011-10-31 Mon]"/>
 <meta name="author" content="Markus Klotzbuecher"/>
-<meta name="description" content=""/>
-<meta name="keywords" content=""/>
+<meta name="description" content="Documentation of rFSM Statecharts."/>
+<meta name="keywords" content="Coordination, Statcharts, Robotics, Real-Time, Lua,"/>
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
   html { font-family: Times, serif; font-size: 12pt; }
@@ -82,7 +82,7 @@ lang="en" xml:lang="en">
 <body>
 <div id="content">
 
-<h1 class="title"><img src="./rFSM_logo.jpg" width="50%" height="50%" alt="rFSM logo" /@> <br/@><br/@>v1.0-beta3</h1>
+<h1 class="title"><img src="./rFSM_logo.jpg" width="50%" height="50%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta3</h1>
 
 
 <div id="table-of-contents">
@@ -119,13 +119,11 @@ lang="en" xml:lang="en">
 <li><a href="#sec-9-1">9.1 The event memory extension (<code>rfsm_emem</code> module) </a></li>
 <li><a href="#sec-9-2">9.2 Timeevents (<code>rfsm_timeevent</code> module) </a></li>
 <li><a href="#sec-9-3">9.3 Configurable and colorized <code>dbg</code> info (<code>fsmpp</code> module) </a></li>
-<li><a href="#sec-9-4">9.4 Generate graphical representations (<code>fsm2uml</code> and <code>fsm2dbg</code> modules) </a>
-<ul>
-<li><a href="#sec-9-4-1">9.4.1 <code>rfsm-viz</code>: command line front end to fsm2uml/fsm2tree </a></li>
-<li><a href="#sec-9-4-2">9.4.2 <code>rfsm-sim</code> simple rfsm simulator </a></li>
-<li><a href="#sec-9-4-3">9.4.3 Lua fsm to json conversion (<code>rfsm2json</code> command line tool) </a></li>
-<li><a href="#sec-9-4-4">9.4.4 <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt </a></li>
-</ul></li>
+<li><a href="#sec-9-4">9.4 Generate graphical representations (<code>fsm2uml</code> and <code>fsm2dbg</code> modules) </a></li>
+<li><a href="#sec-9-5">9.5 <code>rfsm-viz</code>: command line front end to fsm2uml/fsm2tree </a></li>
+<li><a href="#sec-9-6">9.6 <code>rfsm-sim</code> simple rfsm simulator </a></li>
+<li><a href="#sec-9-7">9.7 Lua fsm to json conversion (<code>rfsm2json</code> command line tool) </a></li>
+<li><a href="#sec-9-8">9.8 <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt </a></li>
 </ul>
 </li>
 <li><a href="#sec-10">10 More examples, tips and tricks </a>
@@ -832,7 +830,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <colgroup><col class="left" /><col class="left" /><col class="left" />
 </colgroup>
 <thead>
-<tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>short alias</b></th><th scope="col" class="left"><b>description</b></th></tr>
+<tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Short alias</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
 <tr><td class="left"><code>simple_state{}</code></td><td class="left"><code>sista{}</code></td><td class="left">create a simple state</td></tr>
@@ -859,7 +857,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <colgroup><col class="left" /><col class="left" />
 </colgroup>
 <thead>
-<tr><th scope="col" class="left">Function</th><th scope="col" class="left">description</th></tr>
+<tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
 <tr><td class="left"><code>fsm rfsm.init(fsmmodel)</code></td><td class="left">create an inialized rfsm instance from model</td></tr>
@@ -890,7 +888,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <colgroup><col class="left" /><col class="left" />
 </colgroup>
 <thead>
-<tr><th scope="col" class="left">function</th><th scope="col" class="left">description</th></tr>
+<tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
 <tr><td class="left"><code>dbg</code></td><td class="left">called to output debug information. Set to false to disable. Default false.</td></tr>
@@ -911,7 +909,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <colgroup><col class="left" /><col class="left" />
 </colgroup>
 <thead>
-<tr><th scope="col" class="left">function</th><th scope="col" class="left">description</th></tr>
+<tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
 <tr><td class="left"><code>pre_step_hook(fsm)</code></td><td class="left">is called for each step (mostly for debugging purposes)</td></tr>
@@ -1209,16 +1207,17 @@ fsm2tree.fsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style="
      The <code>rfsm-viz</code> command line uses these modules to generate
      pictures.
 </p>
+</div>
 
 </div>
 
-<div id="outline-container-9-4-1" class="outline-4">
-<h4 id="sec-9-4-1"><span class="section-number-4">9.4.1</span> <code>rfsm-viz</code>: command line front end to fsm2uml/fsm2tree </h4>
-<div class="outline-text-4" id="text-9-4-1">
+<div id="outline-container-9-5" class="outline-3">
+<h3 id="sec-9-5"><span class="section-number-3">9.5</span> <code>rfsm-viz</code>: command line front end to fsm2uml/fsm2tree </h3>
+<div class="outline-text-3" id="text-9-5">
 
 
 <p>
-      to generate all possible formats run:
+     to generate all possible formats run:
 </p>
 
 
@@ -1231,20 +1230,20 @@ fsm2tree.fsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style="
 
 
 <p>
-      generates various representations (in <code>examples/</code>)
+     generates various representations (in <code>examples/</code>)
 </p>
 </div>
 
 </div>
 
-<div id="outline-container-9-4-2" class="outline-4">
-<h4 id="sec-9-4-2"><span class="section-number-4">9.4.2</span> <code>rfsm-sim</code> simple rfsm simulator </h4>
-<div class="outline-text-4" id="text-9-4-2">
+<div id="outline-container-9-6" class="outline-3">
+<h3 id="sec-9-6"><span class="section-number-3">9.6</span> <code>rfsm-sim</code> simple rfsm simulator </h3>
+<div class="outline-text-3" id="text-9-6">
 
 
 <p>
-      small command line simulator for running a fsm
-      interactively.
+     small command line simulator for running a fsm
+     interactively.
 </p>
 
 
@@ -1257,34 +1256,33 @@ fsm2tree.fsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style="
 
 
 <p>
-      It requires an image viewer which automatically updates once the
-      file displayed changes. For example <code>evince</code> works nicely.
+     It requires an image viewer which automatically updates once the
+     file displayed changes. For example <code>evince</code> works nicely.
 </p>
 </div>
 
 </div>
 
-<div id="outline-container-9-4-3" class="outline-4">
-<h4 id="sec-9-4-3"><span class="section-number-4">9.4.3</span> Lua fsm to json conversion (<code>rfsm2json</code> command line tool) </h4>
-<div class="outline-text-4" id="text-9-4-3">
+<div id="outline-container-9-7" class="outline-3">
+<h3 id="sec-9-7"><span class="section-number-3">9.7</span> Lua fsm to json conversion (<code>rfsm2json</code> command line tool) </h3>
+<div class="outline-text-3" id="text-9-7">
 
 
 <p>
-    Based on <code>rfsm2json.lua</code> module and requires lua-json.
+   Based on <code>rfsm2json.lua</code> module and requires lua-json.
 </p>
 </div>
 
 </div>
 
-<div id="outline-container-9-4-4" class="outline-4">
-<h4 id="sec-9-4-4"><span class="section-number-4">9.4.4</span> <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt </h4>
-<div class="outline-text-4" id="text-9-4-4">
+<div id="outline-container-9-8" class="outline-3">
+<h3 id="sec-9-8"><span class="section-number-3">9.8</span> <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt </h3>
+<div class="outline-text-3" id="text-9-8">
 
 
-<p>    
-    See the Orocos <a href="http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook">LuaCookbook</a> for more details.
+<p>   
+   See the Orocos <a href="http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook">LuaCookbook</a> for more details.
 </p>
-</div>
 </div>
 </div>
 
