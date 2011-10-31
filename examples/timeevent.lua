@@ -1,5 +1,7 @@
 --
 -- Simple timeevent demo that shows how to write portable FSM.
+-- The rtp module is available here
+-- https://github.com/kmarkus/rtp.gitg 
 --
 
 require "rfsm"
