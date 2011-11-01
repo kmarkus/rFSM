@@ -47,20 +47,6 @@
     export LUA_PATH="$LUA_PATH;/home/mk/src/git/rfsm/?.lua"
   #+end_src
 
-* Quickstart
-
-  1. define an rfsm state machine (see =examples/hello_world.lua=)
-  2. define a context script to execute it (see =examples/runscript.lua=)
-  3. run it
-     #+begin_src sh
-       lua examples/runscript.lua
-       INFO: created undeclared connector root.initial
-       hello
-       world
-       hello
-       world
-     #+end_src
-
 * Introduction
 
   rFSM is minimal Statechart flavour designed for /Coordinating/ of
@@ -457,56 +443,6 @@
   =rfsm.send_events(fsm, e1, e2, ...)= can be used. The first argument
   is the fsm to which all subsequent event arguments are sent to.
 
-* API Summary
-** State specification
-
-   Functions to define rFSM:
-
-   |                     |               |                          |
-   | *Function*          | *Short alias* | *Description*            |
-   |---------------------+---------------+--------------------------|
-   | =simple_state{}=    | =sista{}=     | create a simple state    |
-   | =composite_state{}= | =csta{}=      | create a composite state |
-   | =connector{}=       | =conn{}=      | create a connector       |
-   | =transition{}=      | =trans{}=     | create a transition      |
-
-  
-
-** Operational functions
-   
-   |                              |                                                      |
-   | *Function*                   | *Description*                                        |
-   |------------------------------+------------------------------------------------------|
-   | =fsm rfsm.init(fsmmodel)=    | create an initialized rfsm instance from model       |
-   | =idle rfsm.step(fsm, n)=     | attempt to transition FSM n times. Default: once     |
-   | =rfsm.run(fsm)=              | run FSM until it goes idle                           |
-   | =rfsm.send_events(fsm, ...)= | send one or more events to internal rfsm event queue |
-
-
-** Hooks
-
-   The following hook functions can be defined for a toplevel
-   composite state and allow to refine various behavior of the state
-   machine.
-   
-   | *Function*          | *Description*                                                                      |
-   |---------------------+------------------------------------------------------------------------------------|
-   | =dbg=               | called to output debug information. Set to false to disable. Default: false.       |
-   | =info=              | called to output informational messages. Set to false to disable. Default: stdout. |
-   | =warn=              | called to output warnings. Set to false to disable. Default stderr.                |
-   | =err=               | called to output errors. Set to false to disable. Default stderr.                  |
-   | =table getevents()= | function which returns a table of new events which have occurred.                  |
-
-
-   Low level hooks (not for normal use):
-
-   | *Function*           | *Description*                                           |
-   |----------------------+---------------------------------------------------------|
-   | =pre_step_hook(fsm)= | is called for each step (mostly for debugging purposes) |
-   | =step_hook(fsm)=     | called before for each step                             |
-   | =idle_hook(fsm)=     | called *instead* of returning from step/run functions   |
-
-
 * Common pitfalls
 
   1. Name clashes between state/connector names with reserved Lua
@@ -805,6 +741,59 @@
 
 ** Using rfsm with Orocos RTT
    The [[http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook][LuaCookbook]] page describes how to do this.
+
+* API Summary
+** State specification
+
+   Functions to define rFSM:
+
+   |                     |               |                          |
+   | *Function*          | *Short alias* | *Description*            |
+   |---------------------+---------------+--------------------------|
+   | =simple_state{}=    | =sista{}=     | create a simple state    |
+   | =composite_state{}= | =csta{}=      | create a composite state |
+   | =connector{}=       | =conn{}=      | create a connector       |
+   | =transition{}=      | =trans{}=     | create a transition      |
+
+  
+
+** Operational functions
+   
+   |                              |                                                      |
+   | *Function*                   | *Description*                                        |
+   |------------------------------+------------------------------------------------------|
+   | =fsm rfsm.init(fsmmodel)=    | create an initialized rfsm instance from model       |
+   | =idle rfsm.step(fsm, n)=     | attempt to transition FSM n times. Default: once     |
+   | =rfsm.run(fsm)=              | run FSM until it goes idle                           |
+   | =rfsm.send_events(fsm, ...)= | send one or more events to internal rfsm event queue |
+
+
+** Hooks
+
+   The following hook functions can be defined for a toplevel
+   composite state and allow to refine various behavior of the state
+   machine.
+   
+   | *Function*          | *Description*                                                                      |
+   |---------------------+------------------------------------------------------------------------------------|
+   | =dbg=               | called to output debug information. Set to false to disable. Default: false.       |
+   | =info=              | called to output informational messages. Set to false to disable. Default: stdout. |
+   | =warn=              | called to output warnings. Set to false to disable. Default stderr.                |
+   | =err=               | called to output errors. Set to false to disable. Default stderr.                  |
+   | =table getevents()= | function which returns a table of new events which have occurred.                  |
+
+
+   Low level hooks (not for normal use):
+
+   | *Function*           | *Description*                                           |
+   |----------------------+---------------------------------------------------------|
+   | =pre_step_hook(fsm)= | is called for each step (mostly for debugging purposes) |
+   | =step_hook(fsm)=     | called before for each step                             |
+   | =idle_hook(fsm)=     | called *instead* of returning from step/run functions   |
+
+
+
+
 * Contact
 
   Please direct questions, bugs or improvements to the [[http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users][orocos-users]]
