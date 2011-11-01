@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
 lang="en" xml:lang="en">
 <head>
-<title><img src="./rFSM_logo.jpg" width="50%" height="50%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta3</title>
+<title><img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta3</title>
 <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
 <meta name="generator" content="Org-mode"/>
 <meta name="generated" content="[2011-10-31 Mon]"/>
@@ -82,7 +82,7 @@ lang="en" xml:lang="en">
 <body>
 <div id="content">
 
-<h1 class="title"><img src="./rFSM_logo.jpg" width="50%" height="50%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta3</h1>
+<h1 class="title"><img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta3</h1>
 
 
 <div id="table-of-contents">
@@ -242,20 +242,19 @@ world
   complex systems such as robots. It has the following features:
 </p>
 <ul>
-<li>hierarchical (composite) states
+<li>Hierarchical (composite) states
 </li>
-<li>completion events
+<li>Completion events
 </li>
-<li>States can be parametrized and reused
+<li>Parametrizable and reusable states
 </li>
-<li>It is easy to build statemachines by composing existing
-    states/state machines.
+<li>Easy to build statemachines by composing existing states/state machines
 </li>
 <li>Plugin mechanism permits extending the core engine. Available
     plugins include timeevents, event memory, sequential AND states
     and more.
 </li>
-<li>real-time safe operation possible using lua-tlsf
+<li>Real-time safe operation possible using lua-tlsf/rtp<sup><a class="footref" name="fnr.1" href="#fn.1">1</a></sup>
 </li>
 </ul>
 
@@ -518,20 +517,21 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <p>
-    This <code>doo</code> will check a certain condition repeatedly and raise
-    an event if it is true. After that control is returned to the
-    rFSM core.
+    This <code>doo</code> will check a certain condition repeatedly and raise the
+    "e_close_obj" event if it is true. Each cycle the control is
+    returned to the rFSM core by calling <code>rfsm.yield()</code>.
 </p>
 <p>
     <code>rfsm.yield(idle_flag)</code> accepts a boolean argument (called the
-    "idle flag") to influence the <code>doo</code> execution behavior by the rFSM
-    core: if true it will cause the rFSM core to go idle if there are
-    no other events. If false (the default if no argument given) and
-    there are no other events, <code>doo</code> will be called in a tight
-    loop. It depends on the application which idle<sub>flag</sub> is
-    appropriate. In general the idle<sub>flag</sub> should only be true if the
-    intention is that the <code>doo</code> function is executed as fast as
-    possible, as this mode will consume a lot of CPU!
+    "idle flag") that influences the <code>doo</code> execution behavior by the
+    rFSM core: if true it will cause the rFSM core to go idle provided
+    there are no other events. If false (the default<sup><a class="footref" name="fnr.2" href="#fn.2">2</a></sup> if no
+    arguments are given) and there are no other events, <code>doo</code> will be
+    called in a tight loop. It depends on each application which
+    idle_flag is appropriate. In general the idle_flag should always
+    be true unless the intention is that the <code>doo</code> function is
+    executed as fast as possible (potentially consuming a lot of
+    CPU!).  reason to choose this default is
 </p>
 </div>
 
@@ -702,7 +702,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
    are true).
 </p>
 <p>
-   See the examples <code>connector_simple.lua</code> and
+   Also see the examples <code>connector_simple.lua</code> and
    <code>connector_split.lua</code>.
 </p>
 <p>
@@ -712,23 +712,23 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </p>
 
 
-<pre class="src src-lua"><span class="linenr"> 1:  </span><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta{
-<span class="linenr"> 2:  </span>  software_err = rfsm.sista{},
-<span class="linenr"> 3:  </span>  hardware_err = rfsm.sista{},
-<span class="linenr"> 4:  </span>
-<span class="linenr"> 5:  </span>  initial = rfsm.conn{},     <span style="color: #cd0000;">-- </span><span style="color: #cd0000;">not necessary, 'initial' is created automatically</span>
-<span class="linenr"> 6:  </span>  recovered = rfsm.conn{},
-<span class="linenr"> 7:  </span>  failed = rfsm.conn{},
-<span class="linenr"> 8:  </span>
-<span id="coderef-conn_dispatch_dispatch1" class="coderef-off"><span class="linenr"> 9:  </span>  rfsm.trans{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'software_err'</span>, events={<span style="color: #00cd00;">'e_sw_err'</span>}},</span>
-<span id="coderef-conn_dispatch_dispatch2" class="coderef-off"><span class="linenr">10:  </span>  rfsm.trans{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'hardware_err'</span>, events={<span style="color: #00cd00;">'e_hw_err'</span>}},</span>
-<span class="linenr">11:  </span>
-<span id="coderef-conn_dispatch_accept1" class="coderef-off"><span class="linenr">12:  </span>  rfsm.trans{src=<span style="color: #00cd00;">'software_err'</span>, tgt=<span style="color: #00cd00;">'recovered'</span>, events={<span style="color: #00cd00;">'e_recovered'</span>}},</span>
-<span id="coderef-conn_dispatch_accept2" class="coderef-off"><span class="linenr">13:  </span>  rfsm.trans{src=<span style="color: #00cd00;">'hardware_err'</span>, tgt=<span style="color: #00cd00;">'recovered'</span>, events={<span style="color: #00cd00;">'e_recovered'</span>}},</span>
-<span id="coderef-conn_dispatch_accept3" class="coderef-off"><span class="linenr">14:  </span>  rfsm.trans{src=<span style="color: #00cd00;">'software_err'</span>, tgt=<span style="color: #00cd00;">'failed'</span>, events={<span style="color: #00cd00;">'e_failed'</span>}},</span>
-<span id="coderef-conn_dispatch_accept4" class="coderef-off"><span class="linenr">15:  </span>  rfsm.trans{src=<span style="color: #00cd00;">'hardware_err'</span>, tgt=<span style="color: #00cd00;">'failed'</span>, events={<span style="color: #00cd00;">'e_failed'</span>}},</span>
-<span class="linenr">16:  </span>}
-<span class="linenr">17:  </span>
+<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta{
+  software_err = rfsm.sista{},
+  hardware_err = rfsm.sista{},
+
+  initial = rfsm.conn{},
+  recovered = rfsm.conn{},
+  failed = rfsm.conn{},
+
+<span id="coderef-conn_dispatch_dispatch1" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'software_err'</span>, events={<span style="color: #00cd00;">'e_sw_err'</span>}},</span>
+<span id="coderef-conn_dispatch_dispatch2" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'hardware_err'</span>, events={<span style="color: #00cd00;">'e_hw_err'</span>}},</span>
+
+<span id="coderef-conn_dispatch_accept1" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'software_err'</span>, tgt=<span style="color: #00cd00;">'recovered'</span>, events={<span style="color: #00cd00;">'e_recovered'</span>}},</span>
+<span id="coderef-conn_dispatch_accept2" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'hardware_err'</span>, tgt=<span style="color: #00cd00;">'recovered'</span>, events={<span style="color: #00cd00;">'e_recovered'</span>}},</span>
+<span id="coderef-conn_dispatch_accept3" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'software_err'</span>, tgt=<span style="color: #00cd00;">'failed'</span>, events={<span style="color: #00cd00;">'e_failed'</span>}},</span>
+<span id="coderef-conn_dispatch_accept4" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'hardware_err'</span>, tgt=<span style="color: #00cd00;">'failed'</span>, events={<span style="color: #00cd00;">'e_failed'</span>}},</span>
+}
+
 </pre>
 
 
@@ -793,7 +793,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
   transition to execute or <code>doo</code>'s to run).
 </p>
 <p>
-  When ommitted, the number of steps argument <code>n</code> to <code>rfsm.step</code>
+  When omitted, the number of steps argument <code>n</code> to <code>rfsm.step</code>
   defaults to <b>1</b>.
 </p>
 <p>
@@ -860,7 +860,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
-<tr><td class="left"><code>fsm rfsm.init(fsmmodel)</code></td><td class="left">create an inialized rfsm instance from model</td></tr>
+<tr><td class="left"><code>fsm rfsm.init(fsmmodel)</code></td><td class="left">create an initialized rfsm instance from model</td></tr>
 <tr><td class="left"><code>idle rfsm.step(fsm, n)</code></td><td class="left">attempt to transition FSM n times. Default: once</td></tr>
 <tr><td class="left"><code>rfsm.run(fsm)</code></td><td class="left">run FSM until it goes idle</td></tr>
 <tr><td class="left"><code>rfsm.send_events(fsm, ...)</code></td><td class="left">send one or more events to internal rfsm event queue</td></tr>
@@ -891,11 +891,11 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
-<tr><td class="left"><code>dbg</code></td><td class="left">called to output debug information. Set to false to disable. Default false.</td></tr>
-<tr><td class="left"><code>info</code></td><td class="left">called to output informational messages. Set to false to disable. Default stdout</td></tr>
+<tr><td class="left"><code>dbg</code></td><td class="left">called to output debug information. Set to false to disable. Default: false.</td></tr>
+<tr><td class="left"><code>info</code></td><td class="left">called to output informational messages. Set to false to disable. Default: stdout.</td></tr>
 <tr><td class="left"><code>warn</code></td><td class="left">called to output warnings. Set to false to disable. Default stderr.</td></tr>
 <tr><td class="left"><code>err</code></td><td class="left">called to output errors. Set to false to disable. Default stderr.</td></tr>
-<tr><td class="left"><code>table getevents()</code></td><td class="left">function which returns a table of new events which have occurred</td></tr>
+<tr><td class="left"><code>table getevents()</code></td><td class="left">function which returns a table of new events which have occurred.</td></tr>
 </tbody>
 </table>
 
@@ -1033,16 +1033,18 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <p>
-   This extension adds "memory" of occured events to an rFSM
-   chart. This is done maintaining a table &lt;code&gt;emem&lt;/code&gt; for every
-   state. The &lt;code&gt;emem&lt;/code&gt; table is cleared when a state is
-   exited by setting all values to 0.
+   This extension adds <i>memory</i> of events that occured to an rFSM
+   statechart. This is done maintaining a table <code>emem</code> for every
+   state. The keys in this table are event names and the values the
+   number of times that event occurred while the respective state was
+   active. The <code>emem</code> table is cleared when a state is exited by
+   setting all values to 0.
 </p>
 <p>
-   This extension is useful to define transitions that are taken only
-   after certain events have occured, but these do not necessarily
-   occur within one step. Because the default behavior of rFSM is to
-   drop events if nothing can be done, this information is lost.
+   This extension is useful for defining transitions that are taken
+   only after certain events have occured, but that do not necessarily
+   occur within one step. Because the rFSM engine drops events after
+   each steps this information would otherwise be lost.
 </p>
 <p>
    To enable event memory, all you need to do is load the <code>rfsm_emem</code>
@@ -1058,10 +1060,13 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <p>   
-   This extension adds time events to rFSM. To enable time events,
-   load the <code>rfsm_timeevent</code> module. Currently only relative (opposed
-   to absolute) timeevents are supported. These can be specified on
-   transitions using the following syntax:
+   This module extends the rFSM engine with time events. Time events
+   are automatically raised <i>after</i> the specified time after entering
+   a state has elapsed. To enable time events, it suffices to load the
+   <code>rfsm_timeevent</code> module. Currently only relative (opposed to
+   absolute) timeevents are supported. These can be specified on
+   transitions using the <code>e_done(duration)</code> syntax, as show in the
+   following example:
 </p>
 
 
@@ -1077,11 +1082,11 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
    The timeevent will be raised 100ms after state <code>A</code> was entered.
 </p>
 <p>
-   The only requirement of a rfsm<sub>timeevents</sub> is that a <code>gettime</code>
+   The only requirement of a rfsm_timeevents is that a <code>gettime</code>
    function is configured using the
    <code>rfsm_timeevent.set_gettime_hook(f)</code> function. This function is
-   expected to return the current time in two return values: sec,
-   nanosecs.
+   expected to return the current time in two return values: seconds,
+   nanoseconds.
 </p>
 <p>
    An example can be found in <code>examples/timeevent.lua</code>
@@ -1137,7 +1142,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <pre class="src src-lua">fsm = rfsm.init(...)
-fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"my fsm"</span>, { STATE_ENTER=<span style="color: #00cdcd; font-weight: bold;">true</span>, STATE_EXIT=<span style="color: #00cdcd; font-weight: bold;">true</span> }, <span style="color: #00cdcd; font-weight: bold;">false</span>)
+fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"fsm1"</span>, {STATE_ENTER=<span style="color: #00cdcd; font-weight: bold;">true</span>, STATE_EXIT=<span style="color: #00cdcd; font-weight: bold;">true</span>}, <span style="color: #00cdcd; font-weight: bold;">false</span>)
 
 </pre>
 
@@ -1145,7 +1150,7 @@ fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"my fsm"</span>, { STA
 
 
 <p>
-   Will show only <code>STATE_ENTER</code> and <code>STATE_EXIT</code> dbg messages.
+   Will show only <code>STATE_ENTER</code> and <code>STATE_EXIT</code> debug messages.
 </p>
 </div>
 
@@ -1457,6 +1462,22 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
     <a href="http://www.omg.org/spec/UML/2.3/Superstructure/PDF/">http://www.omg.org/spec/UML/2.3/Superstructure/PDF/</a>
 </p></li>
 </ul>
+
+
+
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+<p class="footnote"><sup><a class="footnum" name="fn.1" href="#fnr.1">1</a></sup> See <a href="https://lwn.net/images/conf/rtlws-2011/paper.05.html">this</a> Real-time Linux Workshop paper, <a href="https://github.com/kmarkus/lua-tlsf">lua-tlsf</a> and the
+ <a href="https://github.com/kmarkus/rtp">minimal Lua real-time POSIX bindings</a>
+</p>
+
+<p class="footnote"><sup><a class="footnum" name="fn.2" href="#fnr.2">2</a></sup> The reason for this choice of default is that it fails more
+  obviously (100% CPU load) than the opposite (doo function not
+  executed properly).
+</p>
+</div>
+</div>
 
 </div>
 </div>

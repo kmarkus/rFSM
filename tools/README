@@ -1,8 +1,10 @@
 Some experimental tools
 
-* rfsm-sim, rfsm-sim.lua
-  - rfsm simulator run rfsm-sim <file>
+ * rfsm-sim: rFSM simulator 
+     usage: rfsm-sim <file>, then type 'help()'.
 
-* rfsm2json
-* rfsm-dbg
-* rfsm-viz
+ * rfsm2json: 
+     convert a rFSM (Lua) model to json format.
+
+ * rfsm-viz: 
+     convert a rFSM (Lua) models to a graphical UML or tree representation.
