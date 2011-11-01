@@ -1,8 +1,8 @@
 -- -*- lua -*-
 require "rfsm"
-require "fsmpp"
-require "fsm2uml"
-require "fsm2tree"
+require "rfsmpp"
+require "rfsm2uml"
+require "rfsm2tree"
 
 if arg and #arg < 1 then
    print("usage: run <fsmfile>")
@@ -26,7 +26,7 @@ end
 -- debugging
 function dbg(on_off)
    if not on_off then fsm.dbg=function(...) return end
-   else fsm.dbg=fsmpp.gen_dbgcolor(file) end
+   else fsm.dbg=rfsmpp.gen_dbgcolor(file) end
 end
 
 -- operational
@@ -59,15 +59,15 @@ end
 
 -- visualisation
 function pp()
-   print(fsmpp.fsm2str(fsm))
+   print(rfsmpp.fsm2str(fsm))
 end
 
 function uml()
-   fsm2uml.fsm2uml(fsm, "png", tmpdir .. "rfsm-uml-tmp.png")
+   rfsm2uml.rfsm2uml(fsm, "png", tmpdir .. "rfsm-uml-tmp.png")
 end
 
 function tree()
-   fsm2tree.fsm2tree(fsm, "png",  tmpdir .. "rfsm-tree-tmp.png")
+   rfsm2tree.rfsm2tree(fsm, "png",  tmpdir .. "rfsm-tree-tmp.png")
 end
 
 function vizuml()

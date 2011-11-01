@@ -41,7 +41,7 @@ require("rfsm")
 local pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
    = pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
 
-module("fsm2uml")
+module("rfsm2uml")
 
 param = {}
 param.fontsize = 12.0
@@ -306,16 +306,16 @@ local function fsm2gh(root, caption)
    return gh
 end
 
-function fsm2uml(root, format, outfile, caption)
+function rfsm2uml(root, format, outfile, caption)
 
    if not root._initialized then
-      param.err("fsm2uml ERROR: fsm " .. root._id .. " uninitialized")
+      param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
       return false
    end
 
    local gh = fsm2gh(root, caption)
    gv.layout(gh, param.layout)
-   param.dbg("fsm2uml: running " .. param.layout .. " layouter")
+   param.dbg("rfsm2uml: running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
-   param.dbg("fsm2uml: rendering to " .. format .. ", written result to " .. outfile)
+   param.dbg("rfsm2uml: rendering to " .. format .. ", written result to " .. outfile)
 end

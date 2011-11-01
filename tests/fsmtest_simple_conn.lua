@@ -4,11 +4,11 @@
 
 package.path = package.path .. ';../?.lua'
 
-require("fsm2uml")
-require("fsm2tree")
+require("rfsm2uml")
+require("rfsm2tree")
 require("rfsm")
-require("fsmtesting")
-require("fsmpp")
+require("rfsm_testing")
+require("rfsmpp")
 require("utils")
 
 testfsm = rfsm.load("../examples/connector_simple.lua")
@@ -47,4 +47,4 @@ if not jc then
    os.exit(1)
 end
 
-fsmtesting.print_stats(fsmtesting.test_fsm(jc, test, false))
+rfsm_testing.print_stats(rfsm_testing.test_fsm(jc, test, false))

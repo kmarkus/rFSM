@@ -41,7 +41,7 @@ require('utils')
 local pairs, ipairs, print, table, string, type, assert, gv, io, rfsm
    = pairs, ipairs, print, table, string, type, assert, gv, io, rfsm
 
-module("fsm2tree")
+module("rfsm2tree")
 
 param = {}
 
@@ -160,16 +160,16 @@ end
 
 
 -- convert fsm to
-function fsm2tree(fsm, format, outfile)
+function rfsm2tree(fsm, format, outfile)
 
    if not fsm._initialized then
-      param.err("fsm2tree ERROR: fsm " .. (fsm._id or 'root') .. " uninitialized")
+      param.err("rfsm2tree ERROR: fsm " .. (fsm._id or 'root') .. " uninitialized")
       return false
    end
 
    local gh = fsm2gh(fsm)
    gv.layout(gh, param.layout)
-   param.dbg("fsm2tree: running " .. param.layout .. " layouter")
+   param.dbg("rfsm2tree: running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
-   param.dbg("fsm2tree: rendering to " .. format .. ", written result to " .. outfile)
+   param.dbg("rfsm2tree: rendering to " .. format .. ", written result to " .. outfile)
 end

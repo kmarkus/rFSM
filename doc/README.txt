@@ -1,5 +1,5 @@
-@<img src="./rFSM\_logo.jpg" width="50%" height="50%" alt="rFSM logo" /@> @<br/@>@<br/@>v1.0-beta3
-==================================================================================================
+@<img src="./rFSM\_logo.jpg" width="50%" height="50%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta3
+==================================================================================================================================
 
 Author: Markus Klotzbuecher
 Date: [2011-10-31 Mon]
@@ -27,12 +27,12 @@ Table of Contents
 9 Tools and helper modules 
     9.1 The event memory extension (=rfsm\_emem= module) 
     9.2 Timeevents (=rfsm\_timeevent= module) 
-    9.3 Configurable and colorized =dbg= info (=fsmpp= module) 
-    9.4 Generate graphical representations (=fsm2uml= and =fsm2dbg= modules) 
-        9.4.1 =rfsm-viz=: command line front end to fsm2uml/fsm2tree 
-        9.4.2 =rfsm-sim= simple rfsm simulator 
-        9.4.3 Lua fsm to json conversion (=rfsm2json= command line tool) 
-        9.4.4 =rfsm\_rtt= Useful functions for using rFSM with OROCOS rtt 
+    9.3 Configurable and colorized =dbg= info (=rfsmpp= module) 
+    9.4 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
+    9.5 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree 
+    9.6 =rfsm-sim= simple rfsm simulator 
+    9.7 Lua fsm to json conversion (=rfsm2json= command line tool) 
+    9.8 =rfsm\_rtt= Useful functions for using rFSM with OROCOS rtt 
 10 More examples, tips and tricks 
     10.1 A more complete example 
     10.2 How to compose state machines 
@@ -332,7 +332,7 @@ Table of Contents
     list of arguments. The default is to write errors and warnings to
     stderr and info to stdout. Debug messages are turned off by
     default. Nicer and configurable pretty printing of debug output is
-    provided by the =fsmpp= module (described below).
+    provided by the =rfsmpp= module (described below).
 
     *The* =getevents= *hook.* The =getevents= hook is called by the
     rFSM core whenever it needs to check for new events. This function
@@ -536,7 +536,7 @@ Table of Contents
 
    Functions to define rFSM:
 
-     *Function*             *short alias*   *description*             
+     *Function*             *Short alias*   *Description*             
     ----------------------+---------------+--------------------------
      =simple\_state{}=      =sista{}=       create a simple state     
      =composite\_state{}=   =csta{}=        create a composite state  
@@ -548,7 +548,7 @@ Table of Contents
 7.2 Operational functions 
 ==========================
    
-     Function                        description                                           
+     *Function*                      *Description*                                         
     -------------------------------+------------------------------------------------------
      =fsm rfsm.init(fsmmodel)=       create an inialized rfsm instance from model          
      =idle rfsm.step(fsm, n)=        attempt to transition FSM n times. Default: once      
@@ -563,7 +563,7 @@ Table of Contents
    composite state and allow to refine various behavior of the state
    machine.
    
-     function              description                                                                       
+     *Function*            *Description*                                                                     
     ---------------------+----------------------------------------------------------------------------------
      =dbg=                 called to output debug information. Set to false to disable. Default false.       
      =info=                called to output informational messages. Set to false to disable. Default stdout  
@@ -574,7 +574,7 @@ Table of Contents
 
    Low level hooks (not for normal use):
 
-     function                 description                                              
+     *Function*               *Description*                                            
     ------------------------+---------------------------------------------------------
      =pre\_step\_hook(fsm)=   is called for each step (mostly for debugging purposes)  
      =step\_hook(fsm)=        called before for each step                              
@@ -695,17 +695,17 @@ Table of Contents
     "stepped" at a fixed frequency or that never go idle.
 
 
-9.3 Configurable and colorized =dbg= info (=fsmpp= module) 
-===========================================================
+9.3 Configurable and colorized =dbg= info (=rfsmpp= module) 
+============================================================
 
-   The =fsmpp.gen_dbgcolor= function generates a configurable and
+   The =rfsmpp.gen_dbgcolor= function generates a configurable and
    colorful =dbg= hook.
 
    Usage:
 
 
 
-  fsmpp.gen_dbgcolor(name, dbgids, defshow)
+  rfsmpp.gen_dbgcolor(name, dbgids, defshow)
 
 
 
@@ -723,7 +723,7 @@ Table of Contents
 
 
   fsm = rfsm.init(...)
-  fsm.dbg=fsmpp.gen_dbgcolor("my fsm", { STATE_ENTER=true, STATE_EXIT=true }, false)
+  fsm.dbg=rfsmpp.gen_dbgcolor("my fsm", { STATE_ENTER=true, STATE_EXIT=true }, false)
 
 
 
@@ -731,26 +731,26 @@ Table of Contents
    Will show only =STATE_ENTER= and =STATE_EXIT= dbg messages.
      
 
-9.4 Generate graphical representations (=fsm2uml= and =fsm2dbg= modules) 
-=========================================================================
+9.4 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
+==========================================================================
      
      Modules to transform rFSM models to graphical
-     descriptions. =fsm2uml= generates classical statechart figures and
-     =fsm2tree= generates a tree representation (useful to see check
+     descriptions. =rfsm2uml= generates classical statechart figures and
+     =rfsm2tree= generates a tree representation (useful to see check
      priorities).
 
      Usage: 
 
-     - =fsm2uml.fsm2uml(root\_fsm, format, outfile, caption)=
-     - =fsm2tree.fsm2tree(root\_fsm, format, outfile)=
+     - =rfsm2uml.rfsm2uml(root\_fsm, format, outfile, caption)=
+     - =rfsm2tree.rfsm2tree(root\_fsm, format, outfile)=
 
      Examples:
 
 
 
-  require("fsm2uml")
+  require("rfsm2uml")
   fsm = rfsm.init(rfsm.load("fsm.lua"))
-  fsm2uml.fsm2uml(fsm, 'png', "fsm.png", "Figure caption")
+  rfsm2uml.rfsm2uml(fsm, 'png', "fsm.png", "Figure caption")
 
 
 
@@ -759,9 +759,9 @@ Table of Contents
 
 
 
-  require("fsm2tree")
+  require("rfsm2tree")
   fsm = rfsm.init(rfsm.load("fsm.lua"))
-  fsm2tree.fsm2tree(fsm, 'png', "fsm-tree.png")
+  rfsm2tree.rfsm2tree(fsm, 'png', "fsm-tree.png")
 
 
 
@@ -769,10 +769,10 @@ Table of Contents
      The =rfsm-viz= command line uses these modules to generate
      pictures.
 
-9.4.1 =rfsm-viz=: command line front end to fsm2uml/fsm2tree 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+9.5 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree 
+=============================================================
 
-      to generate all possible formats run:
+     to generate all possible formats run:
 
 
 
@@ -781,13 +781,13 @@ Table of Contents
 
 
 
-      generates various representations (in =examples/=)
+     generates various representations (in =examples/=)
 
-9.4.2 =rfsm-sim= simple rfsm simulator 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+9.6 =rfsm-sim= simple rfsm simulator 
+=====================================
 
-      small command line simulator for running a fsm
-      interactively.
+     small command line simulator for running a fsm
+     interactively.
 
 
 
@@ -796,21 +796,21 @@ Table of Contents
 
 
 
-      It requires an image viewer which automatically updates once the
-      file displayed changes. For example =evince= works nicely.
+     It requires an image viewer which automatically updates once the
+     file displayed changes. For example =evince= works nicely.
 
-9.4.3 Lua fsm to json conversion (=rfsm2json= command line tool) 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+9.7 Lua fsm to json conversion (=rfsm2json= command line tool) 
+===============================================================
 
-    Based on =rfsm2json.lua= module and requires lua-json.
+   Based on =rfsm2json.lua= module and requires lua-json.
 
-9.4.4 =rfsm\_rtt= Useful functions for using rFSM with OROCOS rtt 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
-    See the Orocos [LuaCookbook] for more details.
+9.8 =rfsm\_rtt= Useful functions for using rFSM with OROCOS rtt 
+================================================================
+   
+   See the Orocos [LuaCookbook] for more details.
 
 
-    [LuaCookbook]: http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook
+   [LuaCookbook]: http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook
 
 10 More examples, tips and tricks 
 ----------------------------------

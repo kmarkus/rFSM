@@ -56,7 +56,7 @@ local is_csta = rfsm.is_csta
 local sta_mode = rfsm.sta_mode
 local fsmobj_tochar = rfsm.fsmobj_tochar
 
-module("fsmpp")
+module("rfsmpp")
 
 
 local pad = 20

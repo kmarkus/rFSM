@@ -5,7 +5,7 @@
 package.path = package.path .. ';../?.lua'
 
 require("rfsm")
-require("fsmtesting")
+require("rfsm_testing")
 require("utils")
 
 -- load fsm
@@ -45,4 +45,4 @@ if not jc then
    os.exit(1)
 end
 
-fsmtesting.print_stats(fsmtesting.test_fsm(jc, test, false))
+rfsm_testing.print_stats(rfsm_testing.test_fsm(jc, test, false))

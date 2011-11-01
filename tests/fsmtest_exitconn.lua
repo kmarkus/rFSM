@@ -5,9 +5,9 @@
 package.path = package.path .. ';../?.lua'
 
 require("rfsm")
-require("fsm2tree")
-require("fsmtesting")
-require("fsmpp")
+require("rfsm2tree")
+require("rfsm_testing")
+require("rfsmpp")
 require("utils")
 
 local function puts(...)
@@ -37,4 +37,4 @@ local test = {
 
 fsm = rfsm.init(testfsm, "composite_exitconn")
 
-fsmtesting.print_stats(fsmtesting.test_fsm(fsm, test, true))
+rfsm_testing.print_stats(rfsm_testing.test_fsm(fsm, test, true))

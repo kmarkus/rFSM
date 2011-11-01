@@ -3,7 +3,7 @@
 -- levels too.
 
 require "rfsm"
-require "fsmpp"
+require "rfsmpp"
 
 --- This (global) function will be visible in all sub-fsm!
 function foo(a,b,c)
@@ -11,7 +11,7 @@ function foo(a,b,c)
 end
 
 fsm=rfsm.init(rfsm.load('root.lua'))
-fsm.dbg=fsmpp.gen_dbgcolor()
+fsm.dbg=rfsmpp.gen_dbgcolor()
 
 rfsm.step(fsm, 10)
 

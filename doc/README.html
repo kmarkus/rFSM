@@ -118,9 +118,9 @@ lang="en" xml:lang="en">
 <ul>
 <li><a href="#sec-9-1">9.1 The event memory extension (<code>rfsm_emem</code> module) </a></li>
 <li><a href="#sec-9-2">9.2 Timeevents (<code>rfsm_timeevent</code> module) </a></li>
-<li><a href="#sec-9-3">9.3 Configurable and colorized <code>dbg</code> info (<code>fsmpp</code> module) </a></li>
-<li><a href="#sec-9-4">9.4 Generate graphical representations (<code>fsm2uml</code> and <code>fsm2dbg</code> modules) </a></li>
-<li><a href="#sec-9-5">9.5 <code>rfsm-viz</code>: command line front end to fsm2uml/fsm2tree </a></li>
+<li><a href="#sec-9-3">9.3 Configurable and colorized <code>dbg</code> info (<code>rfsmpp</code> module) </a></li>
+<li><a href="#sec-9-4">9.4 Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules) </a></li>
+<li><a href="#sec-9-5">9.5 <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree </a></li>
 <li><a href="#sec-9-6">9.6 <code>rfsm-sim</code> simple rfsm simulator </a></li>
 <li><a href="#sec-9-7">9.7 Lua fsm to json conversion (<code>rfsm2json</code> command line tool) </a></li>
 <li><a href="#sec-9-8">9.8 <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt </a></li>
@@ -554,7 +554,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
     list of arguments. The default is to write errors and warnings to
     stderr and info to stdout. Debug messages are turned off by
     default. Nicer and configurable pretty printing of debug output is
-    provided by the <code>fsmpp</code> module (described below).
+    provided by the <code>rfsmpp</code> module (described below).
 </p>
 <p>
     <b>The</b> <code>getevents</code> <b>hook.</b> The <code>getevents</code> hook is called by the
@@ -1098,12 +1098,12 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-9-3" class="outline-3">
-<h3 id="sec-9-3"><span class="section-number-3">9.3</span> Configurable and colorized <code>dbg</code> info (<code>fsmpp</code> module) </h3>
+<h3 id="sec-9-3"><span class="section-number-3">9.3</span> Configurable and colorized <code>dbg</code> info (<code>rfsmpp</code> module) </h3>
 <div class="outline-text-3" id="text-9-3">
 
 
 <p>
-   The <code>fsmpp.gen_dbgcolor</code> function generates a configurable and
+   The <code>rfsmpp.gen_dbgcolor</code> function generates a configurable and
    colorful <code>dbg</code> hook.
 </p>
 <p>
@@ -1112,7 +1112,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 
-<pre class="src src-lua">fsmpp.gen_dbgcolor(name, dbgids, defshow)
+<pre class="src src-lua">rfsmpp.gen_dbgcolor(name, dbgids, defshow)
 
 </pre>
 
@@ -1137,7 +1137,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <pre class="src src-lua">fsm = rfsm.init(...)
-fsm.dbg=fsmpp.gen_dbgcolor(<span style="color: #00cd00;">"my fsm"</span>, { STATE_ENTER=<span style="color: #00cdcd; font-weight: bold;">true</span>, STATE_EXIT=<span style="color: #00cdcd; font-weight: bold;">true</span> }, <span style="color: #00cdcd; font-weight: bold;">false</span>)
+fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"my fsm"</span>, { STATE_ENTER=<span style="color: #00cdcd; font-weight: bold;">true</span>, STATE_EXIT=<span style="color: #00cdcd; font-weight: bold;">true</span> }, <span style="color: #00cdcd; font-weight: bold;">false</span>)
 
 </pre>
 
@@ -1152,23 +1152,23 @@ fsm.dbg=fsmpp.gen_dbgcolor(<span style="color: #00cd00;">"my fsm"</span>, { STAT
 </div>
 
 <div id="outline-container-9-4" class="outline-3">
-<h3 id="sec-9-4"><span class="section-number-3">9.4</span> Generate graphical representations (<code>fsm2uml</code> and <code>fsm2dbg</code> modules) </h3>
+<h3 id="sec-9-4"><span class="section-number-3">9.4</span> Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules) </h3>
 <div class="outline-text-3" id="text-9-4">
 
 
 <p>     
      Modules to transform rFSM models to graphical
-     descriptions. <code>fsm2uml</code> generates classical statechart figures and
-     <code>fsm2tree</code> generates a tree representation (useful to see check
+     descriptions. <code>rfsm2uml</code> generates classical statechart figures and
+     <code>rfsm2tree</code> generates a tree representation (useful to see check
      priorities).
 </p>
 <p>
      Usage: 
 </p>
 <ul>
-<li><code>fsm2uml.fsm2uml(root_fsm, format, outfile, caption)</code>
+<li><code>rfsm2uml.rfsm2uml(root_fsm, format, outfile, caption)</code>
 </li>
-<li><code>fsm2tree.fsm2tree(root_fsm, format, outfile)</code>
+<li><code>rfsm2tree.rfsm2tree(root_fsm, format, outfile)</code>
 </li>
 </ul>
 
@@ -1179,9 +1179,9 @@ fsm.dbg=fsmpp.gen_dbgcolor(<span style="color: #00cd00;">"my fsm"</span>, { STAT
 
 
 
-<pre class="src src-lua">require(<span style="color: #00cd00;">"fsm2uml"</span>)
+<pre class="src src-lua">require(<span style="color: #00cd00;">"rfsm2uml"</span>)
 fsm = rfsm.init(rfsm.load(<span style="color: #00cd00;">"fsm.lua"</span>))
-fsm2uml.fsm2uml(fsm, <span style="color: #00cd00;">'png'</span>, <span style="color: #00cd00;">"fsm.png"</span>, <span style="color: #00cd00;">"Figure caption"</span>)
+rfsm2uml.rfsm2uml(fsm, <span style="color: #00cd00;">'png'</span>, <span style="color: #00cd00;">"fsm.png"</span>, <span style="color: #00cd00;">"Figure caption"</span>)
 
 </pre>
 
@@ -1194,9 +1194,9 @@ fsm2uml.fsm2uml(fsm, <span style="color: #00cd00;">'png'</span>, <span style="co
 
 
 
-<pre class="src src-lua">require(<span style="color: #00cd00;">"fsm2tree"</span>)
+<pre class="src src-lua">require(<span style="color: #00cd00;">"rfsm2tree"</span>)
 fsm = rfsm.init(rfsm.load(<span style="color: #00cd00;">"fsm.lua"</span>))
-fsm2tree.fsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style="color: #00cd00;">"fsm-tree.png"</span>)
+rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style="color: #00cd00;">"fsm-tree.png"</span>)
 
 </pre>
 
@@ -1212,7 +1212,7 @@ fsm2tree.fsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style="
 </div>
 
 <div id="outline-container-9-5" class="outline-3">
-<h3 id="sec-9-5"><span class="section-number-3">9.5</span> <code>rfsm-viz</code>: command line front end to fsm2uml/fsm2tree </h3>
+<h3 id="sec-9-5"><span class="section-number-3">9.5</span> <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree </h3>
 <div class="outline-text-3" id="text-9-5">
 
 

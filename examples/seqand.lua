@@ -3,10 +3,10 @@
 
 require "rfsm"
 require "rfsm_ext"
-require "fsmpp"
+require "rfsmpp"
 
 return rfsm.csta {
-   dbg=fsmpp.gen_dbgcolor("parent"),
+   dbg=rfsmpp.gen_dbgcolor("parent"),
    and_state = rfsm_ext.seqand {
       seqanddbg=true,
 
@@ -19,7 +19,7 @@ return rfsm.csta {
       -- subfsm 1
       s1=rfsm.init(
 	 rfsm.csta {
-	    dbg=fsmpp.gen_dbgcolor("subfsm1"),
+	    dbg=rfsmpp.gen_dbgcolor("subfsm1"),
 	    s11=rfsm.sista{},
 	    s12=rfsm.sista{},
 	    rfsm.trans{src="initial", tgt="s11", },
@@ -30,7 +30,7 @@ return rfsm.csta {
       -- subfsm 2
       s2=rfsm.init(
 	 rfsm.csta {
-	    dbg=fsmpp.gen_dbgcolor("subfsm2"),
+	    dbg=rfsmpp.gen_dbgcolor("subfsm2"),
 	    s21 = rfsm.sista {
 	       doo = function(fsm)
 			while true do

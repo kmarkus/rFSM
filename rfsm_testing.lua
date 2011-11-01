@@ -43,7 +43,7 @@
 --
 
 require("rfsm")
-require("fsm2uml")
+require("rfsm2uml")
 require("utils")
 local ac = require("ansicolors")
 
@@ -52,7 +52,7 @@ local sista = rfsm.sista
 local is_sista = rfsm.is_sista
 local csta = sista
 
-module("fsmtesting", package.seeall)
+module("rfsm_testing", package.seeall)
 
 verbose = false
 
@@ -99,7 +99,7 @@ end
 --   4. asserting that the new active configuration is as exected and printing
 -- Options
 --  id = 'test_id', no whitespace, will be used as name for pics
---  pics = true|false, generate fsm2uml snapshots for each step.
+--  pics = true|false, generate rfsm2uml snapshots for each step.
 
 function test_fsm(fsm, test, verb)
    verbose = verb or false
@@ -108,7 +108,7 @@ function test_fsm(fsm, test, verb)
    stdout("TESTING:", test.id)
 
    if test.pics then
-      fsm2uml.fsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")
+      rfsm2uml.rfsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")
    end
 
    for i,t in ipairs(test.tests) do
@@ -146,7 +146,7 @@ function test_fsm(fsm, test, verb)
 
       local imgfile = test.id .. "-" .. i .. ".png"
       stdout("generating img: ", imgfile)
-      fsm2uml.fsm2uml(fsm, "png", imgfile, boiler)
+      rfsm2uml.rfsm2uml(fsm, "png", imgfile, boiler)
       stdout(string.rep("-", 80))
    end
    return test

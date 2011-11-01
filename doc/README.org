@@ -280,7 +280,7 @@
     list of arguments. The default is to write errors and warnings to
     stderr and info to stdout. Debug messages are turned off by
     default. Nicer and configurable pretty printing of debug output is
-    provided by the =fsmpp= module (described below).
+    provided by the =rfsmpp= module (described below).
 
     *The* =getevents= *hook.* The =getevents= hook is called by the
     rFSM core whenever it needs to check for new events. This function
@@ -603,15 +603,15 @@
     "stepped" at a fixed frequency or that never go idle.
 
 
-** Configurable and colorized =dbg= info (=fsmpp= module)
+** Configurable and colorized =dbg= info (=rfsmpp= module)
 
-   The =fsmpp.gen_dbgcolor= function generates a configurable and
+   The =rfsmpp.gen_dbgcolor= function generates a configurable and
    colorful =dbg= hook.
 
    Usage:
 
    #+begin_src lua
-     fsmpp.gen_dbgcolor(name, dbgids, defshow)
+     rfsmpp.gen_dbgcolor(name, dbgids, defshow)
    #+end_src
      
      - =name= is the (optional) string name to print prefixing the
@@ -626,43 +626,43 @@
 
    #+begin_src lua
      fsm = rfsm.init(...)
-     fsm.dbg=fsmpp.gen_dbgcolor("my fsm", { STATE_ENTER=true, STATE_EXIT=true }, false)
+     fsm.dbg=rfsmpp.gen_dbgcolor("my fsm", { STATE_ENTER=true, STATE_EXIT=true }, false)
    #+end_src
 
    Will show only =STATE_ENTER= and =STATE_EXIT= dbg messages.
      
-** Generate graphical representations (=fsm2uml= and =fsm2dbg= modules)
+** Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
      
      Modules to transform rFSM models to graphical
-     descriptions. =fsm2uml= generates classical statechart figures and
-     =fsm2tree= generates a tree representation (useful to see check
+     descriptions. =rfsm2uml= generates classical statechart figures and
+     =rfsm2tree= generates a tree representation (useful to see check
      priorities).
 
      Usage: 
 
-     - =fsm2uml.fsm2uml(root\_fsm, format, outfile, caption)=
-     - =fsm2tree.fsm2tree(root\_fsm, format, outfile)=
+     - =rfsm2uml.rfsm2uml(root\_fsm, format, outfile, caption)=
+     - =rfsm2tree.rfsm2tree(root\_fsm, format, outfile)=
 
      Examples:
 
      #+begin_src lua
-     require("fsm2uml")
+     require("rfsm2uml")
      fsm = rfsm.init(rfsm.load("fsm.lua"))
-     fsm2uml.fsm2uml(fsm, 'png', "fsm.png", "Figure caption")
+     rfsm2uml.rfsm2uml(fsm, 'png', "fsm.png", "Figure caption")
      #+end_src
 
      or
 
      #+begin_src lua
-     require("fsm2tree")
+     require("rfsm2tree")
      fsm = rfsm.init(rfsm.load("fsm.lua"))
-     fsm2tree.fsm2tree(fsm, 'png', "fsm-tree.png")
+     rfsm2tree.rfsm2tree(fsm, 'png', "fsm-tree.png")
      #+end_src
 
      The =rfsm-viz= command line uses these modules to generate
      pictures.
 
-** =rfsm-viz=: command line front end to fsm2uml/fsm2tree
+** =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree
 
      to generate all possible formats run:
 

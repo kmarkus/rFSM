@@ -1,8 +1,8 @@
 #!/usr/bin/env lua
 -- -*- lua -*-
-require("fsmpp")
-require("fsm2uml")
-require("fsm2tree")
+require("rfsmpp")
+require("rfsm2uml")
+require("rfsm2tree")
 require("rfsm")
 
 if arg and #arg < 2 then
@@ -31,11 +31,11 @@ else
 end
 
 if arglt['tree'] or arglt['all'] then
-   print("generating fsmtree... ", fsm2tree.fsm2tree(src, "png", outfile .. "-tree.png"))
+   print("generating fsmtree... ", rfsm2tree.rfsm2tree(src, "png", outfile .. "-tree.png"))
 end
 if arglt['uml'] or arglt['all'] then
-   print("generating uml... ", fsm2uml.fsm2uml(src, "png", outfile .. "-uml.png"))
+   print("generating uml... ", rfsm2uml.rfsm2uml(src, "png", outfile .. "-uml.png"))
 end
 if arglt['text'] or arglt['all'] then
-   print(fsmpp.fsm2str(src))
+   print(rfsmpp.fsm2str(src))
 end
