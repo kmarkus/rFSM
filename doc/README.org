@@ -21,7 +21,7 @@
 * Overview
 
   rFSM is a small and powerful Statechart implementation. It is mainly
-  designed for /Coordinating/ of complex systems but is not limited to
+  designed for /Coordination/ of complex systems but is not limited to
   that. rFSM is written in pure Lua and is therefore highly portable
   and embeddable. As a Lua domain specific language rFSM inherits the
   extensibility of its host language.
