@@ -2,7 +2,7 @@ rFSM Statecharts
 ================
 
 Author: Markus Klotzbuecher
-Date: [2011-10-31 Mon]
+Date: [2011-11-21 Mon]
 
 
 

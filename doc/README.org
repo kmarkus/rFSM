@@ -1,7 +1,7 @@
-#+TITLE:	@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta3
+#+TITLE:	@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta4
 #+AUTHOR:	Markus Klotzbuecher
 #+EMAIL:	markus.klotzbuecher@mech.kuleuven.be
-#+DATE:		[2011-10-31 Mon]
+#+DATE:		[2011-11-21 Mon]
 #+DESCRIPTION:  Documentation of rFSM Statecharts.
 #+KEYWORDS:	Coordination, Statcharts, Robotics, Real-Time, Lua,
 #+LANGUAGE:	en
