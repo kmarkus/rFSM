@@ -225,6 +225,28 @@ function load(file)
    return fsm
 end
 
+--- Add a post step hook.
+-- This function will add a hook to be called each time the fsm is
+-- advanced.
+-- @param fsm fsm root to which the hook should be added
+-- @param hook hook function to be called
+-- @param where where to insert the new hook 'before' or 'after' the existing ones.
+function post_step_hook_add(fsm, hook, where)
+   where = where or 'after'
+   fsm.post_step_hook=utils.advise(where, fsm.post_step_hook, hook)
+end
+
+--- Add a post step hook.
+-- This function will add a hook to be called each time the fsm is
+-- advanced.
+-- @param fsm fsm root to which the hook should be added
+-- @param hook hook function to be called
+-- @param where where to insert the new hook 'before' or 'after' the existing ones.
+function pre_step_hook_add(fsm, hook, where)
+   where = where or 'after'
+   fsm.pre_step_hook=utils.advise(where, fsm.pre_step_hook, hook)
+end
+
 
 --- Apply func to all fsm elements for which pred is true
 -- func accepts three arguments: the model element, its fsm parent and
@@ -1306,8 +1328,7 @@ function step(fsm, n)
       else idle = false end -- doo not idle
    end
 
-   -- low level control hook: better ._step_hook
-   if fsm.step_hook then fsm.step_hook(fsm, curq) end
+   if fsm.post_step_hook then fsm.post_step_hook(fsm, curq) end
 
    -- do not dec if no transition executed.
    if do_dec then n = n - 1 end

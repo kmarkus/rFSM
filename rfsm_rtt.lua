@@ -160,7 +160,7 @@ function service_launch_rfsm(file, execstr_f, eehook, env)
 
    s[#s+1] = '_fsm = rfsm.load("' .. file .. '")'
    s[#s+1] = "fsm = rfsm.init(_fsm)"
-   s[#s+1] = "fsm.step_hook = utils.advise('after', fsm.step_hook, setfqn)"
+   s[#s+1] = "rfsm.post_step_hook_add(fsm, setfqn)"
    s[#s+1] = [[ function trigger()
 		   rfsm.step(fsm)
 		   return true
@@ -241,7 +241,7 @@ function component_launch_rfsm(argtab)
 
    s[#s+1] = ([[_fsm = rfsm.load('%s')
 		    fsm = rfsm.init(_fsm)
-		    fsm.step_hook = utils.advise('after', fsm.step_hook, setfqn)
+		    rfsm.post_step_hook_add(fsm, setfqn)
 	      ]]):format(fsmfile)
 
    if argtab.sync then

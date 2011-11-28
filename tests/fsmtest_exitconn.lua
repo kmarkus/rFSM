@@ -37,4 +37,4 @@ local test = {
 
 fsm = rfsm.init(testfsm, "composite_exitconn")
 
-rfsm_testing.print_stats(rfsm_testing.test_fsm(fsm, test, true))
+rfsm_testing.print_stats(rfsm_testing.test_fsm(fsm, test, false))

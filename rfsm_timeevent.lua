@@ -75,7 +75,7 @@ local ts2str = time.ts2str
 -- stored in the source state that when called, checks for expiration
 -- and (possibly) generates the time event. A "master" timeevent check
 -- function (check_act_timeevents) calls all check_ handlers of the
--- current active states during step_hook.
+-- current active states during post_step_hook.
 module 'rfsm_timeevent'
 
 local gettime = false
@@ -151,13 +151,7 @@ local function expand_timeevent(fsm)
       rfsm.map_from_to(fsm, check_timeevent, fsm._act_leaf, fsm)
    end
 
-   if fsm.step_hook then
-      local old_step_hook = fsm.step_hook
-      fsm.step_hook = function (fsm) old_step_hook(fsm); check_act_timeevents(fsm) end
-   else
-      fsm.step_hook=check_act_timeevents
-   end
-
+   rfsm.post_step_hook_add(fsm, check_act_timeevents)
 end
 
 rfsm.preproc[#rfsm.preproc+1] = expand_timeevent

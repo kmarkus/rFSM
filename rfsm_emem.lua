@@ -56,12 +56,7 @@ local function setup_emem(fsm)
 	       end, fsm, rfsm.is_sta)
 
    -- install pre_step_hook
-   if not fsm.pre_step_hook then
-      fsm.pre_step_hook= update_emem_tabs
-   else
-      local oldfun = fsm.pre_step_hook
-      fsm.pre_step_hook=function (fsm) oldfun(fsm); update_emem_tabs(fsm); end
-   end
+   rfsm.pre_step_hook_add(fsm, update_emem_tabs)
 
    -- clear emem counters in exit hooks
    -- todo: this should also happen for root!

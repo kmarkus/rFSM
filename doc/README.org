@@ -807,15 +807,19 @@
    | =table getevents()= | function which returns a table of new events which have occurred.                  |
 
 
-   Low level hooks (not for normal use):
+   Lower level functions (not for normal use):
 
-   | *Function*           | *Description*                                           |
-   |----------------------+---------------------------------------------------------|
-   | =pre_step_hook(fsm)= | is called for each step (mostly for debugging purposes) |
-   | =step_hook(fsm)=     | called before for each step                             |
-   | =idle_hook(fsm)=     | called *instead* of returning from step/run functions   |
+   Use these to manage step hooks. Setting =pre_step_hook= and
+   =post_step_hook= directly is not permitted anymore:
 
+   | *Function*                             | *Description*                                                     |
+   |----------------------------------------+-------------------------------------------------------------------|
+   | =pre_step_hook_add(fsm, hook, where)=  | install function hook to be called _before_ each rfsm step of fsm |
+   | =post_step_hook_add(fsm, hook, where)= | install function hook to be called _after_ each rfsm step of fsm  |
+   |                                        |                                                                   |
 
+   =idle_hook(fsm)=: if defined, called *instead* of returning from
+   step/run functions. Used only for debugging purposes.
 
 * Contact
 
