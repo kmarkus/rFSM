@@ -106,32 +106,23 @@ end
 --
 -- This function returns a function which takes a rfsm instance as the
 -- single parameter and write the fully qualifed state name of the
--- active leaf to the given string rtt.OutputPort. Intended to be
--- added to the fsm step_hook.
---
+-- active leaf to the given string rtt.OutputPort. To be added to the
+-- fsm post_step_hook.
 -- @param port rtt OutputPort to which the fqn shall be written
--- @param filter: function which must take a variable of type and a
--- string fqn and assigns the string to the variable and returns it
--- (optional)
-
-function gen_write_fqn(port, filter)
-   local type = port:info().type --todo check for filter?
-   if type ~= 'string' and type(filter) ~= 'function' then
-      error("use of non string type " .. type .. " requires a filter function")
-   end
+function gen_write_fqn(port)
+   assert(port:info().type=='string', "gen_write_fqn: port must be of type string")
 
    local act_fqn = ""
-   local _f = filter or function (var, fqn) var:assign(fqn); return var end
-   local out_dsb = rtt.Variable.new(type)
+   local out_dsb = rtt.Variable.new('string')
 
-   port:write(_f(out_dsb, "<none>")) -- initial val
+   port:write(out_dsb, "<none>") -- initial val
 
    return function (fsm)
-	     if not fsm._act_leaf then return
-	     elseif act_fqn == fsm._act_leaf._fqn then return end
-
-	     act_fqn = fsm._act_leaf._fqn
-	     port:write(_f(out_dsb, act_fqn))
+	     local actl = fsm._act_leaf
+	     if not actl or act_fqn == actl._fqn then return end
+	     act_fqn = actl._fqn
+	     out_dsb:assign(act_fqn)
+	     port:write(out_dsb, act_fqn)
 	  end
 end
 
