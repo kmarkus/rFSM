@@ -188,7 +188,8 @@ function is_sta(s)   return is_sista(s) or is_csta(s) end
 function is_node(s)  return is_sta(s) or is_conn(s) end
 
 -- check for valid and initalized 'root'
-function is_root(s) return is_csta(s) and s._id == 'root' and s._initialized end
+function is_root(s) return is_csta(s) and s._id == 'root' end
+function is_initialized_root(s) return is_csta(s) and s._id == 'root' and s._initialized end
 
 -- a not but not root
 function is_nr_node(s) return is_node(s) and not is_root(s) end
@@ -603,12 +604,12 @@ end
 
 function check_no_otrs(fsm)
    local function __check_no_otrs(s, p)
-      if s._otrs == nil then
+      if s._otrs == nil or #s._otrs == 0 then
 	 fsm.warn("WARNING: no outgoing transitions from node '" .. s._fqn .. "'")
 	 return false
       else return true end
    end
-   return utils.andt(mapfsm(__check_no_otrs, fsm, is_node))
+   return utils.andt(mapfsm(__check_no_otrs, fsm, is_nr_node))
 end
 
 ----------------------------------------
@@ -717,7 +718,7 @@ end
 ----------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
-   if not is_root(fsm) then fsm.err("ERROR send_events: invalid fsm") end
+   if not is_initialized_root(fsm) then fsm.err("ERROR send_events: invalid fsm") end
    fsm.dbg("RAISED", ...)
    for _,v in ipairs({...}) do
       table.insert(fsm._intq, v)
@@ -1270,7 +1271,7 @@ end
 -- @param n number of steps to execute. default: 1.
 -- @return idle boolean if fsm is idle or not
 function step(fsm, n)
-   if not is_root(fsm) then fsm.err("ERROR step: invalid fsm") end
+   if not is_initialized_root(fsm) then fsm.err("ERROR step: invalid fsm") end
 
    local idle = true
    local n = n or 1
@@ -1330,6 +1331,6 @@ end
 -- @param fsm initialized rfsm state machine
 -- @return idle boolean if fsm is idle or not
 function run(fsm)
-   if not is_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
+   if not is_initialized_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
    return step(fsm, math.huge)
 end
