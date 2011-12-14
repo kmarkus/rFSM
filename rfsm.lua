@@ -251,7 +251,9 @@ function mapfsm(func, fsm, pred, depth)
 	     end
 	  end, states)
    end
-   if pred(fsm) then res[#res+1] = func(fsm, fsm, "root") end
+   if is_root(fsm) then
+      if pred(fsm) then res[#res+1] = func(fsm, fsm, "root") end
+   end
    __mapfsm(fsm, depth)
    return res
 end
