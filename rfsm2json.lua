@@ -67,7 +67,7 @@ function encode(fsm)
 	 else return "?" end
       end
       return { type='transition', src=t.src._fqn, tgt=t.tgt._fqn,
-	       pn=t.pn, events=utils.map(ev2str, t.events) }
+	       pn=t.pn, events=utils.imap(ev2str, t.events) }
    end
 
    --- convert (sub-) fsm s to a table
