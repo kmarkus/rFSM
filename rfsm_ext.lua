@@ -140,7 +140,7 @@ function seqand:new(t)
    -- create a regions table with all substates. Used to keep track
    -- which substates were already added to order.
    local regions = {}
-   rfsm.mapfsm(function (cs, p, n) regions[n] = true end, t, rfsm.is_csta, 1)
+   rfsm.mapfsm(function (cs, p, n) regions[n] = true end, t, rfsm.is_composite, 1)
 
    local exorder = {}
 
@@ -151,7 +151,7 @@ function seqand:new(t)
       t.order=nil; -- not required anymore
 
       for _,name in ipairs(uniq_order) do
-	 if not rfsm.is_csta(t[name]) then
+	 if not rfsm.is_composite(t[name]) then
 	    error("andseq, 'order' field specifies non-existing state " .. name)
 	 end
 	 exorder[#exorder+1] = t[name]
@@ -167,7 +167,7 @@ function seqand:new(t)
       print("andseq, found " .. #exorder .. " substates")
       -- build a state->name lookup tab
       local reg_lt = {}
-      rfsm.mapfsm(function (cs, p, n) reg_lt[cs] = n end, t, rfsm.is_csta, 1)
+      rfsm.mapfsm(function (cs, p, n) reg_lt[cs] = n end, t, rfsm.is_composite, 1)
       print("andseq, execution order:")
       for i,st in ipairs(exorder) do print("\t", tostring(i) ..". " .. reg_lt[st]) end
    end

@@ -50,9 +50,9 @@ local rfsm = rfsm
 
 -- some shortcuts
 local is_meta = rfsm.is_meta
-local is_sta = rfsm.is_sta
-local is_sista = rfsm.is_sista
-local is_csta = rfsm.is_csta
+local is_state = rfsm.is_state
+local is_leaf = rfsm.is_leaf
+local is_composite = rfsm.is_composite
 local sta_mode = rfsm.sta_mode
 local fsmobj_tochar = rfsm.fsmobj_tochar
 
@@ -70,7 +70,7 @@ function fsm2str(fsm, ind)
    function __2colstr(s)
       assert(s, "s not a state")
       if s._mode == 'active' then
-	 if is_sista(s) then return ac.green .. ac.bright .. s._id .. ac.reset
+	 if is_leaf(s) then return ac.green .. ac.bright .. s._id .. ac.reset
 	 else return ac.green .. s._id .. ac.reset end
       elseif s._mode == 'done' then return ac.yellow .. s._id .. ac.reset
       else return ac.red .. s._id .. ac.reset end
@@ -78,10 +78,10 @@ function fsm2str(fsm, ind)
 
    function __fsm_tostring(tab, res, ind)
       for name,state in pairs(tab) do
-	 if not is_meta(name) and is_sta(state) then
+	 if not is_meta(name) and is_state(state) then
 	    res[#res+1] = string.rep(indstr, ind) .. __2colstr(state) .. '[' .. fsmobj_tochar(state) .. ']'
-	    if is_sista(state) then res[#res+1] = '\n' end
-	    if is_csta(state) then
+	    if is_leaf(state) then res[#res+1] = '\n' end
+	    if is_composite(state) then
 	       res[#res+1] = '\n'
 	       __fsm_tostring(state, res, ind+1)
 	    end

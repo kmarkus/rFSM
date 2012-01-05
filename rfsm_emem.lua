@@ -53,7 +53,7 @@ local function setup_emem(fsm)
    rfsm.mapfsm(function (s, p)
 		  print("setting emem tab in state " .. s._fqn)
 		  s.emem={}
-	       end, fsm, rfsm.is_sta)
+	       end, fsm, rfsm.is_state)
 
    -- install pre_step_hook
    rfsm.pre_step_hook_add(fsm, update_emem_tabs)
@@ -70,7 +70,7 @@ local function setup_emem(fsm)
 		  else
 		     s.exit = function (fsm, state, type) emem_reset(state) end
 		  end
-	       end, fsm, rfsm.is_sta)
+	       end, fsm, rfsm.is_state)
 end
 
 

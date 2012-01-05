@@ -45,8 +45,8 @@ module("rfsm2json")
 
 -- shortcuts
 local mapfsm = rfsm.mapfsm
-local is_csta = rfsm.is_csta
-local is_sista = rfsm.is_sista
+local is_composite = rfsm.is_composite
+local is_leaf = rfsm.is_leaf
 local is_conn = rfsm.is_conn
 local is_node = rfsm.is_node
 local is_trans = rfsm.is_trans
@@ -72,12 +72,12 @@ function encode(fsm)
 
    --- convert (sub-) fsm s to a table
    local function __rfsm2json(s)
-      if is_sista(s) then
-	 return { id=s._id, type='simple' }
+      if is_leaf(s) then
+	 return { id=s._id, type='state' }
       elseif is_conn(s) then
 	 return { id=s._id, type='connector' }
-      elseif is_csta(s) then
-	 local tab = { id=s._id, type='composite' }
+      elseif is_composite(s) then
+	 local tab = { id=s._id, type='state' }
 	 tab.transitions = mapfsm(trans2tab, s, is_trans, 1)
 	 tab.subnodes = mapfsm(__rfsm2json, s, rfsm.is_nr_node, 1)
 	 return tab

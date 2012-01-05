@@ -151,7 +151,7 @@ end
 local function fsm2gh(fsm)
    local gh = new_graph(fsm)
    rfsm.mapfsm(function (tr, p) add_ini_state(gh, tr, p) end, fsm, rfsm.is_trans)
-   rfsm.mapfsm(function (s) add_state(gh, s._parent, s) end, fsm, rfsm.is_sta)
+   rfsm.mapfsm(function (s) add_state(gh, s._parent, s) end, fsm, rfsm.is_state)
    rfsm.mapfsm(function (tr, p) add_fini_state(gh, tr, p) end, fsm, rfsm.is_trans)
 
    rfsm.mapfsm(function (tr, p) add_trans(gh, tr, p) end, fsm, rfsm.is_trans)

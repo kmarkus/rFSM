@@ -48,9 +48,7 @@ require("utils")
 local ac = require("ansicolors")
 
 local tab2str = utils.tab2str
-local sista = rfsm.sista
-local is_sista = rfsm.is_sista
-local csta = sista
+local is_leaf = rfsm.is_leaf
 
 module("rfsm_testing", package.seeall)
 
@@ -65,8 +63,8 @@ local function stderr(...)
    utils.stderr(...)
 end
 
-function activate_sista(fsm, node, mode)
-   assert(is_sista(node), "can only set simple_states types active!")
+function activate_leaf(fsm, node, mode)
+   assert(is_leaf(node), "can only activate leaf states!")
    rfsm.map_from_to(fsm, function (fsm, s) set_sta_mode(s, 'active') end, node, fsm)
    set_sta_mode(node, mode)
 end
@@ -81,7 +79,7 @@ function get_act_leaf(fsm)
    if c == nil then
       return false
    end
-   if is_sista(c) then return c end
+   if is_leaf(c) then return c end
    return get_act_leaf(c)
 end
 
@@ -101,11 +99,15 @@ end
 --  id = 'test_id', no whitespace, will be used as name for pics
 --  pics = true|false, generate rfsm2uml snapshots for each step.
 
-function test_fsm(fsm, test, verb)
+function test_fsm(fsm, test, verb, dbg)
    verbose = verb or false
 
    assert(fsm._initialized, "ERROR: test_fsm requires an initialized fsm!")
    stdout("TESTING:", test.id)
+
+   if dbg then
+      fsm.dbg = rfsmpp.gen_dbgcolor(test.id, {}, true)
+   end
 
    if test.pics then
       rfsm2uml.rfsm2uml(fsm, "png", test.id .. "-0.png",  test.id .. " initial state")

@@ -8,7 +8,6 @@ require("rfsmpp")
 if arg and #arg == 2 and arg[1] == 'spawn' then
    -- spawn
    fsm_tpl = assert(rfsm.load(arg[2]), "failed to open fsm file " .. arg[2])
-   assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
    fsm_tpl.info = false
    fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
 

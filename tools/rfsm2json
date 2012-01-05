@@ -13,7 +13,6 @@ end
 function fsm2json(file)
    outfile = string.gsub(file, "\.%w*$", "")
    fsm_tpl = assert(rfsm.load(file), "failed to open fsm file " .. file)
-   assert(rfsm.is_csta(fsm_tpl), "invalid state machine: not a composite state.")
    fsm = rfsm.init(fsm_tpl)
    if not fsm then
       print("error: state machine checking failed.")

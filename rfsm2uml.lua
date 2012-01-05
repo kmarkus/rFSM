@@ -277,8 +277,8 @@ end
 
 
 local function proc_node(gh, node)
-   if rfsm.is_csta(node) then new_csta(gh, node)
-      elseif rfsm.is_sista(node) then new_sista(gh, node)
+   if rfsm.is_composite(node) then new_csta(gh, node)
+      elseif rfsm.is_leaf(node) then new_sista(gh, node)
    elseif rfsm.is_conn(node) then new_conn(gh, node)
    else
       param.err("unknown node type: " .. node:type() .. ", name=" .. node._fqn)

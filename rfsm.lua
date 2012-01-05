@@ -67,39 +67,20 @@ preproc = {}
 -- Model Elements and generic helper functions
 --------------------------------------------------------------------------------
 
--- simple state
---
+-- State
 -- required: -
--- optional: entry, doo, exit
-sista = {}
-sista.rfsm=true
-
-function sista:type() return 'simple' end
-function sista:new(t)
-   setmetatable(t, self)
-   self.__index = self
-   return t
-end
-setmetatable(sista, {__call=sista.new})
-
---
--- composite state
---
--- required: -
--- optional: entry, exit, states, transitions
--- disallowed: doo
+-- optional: entry, doo (only if leaf) exit, states, connectors, transitions
 -- 'root' is a composite state which requires an 'initial' connector
-csta = {}
-csta.rfsm=true
+state = {}
+state.rfsm=true
 
-function csta:type() return 'composite' end
-function csta:new(t)
+function state:type() return 'state' end
+function state:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
 end
-setmetatable(csta, {__call=csta.new})
-
+setmetatable(state, {__call=state.new})
 
 
 --
@@ -161,11 +142,14 @@ end
 setmetatable(conn, {__call=conn.new})
 
 -- aliases
-simple_state = sista
-composite_state = csta
+sista = state; simple_state = state
+csta = state; composite_state = state
 connector = conn
 transition = trans
 yield = coroutine.yield
+
+-- check if a table key is metadata (for now starts with a '_')
+function is_meta(key) return string.sub(key, 1, 1) == '_' end
 
 -- usefull predicates
 function is_fsmobj(s)
@@ -175,33 +159,40 @@ function is_fsmobj(s)
 end
 
 -- type predicates
-
---- Check if state is of type simple/
 -- @param state
 -- @return true if yes, false otherwise
-function is_sista(s) return is_fsmobj(s) and s:type() == 'simple' end
-function is_csta(s)  return is_fsmobj(s) and s:type() == 'composite' end
+function is_state(s) return is_fsmobj(s) and s:type() == 'state' end
 function is_trans(s) return is_fsmobj(s) and s:type() == 'transition' end
 function is_conn(s)  return is_fsmobj(s) and s:type() == 'connector' end
+function is_node(s)  return is_state(s) or is_conn(s) end
 
-function is_sta(s)   return is_sista(s) or is_csta(s) end
-function is_node(s)  return is_sta(s) or is_conn(s) end
+--- check if a state has subnodes
+local function has_subnodes(s)
+   for name,val in pairs(s) do
+      if not is_meta(name) and is_node(val) then return true end
+   end
+   return false
+end
+
+-- derived properties: is_composite/is_leaf
+function is_composite(s) return is_state(s) and has_subnodes(s) end
+function is_leaf(s) return is_state(s) and not is_composite(s) end
 
 -- check for valid and initalized 'root'
-function is_root(s) return is_csta(s) and s._id == 'root' end
-function is_initialized_root(s) return is_csta(s) and s._id == 'root' and s._initialized end
+function is_root(s) return is_composite(s) and s._id == 'root' end
+function is_initialized_root(s) return is_composite(s) and s._id == 'root' and s._initialized end
 
 -- a not but not root
 function is_nr_node(s) return is_node(s) and not is_root(s) end
 
 -- type->char, e.g. 'Composite'-> 'C'
 function fsmobj_tochar(obj)
-   if not is_fsmobj(obj) then return end
-   return string.upper(string.sub(obj:type(), 1, 1))
+   if is_composite(obj) then return "CS"
+   elseif is_leaf(obj) then return "LS"
+   elseif is_trans(obj) then return "TR"
+   elseif is_conn(obj) then return "c"
+   else return end
 end
-
--- check if a table key is metadata (for now starts with a '_')
-function is_meta(key) return string.sub(key, 1, 1) == '_' end
 
 -- check if src is connected to tgt by a transition
 local function is_connected(src, tgt)
@@ -219,8 +210,8 @@ end
 -- @return uninitalized fsm.
 function load(file)
    local fsm = dofile(file)
-   if not is_sta(fsm) then
-      error("rfsm.load: no valid rfsm in file '" .. tostring(file) .. "'")
+   if not is_state(fsm) then
+      error("rfsm.load: no valid rfsm in file '" .. tostring(file) .. "' found.")
    end
    return fsm
 end
@@ -267,7 +258,7 @@ function mapfsm(func, fsm, pred, depth)
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
-		if is_csta(s) then
+		if is_composite(s) then
 		   __mapfsm(s, depth-1)
 		end
 	     end
@@ -302,9 +293,14 @@ function fsm_merge(fsm, parent, obj, id)
 
    -- do some checking
    local mes = {}
-   if not is_csta(parent) then
-      mes[#mes+1] = "parent " .. parent._fqn .. " of " .. id .. " not a complex state"
+   if not is_state(parent) then
+      mes[#mes+1] = "parent " .. parent._fqn .. " of " .. id .. " not a state"
    end
+
+   if parent.doo then
+      mes[#mes+1] = "parent " .. parent._fqn .. " defines a doo function!"
+   end
+
    if id ~= nil and parent[id] ~= nil then
       mes[#mes+1] = "parent " .. parent._fqn .. " already contains a sub element " .. id
    end
@@ -323,7 +319,7 @@ function fsm_merge(fsm, parent, obj, id)
    end
 
    -- merge the object
-   if is_sista(obj) or is_conn(obj) then
+   if is_leaf(obj) or is_conn(obj) then
       parent[id] = obj
       obj._parent = parent
       obj._id = id
@@ -384,7 +380,7 @@ local function add_defconn(fsm)
    -- if transition *locally* references a non-existant initial or
    -- final connector create it
    local function __add_trans_defconn(tr, p)
-      if is_csta(p) then
+      if is_composite(p) then
 	 if tr.src == 'initial' and p.initial == nil then
 	    fsm_merge(fsm, p, conn:new{}, 'initial')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
@@ -510,8 +506,8 @@ local function resolve_trans(fsm)
    local function __resolve_tgt(tr, parent)
       -- resolve target
       if tr.tgt == 'internal' then
-	 fsm.warn("WARNING: internal events not supported (yet)")
-	 return true
+	 fsm.warn("ERROR: internal events not supported (yet?)")
+	 return false
       end
 
       local tgt, mes = __resolve_path(fsm, tr.tgt, parent)
@@ -521,10 +517,9 @@ local function resolve_trans(fsm)
 	 return false
       else
 	 -- complex state, connect to 'initial'
-	 if is_csta(tgt) then
+	 if is_composite(tgt) then
 	    if tgt.initial == nil then
-	       fsm.err("ERROR: transition " .. tostring(tr) ..
-		    " ends on cstate without initial connector")
+	       fsm.err("ERROR: transition " .. tostring(tr) .. " ends on composite state without initial connector")
 	       return false
 	    else
 	       tr.tgt = tgt.initial
@@ -568,7 +563,7 @@ function verify_early(fsm)
       return ret
    end
 
-   local function check_csta(s, p)
+   local function check_composite(s, p)
       local ret = true
       if s.initial and not is_conn(s.initial) then
 	 fsm.err("ERROR: in composite " .. p._fqn .. ".initial is not of type connector but " .. s.initial:type())
@@ -576,7 +571,8 @@ function verify_early(fsm)
       end
 
       if s.doo then
-	 mes[#mes+1] = "WARNING: " .. s .. " 'doo' function in csta will never run"
+	 fsm.err("ERROR: doo not permitted in composite states: " .. p._fqn .. "." .. s._id)
+	 ret = false
       end
 
       return ret
@@ -608,7 +604,7 @@ function verify_early(fsm)
    end
 
    -- root
-   if not is_csta(fsm)  then
+   if not is_state(fsm)  then
       mes[#mes+1] = "ERROR: fsm not a composite state but of type " .. fsm:type()
       res = false
    end
@@ -620,7 +616,7 @@ function verify_early(fsm)
 
    -- no side effects, order does not matter
    res = res and utils.andt(mapfsm(check_node, fsm, is_node))
-   res = res and utils.andt(mapfsm(check_csta, fsm, is_csta))
+   res = res and utils.andt(mapfsm(check_composite, fsm, is_composite))
    res = res and utils.andt(mapfsm(check_trans, fsm, is_trans))
 
    return res, mes
@@ -667,7 +663,7 @@ end
 -- @return inialized fsm
 function init(fsm_templ)
 
-   assert(is_csta(fsm_templ), "invalid fsm model passed to rfsm.init")
+   assert(is_state(fsm_templ), "invalid fsm model passed to rfsm.init")
 
    local fsm = utils.deepcopy(fsm_templ)
 
@@ -731,7 +727,8 @@ function reset(fsm)
    fsm._intq = { 'e_init_fsm' }
    fsm._curq = {}
    fsm._act_leaf = false
-   mapfsm(function (c) c._actchild = nil end, fsm, is_csta)
+   mapfsm(function (c) c._actchild = nil end, fsm, is_composite)
+   mapfsm(function (s) s._doo_co = nil end, fsm, is_leaf)
 end
 
 
@@ -837,9 +834,9 @@ function get_sta_mode(s) return s._mode end
 
 -- set state mode
 function set_sta_mode(s, m)
-   assert(is_sta(s), "can't set_mode on non state type")
+   assert(is_state(s), "can't set_mode on non state type")
 
-   if is_sista(s) then assert(m=='active' or m=='inactive' or m=='done')
+   if is_leaf(s) then assert(m=='active' or m=='inactive' or m=='done')
    else assert(m=='active' or m=='inactive') end -- must be a csta
 
    s._mode = m
@@ -903,7 +900,7 @@ end
 -- @param hot hot entry: resume an previous coroutine if available
 local function enter_one_state(fsm, state, hot)
 
-   if not is_sta(state) then return end
+   if not is_state(state) then return end
    set_sta_mode(state, 'active')
    if state.entry then
       local succ, err = pcall(state.entry, fsm, state, 'entry')
@@ -913,7 +910,7 @@ local function enter_one_state(fsm, state, hot)
       end
    end
 
-   if is_sista(state) then
+   if is_leaf(state) then
       fsm._act_leaf = state
       if not state.doo then
 	 set_sta_mode(state, 'done')
@@ -932,12 +929,12 @@ end
 -- @param state state to exit
 function exit_state(fsm, state)
 
-   if not is_sta(state) then return end  -- don't try to exit connectors.
+   if not is_state(state) then return end  -- don't try to exit connectors.
 
    -- if composite exit child states first
-   if is_csta(state) then exit_state(fsm, actchild_get(state)) end
+   if is_composite(state) then exit_state(fsm, actchild_get(state)) end
 
-   if is_sta(state) then
+   if is_state(state) then
       -- save this for possible history entry
       state._parent._last_active = state
       state._parent._last_active_mode = get_sta_mode(state)
@@ -953,7 +950,7 @@ function exit_state(fsm, state)
       end
 
       -- don't cleanup coroutine, could be used later
-      if is_sista(state) then fsm._act_leaf = false end
+      if is_leaf(state) then fsm._act_leaf = false end
    end
    fsm.dbg("STATE_EXIT", state._fqn)
 end
@@ -1122,7 +1119,7 @@ local function exec_path(fsm, path)
 	 if pn.nextl == false then
 	    -- We have reached a stable configuration!
 	    return
-	 elseif is_sta(pn.node) then
+	 elseif is_state(pn.node) then
 	    -- todo: why not check for conflicts here? because they
 	    -- are currently not possible...
 	    seg = pn.nextl[1]
@@ -1206,7 +1203,7 @@ function node_find_enabled(fsm, start, events)
 	    -- find continuation
 	    local tgt = tr.tgt
 	    local tail
-	    if is_sista(tgt) then tail = { node=tgt, nextl=false }
+	    if is_leaf(tgt) then tail = { node=tgt, nextl=false }
 	    elseif is_conn(tgt) then tail = __find_path(tgt, events)
 	    else fsm.err("ERROR: node_find_path invalid starting node"
 			 .. start._fqn .. ", type" .. start:type()) end
