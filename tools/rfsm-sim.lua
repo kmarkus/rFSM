@@ -3,6 +3,7 @@ require "rfsm"
 require "rfsmpp"
 require "rfsm2uml"
 require "rfsm2tree"
+require "rfsm_proto"
 
 if arg and #arg < 1 then
    print("usage: run <fsmfile>")
@@ -49,6 +50,11 @@ end
 function run()
    rfsm.run(fsm);
    run_hooks()
+end
+
+function sim()
+   fsm.idle_hook = function () os.execute("sleep 0.1") end
+   run()
 end
 
 function step(n)

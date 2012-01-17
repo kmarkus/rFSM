@@ -82,9 +82,9 @@
   [[file:example1.png]]
 
   #+begin_src lua -n -r
-    return rfsm.composite_state { (ref:hello_fsm_root)
-       hello = rfsm.simple_state { exit=function() print("hello") end }, (ref:hello_fsm_hello)
-       world = rfsm.simple_state { entry=function() print("world") end }, (ref:hello_fsm_world)
+    return rfsm.state { (ref:hello_fsm_root)
+       hello = rfsm.state { exit=function() print("hello") end }, (ref:hello_fsm_hello)
+       world = rfsm.state { entry=function() print("world") end }, (ref:hello_fsm_world)
 
        rfsm.transition { src='initial', tgt='hello' }, (ref:hello_fsm_trans_ini)
        rfsm.transition { src='hello', tgt='world', events={ 'e_done' } }, (ref:hello_fsm_e_done)
@@ -93,12 +93,12 @@
   #+end_src
 
   The [[(hello_fsm_root)][first line]] defines a new toplevel composite state and returns
-  it. The root state of an rFSM state machine is always a composite
-  state. This permits it to be composed as a substate in a different
+  it. The root state of an rFSM state machine is always a state
+  itself. This permits it to be composed as a substate in a different
   state machine. The =return= statement facilitates reading rfsm model
   files by tools or other state machines.
 
-  The [[(hello_fsm_hello)][second]] and [[(hello_fsm_world)][third]] line define two simple states that are part of
+  The [[(hello_fsm_hello)][second]] and [[(hello_fsm_world)][third]] line define two leaf states that are part of
   the toplevel composite state. =hello= defines an exit function and
   world an entry function which are called when the state is
   exited/entered, respectively.
@@ -167,12 +167,11 @@
 
 * Specifying rFSM models
 
-  rFSM state machines are built using the following four model
-  elements: *composite_state*, *simple_state*, *connector* and
-  *transition*.
+  rFSM state machines are constructed using four model elements:
+  *states*, *connectors* and *transitions*.
 
   (all functions are part of the rfsm module, thus need to be called
-  in Lua with the =rfsm= prefix, e.g. =rfsm.simple_state{}=)
+  in Lua with the =rfsm= prefix, e.g. =rfsm.state{}=)
 
 ** States (=rfsm.composite_state= and =rfsm.simple_state=)
 
