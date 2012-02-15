@@ -1,7 +1,7 @@
 
 local rfsm = require "rfsm"
 
-local cnt = 1000000
+local cnt = 10000
 print("ping ponging " .. tostring(cnt) .. " times")
 
 local function check_cnt()

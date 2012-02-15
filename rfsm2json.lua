@@ -34,9 +34,10 @@
 -- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --
 
-local rfsm = require ("rfsm")
-local json = require("json")
-local utils = require ("utils")
+local rfsm = require "rfsm"
+local rfsm_marsh = require "rfsm_marsh"
+local json = require "json"
+local utils = require "utils"
 local pcall = pcall
 local tostring = tostring
 local print = print -- debugging only
@@ -51,50 +52,30 @@ local is_conn = rfsm.is_conn
 local is_node = rfsm.is_node
 local is_trans = rfsm.is_trans
 
-local VERSION = 1
+local RFSM2JSON_VERSION = 2
 
+--- msg format
+-- { version=...
+--   graph=....
+--   active_leaf = <active state fqn>
+--   active_leaf_state=<active,done,inactive>"
+-- }
 --- Convert an initialized rFSM instance to the json representation
 -- @param fsm initalized rFSM instance
 function encode(fsm)
-   --- convert a transition to a table
-   -- @param t rfsm.transition
-   local function trans2tab(t)
-      --- safely convert an event to a string
-      -- @param e arbitrary event type that supports __tostring
-      local function ev2str(e)
-	 local res, evstr = pcall(tostring, e)
-	 if res then return evstr
-	 else return "?" end
-      end
-      return { type='transition', src=t.src._fqn, tgt=t.tgt._fqn,
-	       pn=t.pn, events=utils.imap(ev2str, t.events) }
-   end
-
-   --- convert (sub-) fsm s to a table
-   local function __rfsm2json(s)
-      if is_leaf(s) then
-	 return { id=s._id, type='state' }
-      elseif is_conn(s) then
-	 return { id=s._id, type='connector' }
-      elseif is_composite(s) then
-	 local tab = { id=s._id, type='state' }
-	 tab.transitions = mapfsm(trans2tab, s, is_trans, 1)
-	 tab.subnodes = mapfsm(__rfsm2json, s, rfsm.is_nr_node, 1)
-	 return tab
-      end
-   end
-
    if not fsm._initialized then
-      error("rfsm2json: initialized fsm required")
+      error("rfsm2json: initialized FSM required")
       return false
    end
 
-   local res = { version=VERSION }
-   res.fsm_graph = __rfsm2json(fsm)
+   local res = { version=RFSM2JSON_VERSION, type='rfsm_model' }
+   res.graph = rfsm_marsh.model2tab(fsm)
    if fsm._act_leaf then
-      res.active_leaf = { fqn=fsm._act_leaf._fqn, state=get_sta_mode(fsm._act_leaf) }
+      res.active_leaf=fsm._act_leaf._fqn
+      res.active_leaf_state=get_sta_mode(fsm._act_leaf)
    else
       res.active_leaf = false
+      res.active_leaf_state = false
    end
    return json.encode(res)
 end

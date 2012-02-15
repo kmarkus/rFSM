@@ -51,8 +51,6 @@ local is_conn = rfsm.is_conn
 local is_node = rfsm.is_node
 local is_trans = rfsm.is_trans
 
-local VERSION = 1
-
 --- Convert an initalized fsm to a table
 function model2tab(fsm)
    --- convert a transition to a table

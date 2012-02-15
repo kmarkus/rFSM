@@ -60,6 +60,7 @@ module("rfsm_rtt")
 -- @param ... list of ports to read events from
 -- @return getevent function
 function gen_read_events(...)
+   local str_ev = rtt.Variable("string")
 
    local function read_events(tgttab, port)
       local fs,ev
@@ -81,6 +82,34 @@ function gen_read_events(...)
 	     for _,port in ipairs(ports) do
 		read_events(res, port)
 	     end
+	     return res
+	  end
+end
+
+--- Generate an event reader function optimized for string events.
+--
+-- When called this function will read all new events from the given
+-- dataports and return them in a table.
+--
+-- @param ... list of ports to read events from
+-- @return getevent function
+function gen_read_str_events(...)
+   local str_ev = rtt.Variable("string")
+   local function read_events(tgttab, port)
+      local fs
+      while true do
+	 fs = port:read(str_ev)
+	 if fs == 'NewData' then tgttab[#tgttab+1] = str_ev:tolua()
+	 else break end -- OldData or NoData
+      end
+   end
+
+   local ports = {...}
+   assert(#ports > 0, "no ports given")
+   -- check its all ports
+   return function ()
+	     local res = {}
+	     for _,port in ipairs(ports) do read_events(res, port) end
 	     return res
 	  end
 end
