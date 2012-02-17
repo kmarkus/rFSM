@@ -18,7 +18,7 @@ local host = "localhost" 	-- use '*' for host to bind to all local interfaces.
 local port = 44044
 
 local read_timeout = 1		-- block in read for this time
-local heartbeat_timeout = 5	-- drop a subscriber after not receiving a heartbeat for this time
+local heartbeat_timeout = 15	-- drop a subscriber after not receiving a heartbeat for this time
 local idle_update = 3		-- send a state update after this time if no changes take place.
 
 local VERSION=2
@@ -41,7 +41,7 @@ local VERSION=2
 
 --- Update heartbeat timestamp.
 function update_timestamp(key, subs)
-   print("received heartbeat from " .. key)
+   -- print("received heartbeat from " .. key)
    if subs[key] then subs[key].last_heartbeat = os.time() end
 end
 

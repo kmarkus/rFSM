@@ -40,9 +40,9 @@ return rfsm.csta {
    five = rfsm.sista{},
 
    rfsm.trans{ src='initial', tgt='one' },
-   rfsm.trans{ src='one', tgt='two', events={ 'e_after(1)' } },
-   rfsm.trans{ src='two', tgt='three', events={ 'e_after(1.5)' } },
-   rfsm.trans{ src='three', tgt='four', events={ 'e_after(2)' } },
-   rfsm.trans{ src='four', tgt='five', events={ 'e_after(3)' } },
-   rfsm.trans{ src='five', tgt='one', events={ 'e_after(4.5)' } },
+   rfsm.trans{ src='one', tgt='two', events={ 'e_after(0.1)' } },
+   rfsm.trans{ src='two', tgt='three', events={ 'e_after(0.2)' } },
+   rfsm.trans{ src='three', tgt='four', events={ 'e_after(0.3)' } },
+   rfsm.trans{ src='four', tgt='five', events={ 'e_after(0.4)' } },
+   rfsm.trans{ src='five', tgt='one', events={ 'e_after(1)' } },
 }
