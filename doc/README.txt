@@ -2,42 +2,43 @@ rFSM Statecharts
 ================
 
 Author: Markus Klotzbuecher
-Date: [2011-11-21 Mon]
+Date: [2012-02-20 Mon]
 
 
 
 Table of Contents
 =================
-1 Overview 
-2 Setup 
-3 Introduction 
-4 Specifying rFSM models 
-    4.1 States (=rfsm.composite_state= and =rfsm.simple_state=) 
-        4.1.1 The doo function 
-        4.1.2 Particularities of the root composite state 
-    4.2 Transitions (=rfsm.transition=) 
-    4.3 Connector (=rfsm.connector=) 
-5 Executing rFSM models 
-6 Common pitfalls 
-7 Tools and helper modules 
-    7.1 The event memory extension (=rfsm_emem= module) #EventMemory 
-    7.2 Timeevents (=rfsm_timeevent= module) 
-    7.3 Configurable and colorized =dbg= info (=rfsmpp= module) 
-    7.4 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
-    7.5 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree 
-    7.6 =rfsm-sim= simple rfsm simulator 
-    7.7 Lua fsm to json conversion (=rfsm2json= command line tool) 
-    7.8 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt 
-8 More examples, tips and tricks 
-    8.1 A more complete example 
-    8.2 How to compose state machines 
-    8.3 Using rfsm with Orocos RTT 
-9 API Summary 
-    9.1 State specification 
-    9.2 Operational functions 
-    9.3 Hooks 
-10 Contact 
-11 Acknowledgement 
+1 Overview
+2 Setup
+3 Introduction
+4 Specifying rFSM models
+    4.1 States (=rfsm.state=)
+        4.1.1 The doo function
+        4.1.2 Configuring a State Machine
+    4.2 Transitions (=rfsm.transition=)
+    4.3 Connector (=rfsm.connector=)
+5 Executing rFSM models
+6 Common pitfalls
+7 Tools and helper modules
+    7.1 The event memory extension (=rfsm_emem= module) #EventMemory
+    7.2 Timeevents (=rfsm_timeevent= module)
+    7.3 Configurable and colorized =dbg= info (=rfsmpp= module)
+    7.4 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
+    7.5 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree
+    7.6 =rfsm-sim= simple rfsm simulator
+    7.7 Lua fsm to json conversion (=rfsm2json= command line tool)
+    7.8 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt
+8 More examples, tips and tricks
+    8.1 A more complete example
+    8.2 How to compose state machines
+    8.3 Using rfsm with Orocos RTT
+9 API Summary
+    9.1 State specification
+    9.2 Operational functions
+    9.3 Hooks
+10 Contact
+11 Download
+12 Acknowledgement
 
 
 1 Overview 
@@ -66,16 +67,12 @@ Table of Contents
   export LUA_PATH=";;;/home/mk/src/git/rfsm/?.lua"
 
 
-
-
   If your =LUA_PATH= is already set to something, then just add the
   rFSM path instead of overwriting it:
 
 
 
   export LUA_PATH="$LUA_PATH;/home/mk/src/git/rfsm/?.lua"
-
-
 
 
 
@@ -98,13 +95,13 @@ Table of Contents
 
 
 
-  [file:example1.png]
+    [file:example1.png]
 
 
 
-  1:  return rfsm.composite_state {
-  2:     hello = rfsm.simple_state { exit=function() print("hello") end },
-  3:     world = rfsm.simple_state { entry=function() print("world") end },
+  1:  return rfsm.state {
+  2:     hello = rfsm.state { exit=function() print("hello") end },
+  3:     world = rfsm.state { entry=function() print("world") end },
   4:  
   5:     rfsm.transition { src='initial', tgt='hello' },
   6:     rfsm.transition { src='hello', tgt='world', events={ 'e_done' } },
@@ -112,15 +109,13 @@ Table of Contents
   8:  }
 
 
-
-
   The first line defines a new toplevel composite state and returns
-  it. The root state of an rFSM state machine is always a composite
-  state. This permits it to be composed as a substate in a different
+  it. The root state of an rFSM state machine is always a state
+  itself. This permits it to be composed as a substate in a different
   state machine. The =return= statement facilitates reading rfsm model
   files by tools or other state machines.
 
-  The second and third line define two simple states that are part of
+  The second and third line define two leaf states that are part of
   the toplevel composite state. =hello= defines an exit function and
   world an entry function which are called when the state is
   exited/entered, respectively.
@@ -152,8 +147,6 @@ Table of Contents
   queue:  e_done@root.hello
 
 
-
-
   We execute =step()= to advance the state machine once. As this is
   the first step, the fsm is entered via the 'initial' connector to
   the =hello= state. After that the state =hello= is active and =done=
@@ -169,8 +162,6 @@ Table of Contents
   queue:  e_done@root.world
 
 
-
-
   ... causes a transition to =world=. As the =world= state completion
   event does not trigger any transitons, running =step()= again does
   not have any effect:
@@ -180,8 +171,6 @@ Table of Contents
   > step()
   active: root.world(done)
   queue:
-
-
 
 
   But we can manually send in the =e_restart= event and call =step()=,
@@ -197,34 +186,27 @@ Table of Contents
 
 
 
-
-
 4 Specifying rFSM models 
 -------------------------
 
-  rFSM state machines are built using the following four model
-  elements: *composite_state*, *simple_state*, *connector* and
-  *transition*.
+  rFSM state machines are constructed using four model elements:
+  *states*, *connectors* and *transitions*.
 
   (all functions are part of the rfsm module, thus need to be called
-  in Lua with the =rfsm= prefix, e.g. =rfsm.simple_state{}=)
+  in Lua with the =rfsm= prefix, e.g. =rfsm.state{}=)
 
-4.1 States (=rfsm.composite_state= and =rfsm.simple_state=) 
-============================================================
+4.1 States (=rfsm.state=) 
+==========================
 
-   States can be either composite (=composite_state= or =csta=) or
-   simple (=simple_state= or =sista=). While composite states may
-   contain all other model elements (incl. other composite states),
-   simple states are /leaves/ of the FSM tree and hence do not contain
-   any subtypes. Both simple and composite states may define =entry=
-   and =exit= functions:
+   States are used to model discrete states of the system and can be
+   either composite or leaf states. A composite state contains other
+   states, while a leaf state does not. States can define =entry= and
+   =exit= functions
 
 
 
   entry(fsm, state, 'entry')
   exit(fsm, state, 'exit')
-
-
 
 
    that are called when the state is entered or exited
@@ -239,19 +221,17 @@ Table of Contents
 4.1.1 The doo function 
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-    Simple states may additionaly define a do function (it is called
+    Leaf states may additionaly define a do function (it is called
     =doo= in rFSM to avoid clashes with the identically named Lua
     keyword).
-    
+
 
 
   bool doo(fsm, state, 'doo')
 
 
-
-
-    The doo function is used to perform actions /while/ a simple state
-    is active. Therefore it can be used such that it is repeatedly
+    The doo function is used to perform actions /while/ a leaf state
+    is active. To that end it can be used such that it is repeatedly
     called until either the function completes or an event triggers a
     transition to a different state.
 
@@ -287,8 +267,6 @@ Table of Contents
         end
 
 
-
-
     This =doo= will check a certain condition repeatedly and raise the
     "e_close_obj" event if it is true. Each cycle the control is
     returned to the rFSM core by calling =rfsm.yield()=.
@@ -304,12 +282,12 @@ Table of Contents
     possible (potentially consuming a lot of CPU!).
 
 
-4.1.2 Particularities of the root composite state 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4.1.2 Configuring a State Machine 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     The root composite state honors some extra fields to refine the
     global FSM behavior.
-    
+
     *Configuring error, warning, informational and debug output.* The
     =err=, =warn=, =info= and =dbg= fields can be used to fine tune
     how these messages are output. The value of these fields can be
@@ -325,7 +303,6 @@ Table of Contents
     systems. The expected behavior is to return a Lua table of events
     (array part only). These events are then used to check for enabled
     transtions.
-    
 
 4.2 Transitions (=rfsm.transition=) 
 ====================================
@@ -337,9 +314,9 @@ Table of Contents
 
 
 
-  rfsm.transition { 
+  rfsm.transition {
       src='stateX', tgt='stateY', events = {"e1", "e2"},
-      guard=function() 
+      guard=function()
                 if getVal() > 0.3 then
                     return false
                 end
@@ -349,8 +326,6 @@ Table of Contents
   }
 
 
-
-
    The above defines a transition between stateX and stateY which is
    triggered by the events =e1= _and_ =e2=. The =guard= condition
    (optional) will prevent the transition from being executed if it
@@ -358,7 +333,7 @@ Table of Contents
    during the transitioning of the function. If no events are
    specified, this is interpreted as *any* events will trigger the
    transition.
-   
+
    Three ways of specifying the =src= and =target= states are
    supported: /local/, /relative/ or /absolute/. In the above example
    =stateX= and =stateY= are referenced locally and must therefore be
@@ -370,21 +345,19 @@ Table of Contents
 
 
 
-  return rfsm.csta{
-     operational=rfsm.csta{
-        motors_on = rfsm.csta{
-           moving = rfsm.sista{},
-           stopped = rfsm.sista{},
+  return rfsm.state{
+     operational=rfsm.state{
+        motors_on = rfsm.state{
+           moving = rfsm.state{},
+           stopped = rfsm.state{},
            rfsm.trans{src='initial', tgt='stopped'},
         },
         rfsm.trans{src='initial', tgt='motors_on'},
      },
-     off=rfsm.sista{},
+     off=rfsm.state{},
      rfsm.trans{src='initial', tgt=".operational.motors_on.moving" }
      rfsm.trans{src=".operational.motors_on.stopped", tgt='off', events={'e_off'} }
   }
-
-
 
 
    The first transition is defined between the (locally referenced)
@@ -417,8 +390,6 @@ Table of Contents
   rfsm.trans{ src='following', tgt='hitting', pn=10, events={ 't6' } },
 
 
-
-
    If possible, statecharts should be designed not to depend on
    priority numbers and introduce these rather as an optimization.
 
@@ -440,9 +411,9 @@ Table of Contents
    example defines a error handling state:
 
 
-  return rfsm.csta{
-    software_err = rfsm.sista{},
-    hardware_err = rfsm.sista{},
+  return rfsm.state{
+    software_err = rfsm.state{},
+    hardware_err = rfsm.state{},
   
     initial = rfsm.conn{},
     recovered = rfsm.conn{},
@@ -456,8 +427,6 @@ Table of Contents
     rfsm.trans{src='software_err', tgt='failed', events={'e_failed'}},
     rfsm.trans{src='hardware_err', tgt='failed', events={'e_failed'}},
   }
-
-
 
 
    Transitions 1 and 2 dispatch to different error handling states
@@ -483,8 +452,6 @@ Table of Contents
 
 
   fsm = rfsm.init(rfsm.load("fsm.lua"))
-
-
 
 
   If the return value from =rfsm.init= is not =false=, initalization
@@ -529,9 +496,7 @@ Table of Contents
 
 
 
-  ['end'] = rfsm.sista{...}
-
-
+  ['end'] = rfsm.state{...}
 
 
   2. Executing functions accidentially
@@ -541,9 +506,7 @@ Table of Contents
 
 
 
-  stateX = rfsm.sista{ entry = my_func() }
-
-
+  stateX = rfsm.state{ entry = my_func() }
 
 
      The (likely) mistake above is to execute my_func and assigning
@@ -551,9 +514,7 @@ Table of Contents
 
 
 
-  stateX = rfsm.sista{ entry = my_func }
-
-
+  stateX = rfsm.state{ entry = my_func }
 
 
      Of course the first example would be perfectly valid if
@@ -577,7 +538,7 @@ Table of Contents
      The same holds true for =rfsm_timeevent= based timeevents.
 
   4. My FSM is using up 100% CPU, what's wrong?
-     
+
      Most likely you have defined a long running =doo= function that
      does not call =rfsm.yield= with a =true= argument (the idle
      flag). Therefore the rFSM engine calls the =doo= function in a
@@ -608,7 +569,7 @@ Table of Contents
 
 7.2 Timeevents (=rfsm_timeevent= module) 
 =========================================
-   
+
    This module extends the rFSM engine with time events. Time events
    are automatically raised /after/ the specified time after entering
    a state has elapsed. To enable time events, it suffices to load the
@@ -620,8 +581,6 @@ Table of Contents
 
 
   rfsm.trans{ src='A', tgt='B', events={ 'e_after(0.1)' } },
-
-
 
 
    The timeevent will be raised 100ms after state =A= was entered.
@@ -653,8 +612,6 @@ Table of Contents
   rfsmpp.gen_dbgcolor(name, dbgids, defshow)
 
 
-
-     
      - =name= is the (optional) string name to print prefixing the
        debug output
      - =dbgids= is a table that enables or disables certain dbg ids by
@@ -663,7 +620,7 @@ Table of Contents
        =ERROR=, =HIBERNATING=, =RAISED=, =TIMEEVENT=
      - =defshow= (bool) defines wether debug id's not mentioned in the dbgids
        table are shown or not.
-        
+
 
    Example:
 
@@ -674,21 +631,18 @@ Table of Contents
                               { STATE_ENTER=true, STATE_EXIT=true}, false)
 
 
-
-
    Will show only =STATE_ENTER= and =STATE_EXIT= debug messages.
 
-     
 
 7.4 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
 ==========================================================================
-     
+
      Modules to transform rFSM models to graphical
      descriptions. =rfsm2uml= generates classical statechart figures and
      =rfsm2tree= generates a tree representation (useful to see check
      priorities).
 
-     Usage: 
+     Usage:
 
      - =rfsm2uml.rfsm2uml(root_fsm, format, outfile, caption)=
      - =rfsm2tree.rfsm2tree(root_fsm, format, outfile)=
@@ -702,8 +656,6 @@ Table of Contents
   rfsm2uml.rfsm2uml(fsm, 'png', "fsm.png", "Figure caption")
 
 
-
-
      or
 
 
@@ -711,8 +663,6 @@ Table of Contents
   require("rfsm2tree")
   fsm = rfsm.init(rfsm.load("fsm.lua"))
   rfsm2tree.rfsm2tree(fsm, 'png', "fsm-tree.png")
-
-
 
 
      The =rfsm-viz= command line uses these modules to generate
@@ -729,8 +679,6 @@ Table of Contents
   $ tools/rfsm-viz all examples/composite_nested.lua
 
 
-
-
      generates various representations (in =examples/=)
 
 
@@ -745,8 +693,6 @@ Table of Contents
   $ tools/rfsm-sim all examples/ball_tracker_scope.lua
 
 
-
-
      It requires an image viewer which automatically updates once the
      file displayed changes. For example =evince= works nicely.
 
@@ -759,7 +705,7 @@ Table of Contents
 
 7.8 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt 
 ===============================================================
-   
+
    See the Orocos [LuaCookbook] for more details.
 
 
@@ -776,26 +722,26 @@ Table of Contents
 
 
 
-   [file:example2.png]
+      [file:example2.png]
 
    ... and the corresponding textual representation:
 
 
 
-  -- any rFSM is always contained in a composite_state
-  return rfsm.composite_state {
+  -- any rFSM is always contained in a state
+  return rfsm.state {
      dbg = true, -- enable debugging
   
-     on = rfsm.composite_state {
+     on = rfsm.state {
         entry = function () print("disabling brakes") end,
         exit = function () print("enabling brakes") end,
   
-        moving = rfsm.simple_state {
+        moving = rfsm.state {
            entry=function () print("starting to move") end,
            exit=function () print("stopping") end,
         },
   
-        waiting = rfsm.simple_state {},
+        waiting = rfsm.state {},
   
         -- define some transitions
         rfsm.trans{ src='initial', tgt='waiting' },
@@ -803,7 +749,7 @@ Table of Contents
         rfsm.trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
      },
   
-     error = rfsm.simple_state {
+     error = rfsm.state {
         doo = function (fsm)
                    print ("Error detected - trying to fix")
                    rfsm.yield()
@@ -819,7 +765,7 @@ Table of Contents
                 end,
      },
   
-     fatal_error = rfsm.simple_state {},
+     fatal_error = rfsm.state {},
   
      rfsm.trans{ src='initial', tgt='on',
                  effect=function() print("initalizing system") end },
@@ -831,26 +777,22 @@ Table of Contents
 
 
 
-
-
 8.2 How to compose state machines 
 ==================================
 
    This is easy! Let's assume the state machine is is a file
    "subfsm.lua" and uses the strongly recommended =return
-   rfsm.csta ...= syntax, it can be included as follows:
+   rfsm.state ...= syntax, it can be included as follows:
 
 
 
-  return rfsm.csta {
+  return rfsm.state {
   
-     name_of_composite_state = rfsm.load("subfsm.lua"),
+     name_of_state = rfsm.load("subfsm.lua"),
   
-     otherstateX = rfsm.sista{},
+     otherstateX = rfsm.state{},
      ...
   }
-
-
 
 
    Make sure not to forget the ',' after the =rfsm.load()= statement!
@@ -872,18 +814,17 @@ Table of Contents
 
    Functions to define rFSM:
 
-     *Function*            *Short alias*   *Description*             
-    ---------------------+---------------+--------------------------
-     =simple_state{}=      =sista{}=       create a simple state     
-     =composite_state{}=   =csta{}=        create a composite state  
-     =connector{}=         =conn{}=        create a connector        
-     =transition{}=        =trans{}=       create a transition       
+     *Function*       *Short alias*   *Description*        
+    ----------------+---------------+---------------------
+     =state{}=        =state{}=       create a state       
+     =connector{}=    =conn{}=        create a connector   
+     =transition{}=   =trans{}=       create a transition  
 
-  
+
 
 9.2 Operational functions 
 ==========================
-   
+
      *Function*                     *Description*                                         
     ------------------------------+------------------------------------------------------
      =fsm rfsm.init(fsmmodel)=      create an initialized rfsm instance from model        
@@ -898,7 +839,7 @@ Table of Contents
    The following hook functions can be defined for a toplevel
    composite state and allow to refine various behavior of the state
    machine.
-   
+
      *Function*            *Description*                                                                       
     ---------------------+------------------------------------------------------------------------------------
      =dbg=                 called to output debug information. Set to false to disable. Default: false.        
@@ -908,15 +849,18 @@ Table of Contents
      =table getevents()=   function which returns a table of new events which have occurred.                   
 
 
-   Low level hooks (not for normal use):
+   Lower level functions (not for normal use):
 
-     *Function*             *Description*                                            
-    ----------------------+---------------------------------------------------------
-     =pre_step_hook(fsm)=   is called for each step (mostly for debugging purposes)  
-     =step_hook(fsm)=       called before for each step                              
-     =idle_hook(fsm)=       called *instead* of returning from step/run functions    
+   Use these to manage step hooks. Setting =pre_step_hook= and
+   =post_step_hook= directly is not permitted anymore:
 
+     *Function*                               *Description*                                                      
+    ----------------------------------------+-------------------------------------------------------------------
+     =pre_step_hook_add(fsm, hook, where)=    install function hook to be called _before_ each rfsm step of fsm  
+     =post_step_hook_add(fsm, hook, where)=   install function hook to be called _after_ each rfsm step of fsm   
 
+   =idle_hook(fsm)=: if defined, called *instead* of returning from
+   step/run functions. Used only for debugging purposes.
 
 10 Contact 
 -----------
@@ -925,10 +869,17 @@ Table of Contents
   mailing list.
 
 
-
   [orocos-users]: http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users
 
-11 Acknowledgement 
+11 Download 
+------------
+
+  The code can be found in [this] git repository.
+
+
+  [this]: https://github.com/kmarkus/rFSM
+
+12 Acknowledgement 
 -------------------
 
   - Funding
@@ -959,7 +910,6 @@ Table of Contents
 [2] The reason for this choice of default is that it fails more
   obviously (100% CPU load) than the opposite (doo function not
   executed properly).
-
 
   [this]: https://lwn.net/images/conf/rtlws-2011/paper.05.html
   [lua-tlsf]: https://github.com/kmarkus/lua-tlsf

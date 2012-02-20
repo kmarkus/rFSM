@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"
-lang="en" xml:lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>rFSM Statecharts</title>
 <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
 <meta name="generator" content="Org-mode"/>
-<meta name="generated" content="[2011-11-21 Mon]"/>
+<meta name="generated" content="[2012-02-20 Mon]"/>
 <meta name="author" content="Markus Klotzbuecher"/>
 <meta name="description" content="Documentation of rFSM Statecharts."/>
 <meta name="keywords" content="Coordination, Statcharts, Robotics, Real-Time, Lua,"/>
@@ -44,6 +43,12 @@ lang="en" xml:lang="en">
   dt { font-weight: bold; }
   div.figure { padding: 0.5em; }
   div.figure p { text-align: center; }
+  div.inlinetask {
+    padding:10px;
+    border:2px solid gray;
+    margin:10px;
+    background: #ffffcc;
+  }
   textarea { overflow-x: auto; }
   .linenr { font-size:smaller }
   .code-highlighted {background-color:#ffff00;}
@@ -80,66 +85,72 @@ lang="en" xml:lang="en">
 
 </head>
 <body>
-<div id="content">
 
-<h1 class="title"><img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta4</h1>
+<div id="preamble">
+
+</div>
+
+<div id="content">
+<h1 class="title"><img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta5</h1>
+
 
 
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1 Overview </a></li>
-<li><a href="#sec-2">2 Setup </a></li>
-<li><a href="#sec-3">3 Introduction </a></li>
-<li><a href="#sec-4">4 Specifying rFSM models </a>
+<li><a href="#sec-1">1 Overview</a></li>
+<li><a href="#sec-2">2 Setup</a></li>
+<li><a href="#sec-3">3 Introduction</a></li>
+<li><a href="#sec-4">4 Specifying rFSM models</a>
 <ul>
-<li><a href="#sec-4-1">4.1 States (<code>rfsm.composite_state</code> and <code>rfsm.simple_state</code>) </a>
+<li><a href="#sec-4-1">4.1 States (<code>rfsm.state</code>)</a>
 <ul>
-<li><a href="#sec-4-1-1">4.1.1 The doo function </a></li>
-<li><a href="#sec-4-1-2">4.1.2 Particularities of the root composite state </a></li>
+<li><a href="#sec-4-1-1">4.1.1 The doo function</a></li>
+<li><a href="#sec-4-1-2">4.1.2 Configuring a State Machine</a></li>
 </ul>
 </li>
-<li><a href="#sec-4-2">4.2 Transitions (<code>rfsm.transition</code>) </a></li>
-<li><a href="#sec-4-3">4.3 Connector (<code>rfsm.connector</code>) </a></li>
+<li><a href="#sec-4-2">4.2 Transitions (<code>rfsm.transition</code>)</a></li>
+<li><a href="#sec-4-3">4.3 Connector (<code>rfsm.connector</code>)</a></li>
 </ul>
 </li>
-<li><a href="#sec-5">5 Executing rFSM models </a></li>
-<li><a href="#sec-6">6 Common pitfalls </a></li>
-<li><a href="#sec-7">7 Tools and helper modules </a>
+<li><a href="#sec-5">5 Executing rFSM models</a></li>
+<li><a href="#sec-6">6 Common pitfalls</a></li>
+<li><a href="#sec-7">7 Tools and helper modules</a>
 <ul>
-<li><a href="#sec-7-1">7.1 The event memory extension (<code>rfsm_emem</code> module) #EventMemory </a></li>
-<li><a href="#sec-7-2">7.2 Timeevents (<code>rfsm_timeevent</code> module) </a></li>
-<li><a href="#sec-7-3">7.3 Configurable and colorized <code>dbg</code> info (<code>rfsmpp</code> module) </a></li>
-<li><a href="#sec-7-4">7.4 Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules) </a></li>
-<li><a href="#sec-7-5">7.5 <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree </a></li>
-<li><a href="#sec-7-6">7.6 <code>rfsm-sim</code> simple rfsm simulator </a></li>
-<li><a href="#sec-7-7">7.7 Lua fsm to json conversion (<code>rfsm2json</code> command line tool) </a></li>
-<li><a href="#sec-7-8">7.8 <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt </a></li>
+<li><a href="#sec-7-1">7.1 The event memory extension (<code>rfsm_emem</code> module) #EventMemory</a></li>
+<li><a href="#sec-7-2">7.2 Timeevents (<code>rfsm_timeevent</code> module)</a></li>
+<li><a href="#sec-7-3">7.3 Configurable and colorized <code>dbg</code> info (<code>rfsmpp</code> module)</a></li>
+<li><a href="#sec-7-4">7.4 Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules)</a></li>
+<li><a href="#sec-7-5">7.5 <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree</a></li>
+<li><a href="#sec-7-6">7.6 <code>rfsm-sim</code> simple rfsm simulator</a></li>
+<li><a href="#sec-7-7">7.7 Lua fsm to json conversion (<code>rfsm2json</code> command line tool)</a></li>
+<li><a href="#sec-7-8">7.8 <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt</a></li>
 </ul>
 </li>
-<li><a href="#sec-8">8 More examples, tips and tricks </a>
+<li><a href="#sec-8">8 More examples, tips and tricks</a>
 <ul>
-<li><a href="#sec-8-1">8.1 A more complete example </a></li>
-<li><a href="#sec-8-2">8.2 How to compose state machines </a></li>
-<li><a href="#sec-8-3">8.3 Using rfsm with Orocos RTT </a></li>
+<li><a href="#sec-8-1">8.1 A more complete example</a></li>
+<li><a href="#sec-8-2">8.2 How to compose state machines</a></li>
+<li><a href="#sec-8-3">8.3 Using rfsm with Orocos RTT</a></li>
 </ul>
 </li>
-<li><a href="#sec-9">9 API Summary </a>
+<li><a href="#sec-9">9 API Summary</a>
 <ul>
-<li><a href="#sec-9-1">9.1 State specification </a></li>
-<li><a href="#sec-9-2">9.2 Operational functions </a></li>
-<li><a href="#sec-9-3">9.3 Hooks </a></li>
+<li><a href="#sec-9-1">9.1 State specification</a></li>
+<li><a href="#sec-9-2">9.2 Operational functions</a></li>
+<li><a href="#sec-9-3">9.3 Hooks</a></li>
 </ul>
 </li>
-<li><a href="#sec-10">10 Contact </a></li>
-<li><a href="#sec-11">11 Acknowledgement </a></li>
+<li><a href="#sec-10">10 Contact</a></li>
+<li><a href="#sec-11">11 Download</a></li>
+<li><a href="#sec-12">12 Acknowledgement</a></li>
 </ul>
 </div>
 </div>
 
 <div id="outline-container-1" class="outline-2">
-<h2 id="sec-1"><span class="section-number-2">1</span> Overview </h2>
+<h2 id="sec-1"><span class="section-number-2">1</span> Overview</h2>
 <div class="outline-text-2" id="text-1">
 
 
@@ -163,7 +174,7 @@ lang="en" xml:lang="en">
 </div>
 
 <div id="outline-container-2" class="outline-2">
-<h2 id="sec-2"><span class="section-number-2">2</span> Setup </h2>
+<h2 id="sec-2"><span class="section-number-2">2</span> Setup</h2>
 <div class="outline-text-2" id="text-2">
 
 
@@ -175,10 +186,7 @@ lang="en" xml:lang="en">
 
 
 <pre class="src src-sh"><span style="color: #0000cd; font-weight: bold;">export</span> <span style="color: #cdcd00;">LUA_PATH</span>=<span style="color: #00cd00;">";;;/home/mk/src/git/rfsm/?.lua"</span>
-
 </pre>
-
-
 
 
 <p>
@@ -189,10 +197,7 @@ lang="en" xml:lang="en">
 
 
 <pre class="src src-sh"><span style="color: #0000cd; font-weight: bold;">export</span> <span style="color: #cdcd00;">LUA_PATH</span>=<span style="color: #00cd00;">"$LUA_PATH;/home/mk/src/git/rfsm/?.lua"</span>
-
 </pre>
-
-
 
 
 
@@ -201,7 +206,7 @@ lang="en" xml:lang="en">
 </div>
 
 <div id="outline-container-3" class="outline-2">
-<h2 id="sec-3"><span class="section-number-2">3</span> Introduction </h2>
+<h2 id="sec-3"><span class="section-number-2">3</span> Introduction</h2>
 <div class="outline-text-2" id="text-3">
 
 
@@ -233,34 +238,31 @@ lang="en" xml:lang="en">
 
 
 <p>
-  <img src="example1.png"  alt="example1.png" />
+    <img src="example1.png"  alt="example1.png" />
 </p>
 
 
 
-<pre class="src src-lua"><span id="coderef-hello_fsm_root" class="coderef-off"><span class="linenr">1:  </span><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.composite_state {</span>
-<span id="coderef-hello_fsm_hello" class="coderef-off"><span class="linenr">2:  </span>   hello = rfsm.simple_state { <span style="color: #0000cd; font-weight: bold;">exit</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"hello"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },</span>
-<span id="coderef-hello_fsm_world" class="coderef-off"><span class="linenr">3:  </span>   world = rfsm.simple_state { <span style="color: #0000cd; font-weight: bold;">entry</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"world"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },</span>
+<pre class="src src-lua"><span id="coderef-hello_fsm_root" class="coderef-off"><span class="linenr">1:  </span><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.state {</span>
+<span id="coderef-hello_fsm_hello" class="coderef-off"><span class="linenr">2:  </span>   hello = rfsm.state { <span style="color: #0000cd; font-weight: bold;">exit</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"hello"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },</span>
+<span id="coderef-hello_fsm_world" class="coderef-off"><span class="linenr">3:  </span>   world = rfsm.state { <span style="color: #0000cd; font-weight: bold;">entry</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"world"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },</span>
 <span class="linenr">4:  </span>
 <span id="coderef-hello_fsm_trans_ini" class="coderef-off"><span class="linenr">5:  </span>   rfsm.transition { src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'hello'</span> },</span>
 <span id="coderef-hello_fsm_e_done" class="coderef-off"><span class="linenr">6:  </span>   rfsm.transition { src=<span style="color: #00cd00;">'hello'</span>, tgt=<span style="color: #00cd00;">'world'</span>, events={ <span style="color: #00cd00;">'e_done'</span> } },</span>
 <span id="coderef-hello_fsm_e_restart" class="coderef-off"><span class="linenr">7:  </span>   rfsm.transition { src=<span style="color: #00cd00;">'world'</span>, tgt=<span style="color: #00cd00;">'hello'</span>, events={ <span style="color: #00cd00;">'e_restart'</span> } },</span>
 <span class="linenr">8:  </span>}
-<span class="linenr">9:  </span>
 </pre>
-
-
 
 
 <p>
   The <a href="#coderef-hello_fsm_root" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_root');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_root');">first line</a> defines a new toplevel composite state and returns
-  it. The root state of an rFSM state machine is always a composite
-  state. This permits it to be composed as a substate in a different
+  it. The root state of an rFSM state machine is always a state
+  itself. This permits it to be composed as a substate in a different
   state machine. The <code>return</code> statement facilitates reading rfsm model
   files by tools or other state machines.
 </p>
 <p>
-  The <a href="#coderef-hello_fsm_hello" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_hello');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_hello');">second</a> and <a href="#coderef-hello_fsm_world" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_world');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_world');">third</a> line define two simple states that are part of
+  The <a href="#coderef-hello_fsm_hello" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_hello');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_hello');">second</a> and <a href="#coderef-hello_fsm_world" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-hello_fsm_world');" onmouseout="CodeHighlightOff(this, 'coderef-hello_fsm_world');">third</a> line define two leaf states that are part of
   the toplevel composite state. <code>hello</code> defines an exit function and
   world an entry function which are called when the state is
   exited/entered, respectively.
@@ -294,10 +296,7 @@ INFO: created undeclared connector root.initial
 hello
 active: root.hello(<span style="color: #00cdcd; font-weight: bold;">done</span>)
 queue:  e_done@root.hello
-
 </pre>
-
-
 
 
 <p>
@@ -315,10 +314,7 @@ queue:  e_done@root.hello
 world
 active: root.world(<span style="color: #00cdcd; font-weight: bold;">done</span>)
 queue:  e_done@root.world
-
 </pre>
-
-
 
 
 <p>
@@ -332,10 +328,7 @@ queue:  e_done@root.world
 <pre class="src src-sh">&gt; step()
 active: root.world(<span style="color: #00cdcd; font-weight: bold;">done</span>)
 queue:
-
 </pre>
-
-
 
 
 <p>
@@ -350,10 +343,7 @@ queue:
 hello
 active: root.hello(<span style="color: #00cdcd; font-weight: bold;">done</span>)
 queue:  e_done@root.hello
-
 </pre>
-
-
 
 
 
@@ -362,44 +352,38 @@ queue:  e_done@root.hello
 </div>
 
 <div id="outline-container-4" class="outline-2">
-<h2 id="sec-4"><span class="section-number-2">4</span> Specifying rFSM models </h2>
+<h2 id="sec-4"><span class="section-number-2">4</span> Specifying rFSM models</h2>
 <div class="outline-text-2" id="text-4">
 
 
 <p>
-  rFSM state machines are built using the following four model
-  elements: <b>composite_state</b>, <b>simple_state</b>, <b>connector</b> and
-  <b>transition</b>.
+  rFSM state machines are constructed using four model elements:
+  <b>states</b>, <b>connectors</b> and <b>transitions</b>.
 </p>
 <p>
   (all functions are part of the rfsm module, thus need to be called
-  in Lua with the <code>rfsm</code> prefix, e.g. <code>rfsm.simple_state{}</code>)
+  in Lua with the <code>rfsm</code> prefix, e.g. <code>rfsm.state{}</code>)
 </p>
 
 </div>
 
 <div id="outline-container-4-1" class="outline-3">
-<h3 id="sec-4-1"><span class="section-number-3">4.1</span> States (<code>rfsm.composite_state</code> and <code>rfsm.simple_state</code>) </h3>
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> States (<code>rfsm.state</code>)</h3>
 <div class="outline-text-3" id="text-4-1">
 
 
 <p>
-   States can be either composite (<code>composite_state</code> or <code>csta</code>) or
-   simple (<code>simple_state</code> or <code>sista</code>). While composite states may
-   contain all other model elements (incl. other composite states),
-   simple states are <i>leaves</i> of the FSM tree and hence do not contain
-   any subtypes. Both simple and composite states may define <code>entry</code>
-   and <code>exit</code> functions:
+   States are used to model discrete states of the system and can be
+   either composite or leaf states. A composite state contains other
+   states, while a leaf state does not. States can define <code>entry</code> and
+   <code>exit</code> functions
 </p>
 
 
 
 <pre class="src src-lua">entry(fsm, state, <span style="color: #00cd00;">'entry'</span>)
 exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
-
 </pre>
-
-
 
 
 <p>
@@ -416,12 +400,12 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-4-1-1" class="outline-4">
-<h4 id="sec-4-1-1"><span class="section-number-4">4.1.1</span> The doo function </h4>
+<h4 id="sec-4-1-1"><span class="section-number-4">4.1.1</span> The doo function</h4>
 <div class="outline-text-4" id="text-4-1-1">
 
 
 <p>
-    Simple states may additionaly define a do function (it is called
+    Leaf states may additionaly define a do function (it is called
     <code>doo</code> in rFSM to avoid clashes with the identically named Lua
     keyword).
 </p>
@@ -429,15 +413,12 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <pre class="src src-lua">bool doo(fsm, state, <span style="color: #00cd00;">'doo'</span>)
-
 </pre>
 
 
-
-
 <p>
-    The doo function is used to perform actions <i>while</i> a simple state
-    is active. Therefore it can be used such that it is repeatedly
+    The doo function is used to perform actions <i>while</i> a leaf state
+    is active. To that end it can be used such that it is repeatedly
     called until either the function completes or an event triggers a
     transition to a different state.
 </p>
@@ -480,10 +461,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
             rfsm.yield()
          <span style="color: #00cdcd; font-weight: bold;">end</span>
       <span style="color: #00cdcd; font-weight: bold;">end</span>
-
 </pre>
-
-
 
 
 <p>
@@ -508,7 +486,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-4-1-2" class="outline-4">
-<h4 id="sec-4-1-2"><span class="section-number-4">4.1.2</span> Particularities of the root composite state </h4>
+<h4 id="sec-4-1-2"><span class="section-number-4">4.1.2</span> Configuring a State Machine</h4>
 <div class="outline-text-4" id="text-4-1-2">
 
 
@@ -516,7 +494,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
     The root composite state honors some extra fields to refine the
     global FSM behavior.
 </p>
-<p>    
+<p>
     <b>Configuring error, warning, informational and debug output.</b> The
     <code>err</code>, <code>warn</code>, <code>info</code> and <code>dbg</code> fields can be used to fine tune
     how these messages are output. The value of these fields can be
@@ -540,7 +518,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-4-2" class="outline-3">
-<h3 id="sec-4-2"><span class="section-number-3">4.2</span> Transitions (<code>rfsm.transition</code>) </h3>
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> Transitions (<code>rfsm.transition</code>)</h3>
 <div class="outline-text-3" id="text-4-2">
 
 
@@ -554,9 +532,9 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 
-<pre class="src src-lua">rfsm.transition { 
+<pre class="src src-lua">rfsm.transition {
     src=<span style="color: #00cd00;">'stateX'</span>, tgt=<span style="color: #00cd00;">'stateY'</span>, events = {<span style="color: #00cd00;">"e1"</span>, <span style="color: #00cd00;">"e2"</span>},
-    <span style="color: #0000cd; font-weight: bold;">guard</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() 
+    <span style="color: #0000cd; font-weight: bold;">guard</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>()
               <span style="color: #00cdcd; font-weight: bold;">if</span> getVal() &gt; 0.3 <span style="color: #00cdcd; font-weight: bold;">then</span>
                   <span style="color: #00cdcd; font-weight: bold;">return</span> <span style="color: #00cdcd; font-weight: bold;">false</span>
               <span style="color: #00cdcd; font-weight: bold;">end</span>
@@ -564,10 +542,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
           <span style="color: #00cdcd; font-weight: bold;">end</span>,
     <span style="color: #0000cd; font-weight: bold;">effect</span>=<span style="color: #00cdcd; font-weight: bold;">function</span> () do_this() <span style="color: #00cdcd; font-weight: bold;">end</span>
 }
-
 </pre>
-
-
 
 
 <p>
@@ -579,7 +554,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
    specified, this is interpreted as <b>any</b> events will trigger the
    transition.
 </p>
-<p>   
+<p>
    Three ways of specifying the <code>src</code> and <code>target</code> states are
    supported: <i>local</i>, <i>relative</i> or <i>absolute</i>. In the above example
    <code>stateX</code> and <code>stateY</code> are referenced locally and must therefore be
@@ -593,23 +568,20 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 
-<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta{
-   operational=rfsm.csta{
-      motors_on = rfsm.csta{
-         moving = rfsm.sista{},
-         stopped = rfsm.sista{},
+<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.state{
+   operational=rfsm.state{
+      motors_on = rfsm.state{
+         moving = rfsm.state{},
+         stopped = rfsm.state{},
          rfsm.trans{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'stopped'</span>},
       },
       rfsm.trans{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'motors_on'</span>},
    },
-   off=rfsm.sista{},
+   off=rfsm.state{},
 <span id="coderef-trans_ref_types_one" class="coderef-off">   rfsm.trans{src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">".operational.motors_on.moving"</span> }</span>
 <span id="coderef-trans_ref_types_two" class="coderef-off">   rfsm.trans{src=<span style="color: #00cd00;">".operational.motors_on.stopped"</span>, tgt=<span style="color: #00cd00;">'off'</span>, events={<span style="color: #00cd00;">'e_off'</span>} }</span>
 }
-
 </pre>
-
-
 
 
 <p>
@@ -644,10 +616,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <pre class="src src-lua">rfsm.trans{ src=<span style="color: #00cd00;">'following'</span>, tgt=<span style="color: #00cd00;">'hitting'</span>, pn=10, events={ <span style="color: #00cd00;">'t6'</span> } },
-
 </pre>
-
-
 
 
 <p>
@@ -659,7 +628,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-4-3" class="outline-3">
-<h3 id="sec-4-3"><span class="section-number-3">4.3</span> Connector (<code>rfsm.connector</code>) </h3>
+<h3 id="sec-4-3"><span class="section-number-3">4.3</span> Connector (<code>rfsm.connector</code>)</h3>
 <div class="outline-text-3" id="text-4-3">
 
 
@@ -682,9 +651,9 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </p>
 
 
-<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta{
-  software_err = rfsm.sista{},
-  hardware_err = rfsm.sista{},
+<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.state{
+  software_err = rfsm.state{},
+  hardware_err = rfsm.state{},
 
   initial = rfsm.conn{},
   recovered = rfsm.conn{},
@@ -698,10 +667,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <span id="coderef-conn_dispatch_accept3" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'software_err'</span>, tgt=<span style="color: #00cd00;">'failed'</span>, events={<span style="color: #00cd00;">'e_failed'</span>}},</span>
 <span id="coderef-conn_dispatch_accept4" class="coderef-off">  rfsm.trans{src=<span style="color: #00cd00;">'hardware_err'</span>, tgt=<span style="color: #00cd00;">'failed'</span>, events={<span style="color: #00cd00;">'e_failed'</span>}},</span>
 }
-
 </pre>
-
-
 
 
 <p>
@@ -722,7 +688,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-5" class="outline-2">
-<h2 id="sec-5"><span class="section-number-2">5</span> Executing rFSM models </h2>
+<h2 id="sec-5"><span class="section-number-2">5</span> Executing rFSM models</h2>
 <div class="outline-text-2" id="text-5">
 
 
@@ -738,10 +704,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <pre class="src src-lua">fsm = rfsm.init(rfsm.load(<span style="color: #00cd00;">"fsm.lua"</span>))
-
 </pre>
-
-
 
 
 <p>
@@ -784,7 +747,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-6" class="outline-2">
-<h2 id="sec-6"><span class="section-number-2">6</span> Common pitfalls </h2>
+<h2 id="sec-6"><span class="section-number-2">6</span> Common pitfalls</h2>
 <div class="outline-text-2" id="text-6">
 
 
@@ -798,11 +761,8 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 
-<pre class="src src-lua">[<span style="color: #00cd00;">'end'</span>] = rfsm.sista{...}
-
+<pre class="src src-lua">[<span style="color: #00cd00;">'end'</span>] = rfsm.state{...}
 </pre>
-
-
 
 
 </li>
@@ -815,11 +775,8 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 
-<pre class="src src-lua">stateX = rfsm.sista{ entry = my_func() }
-
+<pre class="src src-lua">stateX = rfsm.state{ entry = my_func() }
 </pre>
-
-
 
 
 <p>
@@ -829,11 +786,8 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 
-<pre class="src src-lua">stateX = rfsm.sista{ entry = my_func }
-
+<pre class="src src-lua">stateX = rfsm.state{ entry = my_func }
 </pre>
-
-
 
 
 <p>
@@ -864,7 +818,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </li>
 <li>My FSM is using up 100% CPU, what's wrong?
 
-<p>     
+<p>
      Most likely you have defined a long running <code>doo</code> function that
      does not call <code>rfsm.yield</code> with a <code>true</code> argument (the idle
      flag). Therefore the rFSM engine calls the <code>doo</code> function in a
@@ -872,12 +826,14 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </p></li>
 </ol>
 
+
+
 </div>
 
 </div>
 
 <div id="outline-container-7" class="outline-2">
-<h2 id="sec-7"><span class="section-number-2">7</span> Tools and helper modules </h2>
+<h2 id="sec-7"><span class="section-number-2">7</span> Tools and helper modules</h2>
 <div class="outline-text-2" id="text-7">
 
 
@@ -885,7 +841,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-7-1" class="outline-3">
-<h3 id="sec-7-1"><span class="section-number-3">7.1</span> The event memory extension (<code>rfsm_emem</code> module) #<span class="target">EventMemory</span>  </h3>
+<h3 id="sec-7-1"><span class="section-number-3">7.1</span> The event memory extension (<code>rfsm_emem</code> module) #<span class="target">EventMemory</span></h3>
 <div class="outline-text-3" id="text-7-1">
 
 
@@ -913,11 +869,11 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-7-2" class="outline-3">
-<h3 id="sec-7-2"><span class="section-number-3">7.2</span> Timeevents (<code>rfsm_timeevent</code> module) </h3>
+<h3 id="sec-7-2"><span class="section-number-3">7.2</span> Timeevents (<code>rfsm_timeevent</code> module)</h3>
 <div class="outline-text-3" id="text-7-2">
 
 
-<p>   
+<p>
    This module extends the rFSM engine with time events. Time events
    are automatically raised <i>after</i> the specified time after entering
    a state has elapsed. To enable time events, it suffices to load the
@@ -930,10 +886,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <pre class="src src-lua">rfsm.trans{ src=<span style="color: #00cd00;">'A'</span>, tgt=<span style="color: #00cd00;">'B'</span>, events={ <span style="color: #00cd00;">'e_after(0.1)'</span> } },
-
 </pre>
-
-
 
 
 <p>
@@ -961,7 +914,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </div>
 
 <div id="outline-container-7-3" class="outline-3">
-<h3 id="sec-7-3"><span class="section-number-3">7.3</span> Configurable and colorized <code>dbg</code> info (<code>rfsmpp</code> module) </h3>
+<h3 id="sec-7-3"><span class="section-number-3">7.3</span> Configurable and colorized <code>dbg</code> info (<code>rfsmpp</code> module)</h3>
 <div class="outline-text-3" id="text-7-3">
 
 
@@ -976,10 +929,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 
 
 <pre class="src src-lua">rfsmpp.gen_dbgcolor(name, dbgids, defshow)
-
 </pre>
-
-
 
 
 <ul>
@@ -996,7 +946,10 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 </li>
 </ul>
 
-<p>   Example:
+
+
+<p>
+   Example:
 </p>
 
 
@@ -1004,10 +957,7 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
 <pre class="src src-lua">fsm = rfsm.init(...)
 fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"fsm1"</span>,
                             { STATE_ENTER=<span style="color: #00cdcd; font-weight: bold;">true</span>, STATE_EXIT=<span style="color: #00cdcd; font-weight: bold;">true</span>}, <span style="color: #00cdcd; font-weight: bold;">false</span>)
-
 </pre>
-
-
 
 
 <p>
@@ -1019,18 +969,18 @@ fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"fsm1"</span>,
 </div>
 
 <div id="outline-container-7-4" class="outline-3">
-<h3 id="sec-7-4"><span class="section-number-3">7.4</span> Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules) </h3>
+<h3 id="sec-7-4"><span class="section-number-3">7.4</span> Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules)</h3>
 <div class="outline-text-3" id="text-7-4">
 
 
-<p>     
+<p>
      Modules to transform rFSM models to graphical
      descriptions. <code>rfsm2uml</code> generates classical statechart figures and
      <code>rfsm2tree</code> generates a tree representation (useful to see check
      priorities).
 </p>
 <p>
-     Usage: 
+     Usage:
 </p>
 <ul>
 <li><code>rfsm2uml.rfsm2uml(root_fsm, format, outfile, caption)</code>
@@ -1049,10 +999,7 @@ fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"fsm1"</span>,
 <pre class="src src-lua">require(<span style="color: #00cd00;">"rfsm2uml"</span>)
 fsm = rfsm.init(rfsm.load(<span style="color: #00cd00;">"fsm.lua"</span>))
 rfsm2uml.rfsm2uml(fsm, <span style="color: #00cd00;">'png'</span>, <span style="color: #00cd00;">"fsm.png"</span>, <span style="color: #00cd00;">"Figure caption"</span>)
-
 </pre>
-
-
 
 
 <p>
@@ -1064,10 +1011,7 @@ rfsm2uml.rfsm2uml(fsm, <span style="color: #00cd00;">'png'</span>, <span style="
 <pre class="src src-lua">require(<span style="color: #00cd00;">"rfsm2tree"</span>)
 fsm = rfsm.init(rfsm.load(<span style="color: #00cd00;">"fsm.lua"</span>))
 rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style="color: #00cd00;">"fsm-tree.png"</span>)
-
 </pre>
-
-
 
 
 <p>
@@ -1080,7 +1024,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-7-5" class="outline-3">
-<h3 id="sec-7-5"><span class="section-number-3">7.5</span> <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree </h3>
+<h3 id="sec-7-5"><span class="section-number-3">7.5</span> <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree</h3>
 <div class="outline-text-3" id="text-7-5">
 
 
@@ -1091,10 +1035,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 
 <pre class="src src-sh">$ tools/rfsm-viz all examples/composite_nested.lua
-
 </pre>
-
-
 
 
 <p>
@@ -1106,7 +1047,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-7-6" class="outline-3">
-<h3 id="sec-7-6"><span class="section-number-3">7.6</span> <code>rfsm-sim</code> simple rfsm simulator </h3>
+<h3 id="sec-7-6"><span class="section-number-3">7.6</span> <code>rfsm-sim</code> simple rfsm simulator</h3>
 <div class="outline-text-3" id="text-7-6">
 
 
@@ -1118,10 +1059,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 
 <pre class="src src-sh">$ tools/rfsm-sim all examples/ball_tracker_scope.lua
-
 </pre>
-
-
 
 
 <p>
@@ -1134,7 +1072,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-7-7" class="outline-3">
-<h3 id="sec-7-7"><span class="section-number-3">7.7</span> Lua fsm to json conversion (<code>rfsm2json</code> command line tool) </h3>
+<h3 id="sec-7-7"><span class="section-number-3">7.7</span> Lua fsm to json conversion (<code>rfsm2json</code> command line tool)</h3>
 <div class="outline-text-3" id="text-7-7">
 
 
@@ -1147,11 +1085,11 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-7-8" class="outline-3">
-<h3 id="sec-7-8"><span class="section-number-3">7.8</span> <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt </h3>
+<h3 id="sec-7-8"><span class="section-number-3">7.8</span> <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt</h3>
 <div class="outline-text-3" id="text-7-8">
 
 
-<p>   
+<p>
    See the Orocos <a href="http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook">LuaCookbook</a> for more details.
 </p>
 
@@ -1161,7 +1099,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-8" class="outline-2">
-<h2 id="sec-8"><span class="section-number-2">8</span> More examples, tips and tricks </h2>
+<h2 id="sec-8"><span class="section-number-2">8</span> More examples, tips and tricks</h2>
 <div class="outline-text-2" id="text-8">
 
 
@@ -1169,7 +1107,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-8-1" class="outline-3">
-<h3 id="sec-8-1"><span class="section-number-3">8.1</span> A more complete example </h3>
+<h3 id="sec-8-1"><span class="section-number-3">8.1</span> A more complete example</h3>
 <div class="outline-text-3" id="text-8-1">
 
 
@@ -1179,7 +1117,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 
 <p>
-   <img src="example2.png"  alt="example2.png" />
+      <img src="example2.png"  alt="example2.png" />
 </p>
 <p>
    &hellip; and the corresponding textual representation:
@@ -1187,20 +1125,20 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 
 
-<pre class="src src-lua"><span style="color: #cd0000;">-- </span><span style="color: #cd0000;">any rFSM is always contained in a composite_state</span>
-<span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.composite_state {
+<pre class="src src-lua"><span style="color: #cd0000;">-- </span><span style="color: #cd0000;">any rFSM is always contained in a state</span>
+<span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.state {
    dbg = <span style="color: #00cdcd; font-weight: bold;">true</span>, <span style="color: #cd0000;">-- </span><span style="color: #cd0000;">enable debugging</span>
 
-   on = rfsm.composite_state {
+   on = rfsm.state {
       <span style="color: #0000cd; font-weight: bold;">entry</span> = <span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"disabling brakes"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
       <span style="color: #0000cd; font-weight: bold;">exit</span> = <span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"enabling brakes"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
 
-      moving = rfsm.simple_state {
+      moving = rfsm.state {
          <span style="color: #0000cd; font-weight: bold;">entry</span>=<span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"starting to move"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
          <span style="color: #0000cd; font-weight: bold;">exit</span>=<span style="color: #00cdcd; font-weight: bold;">function</span> () print(<span style="color: #00cd00;">"stopping"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span>,
       },
 
-      waiting = rfsm.simple_state {},
+      waiting = rfsm.state {},
 
       <span style="color: #cd0000;">-- </span><span style="color: #cd0000;">define some transitions</span>
       rfsm.trans{ src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'waiting'</span> },
@@ -1208,7 +1146,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
       rfsm.trans{ src=<span style="color: #00cd00;">'moving'</span>, tgt=<span style="color: #00cd00;">'waiting'</span>, events={ <span style="color: #00cd00;">'e_stop'</span> } },
    },
 
-   error = rfsm.simple_state {
+   error = rfsm.state {
       <span style="color: #0000cd; font-weight: bold;">doo</span> = <span style="color: #00cdcd; font-weight: bold;">function</span> (fsm)
                  print (<span style="color: #00cd00;">"Error detected - trying to fix"</span>)
                  rfsm.yield()
@@ -1224,7 +1162,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
               <span style="color: #00cdcd; font-weight: bold;">end</span>,
    },
 
-   fatal_error = rfsm.simple_state {},
+   fatal_error = rfsm.state {},
 
    rfsm.trans{ src=<span style="color: #00cd00;">'initial'</span>, tgt=<span style="color: #00cd00;">'on'</span>,
                <span style="color: #0000cd; font-weight: bold;">effect</span>=<span style="color: #00cdcd; font-weight: bold;">function</span>() print(<span style="color: #00cd00;">"initalizing system"</span>) <span style="color: #00cdcd; font-weight: bold;">end</span> },
@@ -1233,10 +1171,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
    rfsm.trans{ src=<span style="color: #00cd00;">'error'</span>, tgt=<span style="color: #00cd00;">'fatal_error'</span>, events={ <span style="color: #00cd00;">'e_fatal_error'</span> } },
    rfsm.trans{ src=<span style="color: #00cd00;">'fatal_error'</span>, tgt=<span style="color: #00cd00;">'initial'</span>, events={ <span style="color: #00cd00;">'e_reset'</span> } },
 }
-
 </pre>
-
-
 
 
 
@@ -1245,28 +1180,25 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-8-2" class="outline-3">
-<h3 id="sec-8-2"><span class="section-number-3">8.2</span> How to compose state machines </h3>
+<h3 id="sec-8-2"><span class="section-number-3">8.2</span> How to compose state machines</h3>
 <div class="outline-text-3" id="text-8-2">
 
 
 <p>
    This is easy! Let's assume the state machine is is a file
-   "subfsm.lua" and uses the strongly recommended <code>return    rfsm.csta ...</code> syntax, it can be included as follows:
+   "subfsm.lua" and uses the strongly recommended <code>return    rfsm.state ...</code> syntax, it can be included as follows:
 </p>
 
 
 
-<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.csta {
+<pre class="src src-lua"><span style="color: #00cdcd; font-weight: bold;">return</span> rfsm.state {
 
-   name_of_composite_state = rfsm.load(<span style="color: #00cd00;">"subfsm.lua"</span>),
+   name_of_state = rfsm.load(<span style="color: #00cd00;">"subfsm.lua"</span>),
 
-   otherstateX = rfsm.sista{},
+   otherstateX = rfsm.state{},
    ...
 }
-
 </pre>
-
-
 
 
 <p>
@@ -1278,7 +1210,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-8-3" class="outline-3">
-<h3 id="sec-8-3"><span class="section-number-3">8.3</span> Using rfsm with Orocos RTT </h3>
+<h3 id="sec-8-3"><span class="section-number-3">8.3</span> Using rfsm with Orocos RTT</h3>
 <div class="outline-text-3" id="text-8-3">
 
 <p>   The <a href="http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook">LuaCookbook</a> page describes how to do this.
@@ -1290,7 +1222,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-9" class="outline-2">
-<h2 id="sec-9"><span class="section-number-2">9</span> API Summary </h2>
+<h2 id="sec-9"><span class="section-number-2">9</span> API Summary</h2>
 <div class="outline-text-2" id="text-9">
 
 
@@ -1298,7 +1230,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-9-1" class="outline-3">
-<h3 id="sec-9-1"><span class="section-number-3">9.1</span> State specification </h3>
+<h3 id="sec-9-1"><span class="section-number-3">9.1</span> State specification</h3>
 <div class="outline-text-3" id="text-9-1">
 
 
@@ -1313,8 +1245,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 <tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Short alias</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
-<tr><td class="left"><code>simple_state{}</code></td><td class="left"><code>sista{}</code></td><td class="left">create a simple state</td></tr>
-<tr><td class="left"><code>composite_state{}</code></td><td class="left"><code>csta{}</code></td><td class="left">create a composite state</td></tr>
+<tr><td class="left"><code>state{}</code></td><td class="left"><code>state{}</code></td><td class="left">create a state</td></tr>
 <tr><td class="left"><code>connector{}</code></td><td class="left"><code>conn{}</code></td><td class="left">create a connector</td></tr>
 <tr><td class="left"><code>transition{}</code></td><td class="left"><code>trans{}</code></td><td class="left">create a transition</td></tr>
 </tbody>
@@ -1328,7 +1259,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-9-2" class="outline-3">
-<h3 id="sec-9-2"><span class="section-number-3">9.2</span> Operational functions </h3>
+<h3 id="sec-9-2"><span class="section-number-3">9.2</span> Operational functions</h3>
 <div class="outline-text-3" id="text-9-2">
 
 
@@ -1354,7 +1285,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 </div>
 
 <div id="outline-container-9-3" class="outline-3">
-<h3 id="sec-9-3"><span class="section-number-3">9.3</span> Hooks </h3>
+<h3 id="sec-9-3"><span class="section-number-3">9.3</span> Hooks</h3>
 <div class="outline-text-3" id="text-9-3">
 
 
@@ -1382,7 +1313,11 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 
 <p>
-   Low level hooks (not for normal use):
+   Lower level functions (not for normal use):
+</p>
+<p>
+   Use these to manage step hooks. Setting <code>pre_step_hook</code> and
+   <code>post_step_hook</code> directly is not permitted anymore:
 </p>
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 <caption></caption>
@@ -1392,22 +1327,23 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 <tr><th scope="col" class="left"><b>Function</b></th><th scope="col" class="left"><b>Description</b></th></tr>
 </thead>
 <tbody>
-<tr><td class="left"><code>pre_step_hook(fsm)</code></td><td class="left">is called for each step (mostly for debugging purposes)</td></tr>
-<tr><td class="left"><code>step_hook(fsm)</code></td><td class="left">called before for each step</td></tr>
-<tr><td class="left"><code>idle_hook(fsm)</code></td><td class="left">called <b>instead</b> of returning from step/run functions</td></tr>
+<tr><td class="left"><code>pre_step_hook_add(fsm, hook, where)</code></td><td class="left">install function hook to be called <span style="text-decoration:underline;">before</span> each rfsm step of fsm</td></tr>
+<tr><td class="left"><code>post_step_hook_add(fsm, hook, where)</code></td><td class="left">install function hook to be called <span style="text-decoration:underline;">after</span> each rfsm step of fsm</td></tr>
 </tbody>
 </table>
 
 
-
-
+<p>
+   <code>idle_hook(fsm)</code>: if defined, called <b>instead</b> of returning from
+   step/run functions. Used only for debugging purposes.
+</p>
 </div>
 </div>
 
 </div>
 
 <div id="outline-container-10" class="outline-2">
-<h2 id="sec-10"><span class="section-number-2">10</span> Contact </h2>
+<h2 id="sec-10"><span class="section-number-2">10</span> Contact</h2>
 <div class="outline-text-2" id="text-10">
 
 
@@ -1415,14 +1351,25 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
   Please direct questions, bugs or improvements to the <a href="http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users">orocos-users</a>
   mailing list.
 </p>
-
 </div>
 
 </div>
 
 <div id="outline-container-11" class="outline-2">
-<h2 id="sec-11"><span class="section-number-2">11</span> Acknowledgement </h2>
+<h2 id="sec-11"><span class="section-number-2">11</span> Download</h2>
 <div class="outline-text-2" id="text-11">
+
+
+<p>
+  The code can be found in <a href="https://github.com/kmarkus/rFSM">this</a> git repository.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-12" class="outline-2">
+<h2 id="sec-12"><span class="section-number-2">12</span> Acknowledgement</h2>
+<div class="outline-text-2" id="text-12">
 
 
 <ul>
@@ -1466,18 +1413,19 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 <p class="footnote"><sup><a class="footnum" name="fn.2" href="#fnr.2">2</a></sup> The reason for this choice of default is that it fails more
   obviously (100% CPU load) than the opposite (doo function not
   executed properly).
-</p>
-</div>
+</p></div>
 </div>
 
 </div>
 </div>
-<div id="postamble">
-<p class="date">Date: [2011-11-21 Mon]</p>
-<p class="author">Author: Markus Klotzbuecher</p>
-<p class="creator">Org version 7.6 with Emacs version 23</p>
-<a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
 </div>
+
+<div id="postamble">
+<p class="date">Date: [2012-02-20 Mon]</p>
+<p class="author">Author: Markus Klotzbuecher</p>
+<p class="creator">Org version 7.8.02 with Emacs version 23</p>
+<a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
+
 </div>
 </body>
 </html>

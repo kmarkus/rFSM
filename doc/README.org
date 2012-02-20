@@ -1,7 +1,7 @@
-#+TITLE:	@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta4
+#+TITLE:	@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta5
 #+AUTHOR:	Markus Klotzbuecher
 #+EMAIL:	markus.klotzbuecher@mech.kuleuven.be
-#+DATE:		[2011-11-21 Mon]
+#+DATE:		[2012-02-20 Mon]
 #+DESCRIPTION:  Documentation of rFSM Statecharts.
 #+KEYWORDS:	Coordination, Statcharts, Robotics, Real-Time, Lua,
 #+LANGUAGE:	en
@@ -178,7 +178,7 @@
    States are used to model discrete states of the system and can be
    either composite or leaf states. A composite state contains other
    states, while a leaf state does not. States can define =entry= and
-   =exit= functions 
+   =exit= functions
 
    #+begin_src lua
        entry(fsm, state, 'entry')
@@ -199,7 +199,7 @@
     Leaf states may additionaly define a do function (it is called
     =doo= in rFSM to avoid clashes with the identically named Lua
     keyword).
-    
+
     #+begin_src lua
 	bool doo(fsm, state, 'doo')
     #+end_src
@@ -218,12 +218,12 @@
 	execution of the =entry= function).
 
      2. Long running =doo= with voluntary preemption: while possible,
-        it is not recommended to define a =doo= function that runs for
-        a longer time, because this would prevent incoming events to
-        trigger transitions. Therefore, the =rfsm.yield()= call can be
-        inserted at appropriate points into a long running =doo= to
-        explicitely return control to the rfsm engine, that then
-        checks for new events and potentially executes transitions.
+	it is not recommended to define a =doo= function that runs for
+	a longer time, because this would prevent incoming events to
+	trigger transitions. Therefore, the =rfsm.yield()= call can be
+	inserted at appropriate points into a long running =doo= to
+	explicitely return control to the rfsm engine, that then
+	checks for new events and potentially executes transitions.
 
     (Note: rfsm.yield is currently only an alias to =coroutine.yield=)
 
@@ -259,7 +259,7 @@
 
     The root composite state honors some extra fields to refine the
     global FSM behavior.
-    
+
     *Configuring error, warning, informational and debug output.* The
     =err=, =warn=, =info= and =dbg= fields can be used to fine tune
     how these messages are output. The value of these fields can be
@@ -275,7 +275,7 @@
     systems. The expected behavior is to return a Lua table of events
     (array part only). These events are then used to check for enabled
     transtions.
-    
+
 ** Transitions (=rfsm.transition=)
 
    Transitions define how a state machine changes state upon receiving
@@ -284,14 +284,14 @@
    Example:
 
    #+begin_src lua
-   rfsm.transition { 
+   rfsm.transition {
        src='stateX', tgt='stateY', events = {"e1", "e2"},
-       guard=function() 
-                 if getVal() > 0.3 then
-                     return false
-                 end
-                 return true
-             end,
+       guard=function()
+		 if getVal() > 0.3 then
+		     return false
+		 end
+		 return true
+	     end,
        effect=function () do_this() end
    }
    #+end_src
@@ -303,7 +303,7 @@
    during the transitioning of the function. If no events are
    specified, this is interpreted as *any* events will trigger the
    transition.
-   
+
    Three ways of specifying the =src= and =target= states are
    supported: /local/, /relative/ or /absolute/. In the above example
    =stateX= and =stateY= are referenced locally and must therefore be
@@ -319,9 +319,9 @@
 	     motors_on = rfsm.state{
 		moving = rfsm.state{},
 		stopped = rfsm.state{},
-                rfsm.trans{src='initial', tgt='stopped'},
+		rfsm.trans{src='initial', tgt='stopped'},
 	     },
-             rfsm.trans{src='initial', tgt='motors_on'},
+	     rfsm.trans{src='initial', tgt='motors_on'},
 	  },
 	  off=rfsm.state{},
 	  rfsm.trans{src='initial', tgt=".operational.motors_on.moving" }                (ref:trans_ref_types_one)
@@ -495,7 +495,7 @@
      The same holds true for =rfsm_timeevent= based timeevents.
 
   4. My FSM is using up 100% CPU, what's wrong?
-     
+
      Most likely you have defined a long running =doo= function that
      does not call =rfsm.yield= with a =true= argument (the idle
      flag). Therefore the rFSM engine calls the =doo= function in a
@@ -523,7 +523,7 @@
 
 
 ** Timeevents (=rfsm_timeevent= module)
-   
+
    This module extends the rFSM engine with time events. Time events
    are automatically raised /after/ the specified time after entering
    a state has elapsed. To enable time events, it suffices to load the
@@ -562,7 +562,7 @@
    #+begin_src lua
      rfsmpp.gen_dbgcolor(name, dbgids, defshow)
    #+end_src
-     
+
      - =name= is the (optional) string name to print prefixing the
        debug output
      - =dbgids= is a table that enables or disables certain dbg ids by
@@ -571,27 +571,27 @@
        =ERROR=, =HIBERNATING=, =RAISED=, =TIMEEVENT=
      - =defshow= (bool) defines wether debug id's not mentioned in the dbgids
        table are shown or not.
-       	
+
 
    Example:
 
    #+begin_src lua
      fsm = rfsm.init(...)
      fsm.dbg=rfsmpp.gen_dbgcolor("fsm1",
-                                 { STATE_ENTER=true, STATE_EXIT=true}, false)
+				 { STATE_ENTER=true, STATE_EXIT=true}, false)
    #+end_src
 
    Will show only =STATE_ENTER= and =STATE_EXIT= debug messages.
 
-     
+
 ** Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
-     
+
      Modules to transform rFSM models to graphical
      descriptions. =rfsm2uml= generates classical statechart figures and
      =rfsm2tree= generates a tree representation (useful to see check
      priorities).
 
-     Usage: 
+     Usage:
 
      - =rfsm2uml.rfsm2uml(root_fsm, format, outfile, caption)=
      - =rfsm2tree.rfsm2tree(root_fsm, format, outfile)=
@@ -646,7 +646,7 @@
 
 
 ** =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt
-   
+
    See the Orocos [[http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook][LuaCookbook]] for more details.
 
 
@@ -729,8 +729,8 @@
 
        	fatal_error = rfsm.state {},
 
-        rfsm.trans{ src='initial', tgt='on',
-                    effect=function() print("initalizing system") end },
+	rfsm.trans{ src='initial', tgt='on',
+		    effect=function() print("initalizing system") end },
        	rfsm.trans{ src='on', tgt='error', events={ 'e_error' } },
        	rfsm.trans{ src='error', tgt='on', events={ 'e_error_fixed' } },
        	rfsm.trans{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
@@ -775,10 +775,10 @@
    | =connector{}=  | =conn{}=      | create a connector  |
    | =transition{}= | =trans{}=     | create a transition |
 
-  
+
 
 ** Operational functions
-   
+
    |                              |                                                      |
    | *Function*                   | *Description*                                        |
    |------------------------------+------------------------------------------------------|
@@ -793,7 +793,7 @@
    The following hook functions can be defined for a toplevel
    composite state and allow to refine various behavior of the state
    machine.
-   
+
    | *Function*          | *Description*                                                                      |
    |---------------------+------------------------------------------------------------------------------------|
    | =dbg=               | called to output debug information. Set to false to disable. Default: false.       |
@@ -822,6 +822,9 @@
   Please direct questions, bugs or improvements to the [[http://lists.mech.kuleuven.be/mailman/listinfo/orocos-users][orocos-users]]
   mailing list.
 
+* Download
+
+  The code can be found in [[https://github.com/kmarkus/rFSM][this]] git repository.
 
 * Acknowledgement
 
@@ -852,4 +855,3 @@
 
 [fn:2] See [[https://lwn.net/images/conf/rtlws-2011/paper.05.html][this]] Real-time Linux Workshop paper, [[https://github.com/kmarkus/lua-tlsf][lua-tlsf]] and the
  [[https://github.com/kmarkus/rtp][minimal Lua real-time POSIX bindings]]
-
