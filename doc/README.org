@@ -173,14 +173,12 @@
   (all functions are part of the rfsm module, thus need to be called
   in Lua with the =rfsm= prefix, e.g. =rfsm.state{}=)
 
-** States (=rfsm.composite_state= and =rfsm.simple_state=)
+** States (=rfsm.state=)
 
-   States can be either composite (=composite_state= or =csta=) or
-   simple (=simple_state= or =sista=). While composite states may
-   contain all other model elements (incl. other composite states),
-   simple states are /leaves/ of the FSM tree and hence do not contain
-   any subtypes. Both simple and composite states may define =entry=
-   and =exit= functions:
+   States are used to model discrete states of the system and can be
+   either composite or leaf states. A composite state contains other
+   states, while a leaf state does not. States can define =entry= and
+   =exit= functions 
 
    #+begin_src lua
        entry(fsm, state, 'entry')
@@ -198,7 +196,7 @@
 
 *** The doo function
 
-    Simple states may additionaly define a do function (it is called
+    Leaf states may additionaly define a do function (it is called
     =doo= in rFSM to avoid clashes with the identically named Lua
     keyword).
     
@@ -206,8 +204,8 @@
 	bool doo(fsm, state, 'doo')
     #+end_src
 
-    The doo function is used to perform actions /while/ a simple state
-    is active. Therefore it can be used such that it is repeatedly
+    The doo function is used to perform actions /while/ a leaf state
+    is active. To that end it can be used such that it is repeatedly
     called until either the function completes or an event triggers a
     transition to a different state.
 
@@ -257,7 +255,7 @@
     possible (potentially consuming a lot of CPU!).
 
 
-*** Particularities of the root composite state
+*** Configuring a State Machine
 
     The root composite state honors some extra fields to refine the
     global FSM behavior.
@@ -316,16 +314,16 @@
    starts with a leading dot. For example:
 
    #+begin_src lua -r
-       return rfsm.csta{
-	  operational=rfsm.csta{
-	     motors_on = rfsm.csta{
-		moving = rfsm.sista{},
-		stopped = rfsm.sista{},
+       return rfsm.state{
+	  operational=rfsm.state{
+	     motors_on = rfsm.state{
+		moving = rfsm.state{},
+		stopped = rfsm.state{},
                 rfsm.trans{src='initial', tgt='stopped'},
 	     },
              rfsm.trans{src='initial', tgt='motors_on'},
 	  },
-	  off=rfsm.sista{},
+	  off=rfsm.state{},
 	  rfsm.trans{src='initial', tgt=".operational.motors_on.moving" }                (ref:trans_ref_types_one)
 	  rfsm.trans{src=".operational.motors_on.stopped", tgt='off', events={'e_off'} } (ref:trans_ref_types_two)
        }
@@ -379,9 +377,9 @@
    points) that hide internals of a composite state. The following
    example defines a error handling state:
    #+begin_src lua -r
-   return rfsm.csta{
-     software_err = rfsm.sista{},
-     hardware_err = rfsm.sista{},
+   return rfsm.state{
+     software_err = rfsm.state{},
+     hardware_err = rfsm.state{},
 
      initial = rfsm.conn{},
      recovered = rfsm.conn{},
@@ -457,7 +455,7 @@
      This can be worked around by using the following syntax:
 
      #+begin_src lua
-     ['end'] = rfsm.sista{...}
+     ['end'] = rfsm.state{...}
      #+end_src
 
   2. Executing functions accidentially
@@ -466,14 +464,14 @@
      instead of adding references to them:
 
      #+begin_src lua
-     stateX = rfsm.sista{ entry = my_func() }
+     stateX = rfsm.state{ entry = my_func() }
      #+end_src
 
      The (likely) mistake above is to execute my_func and assigning
      the result to entry instead of assigning my_func:
 
      #+begin_src lua
-     stateX = rfsm.sista{ entry = my_func }
+     stateX = rfsm.state{ entry = my_func }
      #+end_src
 
      Of course the first example would be perfectly valid if
@@ -692,20 +690,20 @@
    ... and the corresponding textual representation:
 
    #+begin_src lua
-     -- any rFSM is always contained in a composite_state
-     return rfsm.composite_state {
+     -- any rFSM is always contained in a state
+     return rfsm.state {
        	dbg = true, -- enable debugging
 
-       	on = rfsm.composite_state {
+       	on = rfsm.state {
 	   entry = function () print("disabling brakes") end,
 	   exit = function () print("enabling brakes") end,
 
-	   moving = rfsm.simple_state {
+	   moving = rfsm.state {
 	      entry=function () print("starting to move") end,
 	      exit=function () print("stopping") end,
 	   },
 
-	   waiting = rfsm.simple_state {},
+	   waiting = rfsm.state {},
 
 	   -- define some transitions
 	   rfsm.trans{ src='initial', tgt='waiting' },
@@ -713,7 +711,7 @@
 	   rfsm.trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
        	},
 
-       	error = rfsm.simple_state {
+       	error = rfsm.state {
 	   doo = function (fsm)
 		      print ("Error detected - trying to fix")
 		      rfsm.yield()
@@ -729,7 +727,7 @@
 		   end,
        	},
 
-       	fatal_error = rfsm.simple_state {},
+       	fatal_error = rfsm.state {},
 
         rfsm.trans{ src='initial', tgt='on',
                     effect=function() print("initalizing system") end },
@@ -745,14 +743,14 @@
 
    This is easy! Let's assume the state machine is is a file
    "subfsm.lua" and uses the strongly recommended =return
-   rfsm.csta ...= syntax, it can be included as follows:
+   rfsm.state ...= syntax, it can be included as follows:
 
    #+begin_src lua
-       	return rfsm.csta {
+       	return rfsm.state {
 
-	   name_of_composite_state = rfsm.load("subfsm.lua"),
+	   name_of_state = rfsm.load("subfsm.lua"),
 
-	   otherstateX = rfsm.sista{},
+	   otherstateX = rfsm.state{},
 	   ...
        	}
    #+end_src
@@ -770,13 +768,12 @@
 
    Functions to define rFSM:
 
-   |                     |               |                          |
-   | *Function*          | *Short alias* | *Description*            |
-   |---------------------+---------------+--------------------------|
-   | =simple_state{}=    | =sista{}=     | create a simple state    |
-   | =composite_state{}= | =csta{}=      | create a composite state |
-   | =connector{}=       | =conn{}=      | create a connector       |
-   | =transition{}=      | =trans{}=     | create a transition      |
+   |                |               |                     |
+   | *Function*     | *Short alias* | *Description*       |
+   |----------------+---------------+---------------------|
+   | =state{}=      | =state{}=     | create a state      |
+   | =connector{}=  | =conn{}=      | create a connector  |
+   | =transition{}= | =trans{}=     | create a transition |
 
   
 
