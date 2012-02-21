@@ -172,19 +172,26 @@ function seqand:new(t)
       for i,st in ipairs(exorder) do print("\t", tostring(i) ..". " .. reg_lt[st]) end
    end
 
+   -- move all states in the sequential and state to a substates
+   -- table, so that this state is still recognized as a leaf state
+   -- (and hence is permitted to have a doo)
+   local substates = rfsm.mapfsm(function (cs, st, name) return name end, t, rfsm.is_state, 1)
+   t.substates={}
+   for _,n in ipairs(substates) do t.substates[n]=t[n]; t[n]=nil; end
+
    local sh_saved
    -- entry install a new step hook (removed in exit) that intercepts
    -- and forward the current events to the child fsms.
    t.entry=function(fsm)
-	      sh_saved=fsm.stephook
-	      fsm.step_hook=function(fsm, events)
-			       if sh_saved then sh_saved() end
-			       if #events > 0 then
-				  for _,subfsm in ipairs(exorder) do
-				     rfsm.send_events(subfsm, unpack(events))
-				  end
-			       end
-			    end
+	      sh_saved=fsm.post_step_hook
+	      fsm.post_step_hook=function(fsm, events)
+				    if sh_saved then sh_saved(fsm, events) end
+				    if #events > 0 then
+				       for _,subfsm in ipairs(exorder) do
+					  rfsm.send_events(subfsm, unpack(events))
+				       end
+				    end
+				 end
 	      for _,subfsm in ipairs(exorder) do rfsm.step(subfsm, t.step) end
 	   end
 
@@ -196,7 +203,7 @@ function seqand:new(t)
 	 end
 
    t.exit=function(fsm)
-	     fsm.stephook=sh_saved
+	     fsm.post_step_hook=sh_saved
 	     for _,subfsm in ipairs(exorder) do
 		rfsm.exit_state(subfsm, subfsm)
 		rfsm.reset(subfsm)
