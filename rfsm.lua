@@ -175,8 +175,10 @@ local function has_subnodes(s)
 end
 
 -- derived properties: is_composite/is_leaf
-function is_composite(s) return is_state(s) and has_subnodes(s) end
-function is_leaf(s) return is_state(s) and not is_composite(s) end
+function is_composite_slow(s) return is_state(s) and has_subnodes(s) end
+function is_leaf_slow(s) return is_state(s) and not is_composite(s) end
+is_composite=utils.memoize(is_composite_slow)
+is_leaf=utils.memoize(is_leaf_slow)
 
 -- check for valid and initalized 'root'
 function is_root(s) return is_composite(s) and s._id == 'root' end
