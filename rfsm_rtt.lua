@@ -139,7 +139,7 @@ end
 -- fsm post_step_hook.
 -- @param port rtt OutputPort to which the fqn shall be written
 function gen_write_fqn(port)
-   assert(port:info().type=='string', "gen_write_fqn: port must be of type string")
+   assert(port:info().type==rtt.Variable('string'):getType(), "gen_write_fqn: port must be of type string")
 
    local act_fqn = ""
    local out_dsb = rtt.Variable.new('string')
