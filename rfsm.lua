@@ -817,7 +817,7 @@ end
 -- actchild handling
 local function actchild_add(parent, child)
    if parent._actchild ~= nil then
-      error("actchild_add: error adding " .. child._fqn .. ", parent " .. parent._fqn .. " already has an active child " .. child._fqn)
+      error("actchild_add: error adding " .. child._fqn .. ", parent " .. parent._fqn .. " already has an active child " .. parent._actchild._fqn)
    end
    parent._actchild = child
 end
@@ -1257,7 +1257,6 @@ end
 ----------------------------------------
 -- enter fsm for the first time
 local function enter_fsm(fsm, events)
-   fsm._mode = 'active'
    local path = node_find_enabled(fsm, fsm.initial, events)
 
    if path == false then
@@ -1265,6 +1264,8 @@ local function enter_fsm(fsm, events)
       return false
    end
 
+   enter_one_state(fsm, fsm)
+   fsm._actchild = nil -- unset because the previous line set this to fsm
    exec_path(fsm, path)
    return true
 end
