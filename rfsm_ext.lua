@@ -104,7 +104,7 @@ end
 --- Sequential AND state
 seqand = {}
 seqand.rfsm=true
-function seqand:type() return 'simple' end
+function seqand:type() return 'state' end
 
 --- Sequential AND state (experimental)
 -- Permits declaration of multiple subfsm which are executed
