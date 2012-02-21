@@ -3,6 +3,7 @@ require "rfsm"
 require "rfsmpp"
 require "rfsm2uml"
 require "rfsm2tree"
+require "rfsm_proto"
 
 if arg and #arg < 1 then
    print("usage: run <fsmfile>")

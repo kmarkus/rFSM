@@ -41,8 +41,10 @@
 
 require "rttlib"
 require "utils"
+require "rfsm"
 
 local rtt = rtt
+local rfsm = rfsm
 local rttlib = rttlib
 local string = string
 local utils = utils
