@@ -169,6 +169,8 @@ function gen_updater(conf)
 end
 
 function setup_proto(fsm)
+   fsm.info("rfsm_proto: rfsm introspection protocol loaded")
+
    local getmodel = function () return rfsm_marsh.model2tab(fsm) end
    local getactleaf = function () return rfsm_marsh.actinfo2tab(fsm) end
    local updater = gen_updater({read_timeout=0,

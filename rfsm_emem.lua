@@ -49,9 +49,11 @@ end
 --- Setup event memory for the given fsm.
 -- @param fsm initialized root fsm.
 local function setup_emem(fsm)
+
+   fsm.info("rfsm_emem: event memory extension loaded")
+
    -- create emem tables
    rfsm.mapfsm(function (s, p)
-		  print("setting emem tab in state " .. s._fqn)
 		  s.emem={}
 	       end, fsm, rfsm.is_state)
 

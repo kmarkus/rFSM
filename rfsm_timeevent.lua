@@ -125,7 +125,8 @@ end
 local function expand_timeevent(fsm)
    local function se(...) rfsm.send_events(fsm, ...) end
 
-   fsm.dbg("TIMEEVENT", "Expanding timeevents")
+   fsm.info("rfsm_timeevent: time-event extension loaded")
+
    rfsm.mapfsm(function (tr, p)
 		  if not tr.events then return end
 		  for i=1,#tr.events do
