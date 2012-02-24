@@ -6,7 +6,7 @@ require("rfsm2tree")
 require("rfsm")
 
 if arg and #arg < 2 then
-   print("usage: rfsmviz [noinit|text|tree|uml|all] <fsm-model-file>")
+   print("usage: rfsmviz [noinit|text|tree|uml|umldot|all] <fsm-model-file>")
    os.exit(1)
 end
 
@@ -37,4 +37,7 @@ if arglt['uml'] or arglt['all'] then
 end
 if arglt['text'] or arglt['all'] then
    print(rfsmpp.fsm2str(src))
+end
+if arglt['umldot'] or arglt['all'] then
+   print("generating umldot... ", rfsm2uml.rfsm2dot(src, outfile .. "-uml.dot"))
 end

@@ -109,7 +109,7 @@ local function new_gra(name, caption)
    gv.setv(gh, "compound", "true")
    gv.setv(gh, "fontsize", param.fontsize)
    gv.setv(gh, "labelloc", "t")
-   gv.setv(gh, "label", name .. '\n' .. caption)
+   gv.setv(gh, "label", name .. ' - ' .. caption)
    gv.setv(gh, "remincross", "true")
    gv.setv(gh, "splines", "true")
    gv.setv(gh, "rankdir", param.rankdir or "TD")
@@ -318,4 +318,14 @@ function rfsm2uml(root, format, outfile, caption)
    param.dbg("rfsm2uml: running " .. param.layout .. " layouter")
    gv.render(gh, format, outfile)
    param.dbg("rfsm2uml: rendering to " .. format .. ", written result to " .. outfile)
+end
+
+function rfsm2dot(root, outfile, caption)
+   if not root._initialized then
+      param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
+      return false
+   end
+
+   local gh = fsm2gh(root, caption or " ")
+   gv.write(gh, outfile)
 end
