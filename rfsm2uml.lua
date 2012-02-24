@@ -50,7 +50,7 @@ param.ndfontsize = 8.0
 param.cs_border_color = "black"
 param.cs_fillcolor = "white"
 param.layout="dot"
-param.rankdir="LR" -- "TD"
+param.rankdir="TD"
 param.show_fqn = false
 
 param.err = print
