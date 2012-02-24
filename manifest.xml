@@ -6,4 +6,6 @@
   <url>http://people.mech.kuleuven.be/~mklotzbucher/rfsm/README.html</url>
   <license>Dual LGPL/BSD</license>
   <review status="unreviewed" notes=""/>
+  <rosdep name="lua-gv"/>
+  <rosdep name="lua-json"/>
 </package>
