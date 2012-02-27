@@ -182,18 +182,19 @@ function seqand:new(t)
    local sh_saved
    -- entry install a new step hook (removed in exit) that intercepts
    -- and forward the current events to the child fsms.
-   t.entry=function(fsm)
-	      sh_saved=fsm.post_step_hook
-	      fsm.post_step_hook=function(fsm, events)
-				    if sh_saved then sh_saved(fsm, events) end
-				    if #events > 0 then
-				       for _,subfsm in ipairs(exorder) do
-					  rfsm.send_events(subfsm, unpack(events))
-				       end
-				    end
-				 end
-	      for _,subfsm in ipairs(exorder) do rfsm.step(subfsm, t.step) end
-	   end
+   local function entry_hook (fsm)
+      sh_saved=fsm.post_step_hook
+      fsm.post_step_hook=function(fsm, events)
+			    if sh_saved then sh_saved(fsm, events) end
+			    if #events > 0 then
+			       for _,subfsm in ipairs(exorder) do
+				  rfsm.send_events(subfsm, unpack(events))
+			       end
+			    end
+			 end
+      for _,subfsm in ipairs(exorder) do rfsm.step(subfsm, t.step) end
+   end
+   t.entry=utils.advise('after', t.entry, entry_hook)
 
    t.doo=function(fsm)
 	    while true do
@@ -202,13 +203,15 @@ function seqand:new(t)
 	    end
 	 end
 
-   t.exit=function(fsm)
-	     fsm.post_step_hook=sh_saved
-	     for _,subfsm in ipairs(exorder) do
-		rfsm.exit_state(subfsm, subfsm)
-		rfsm.reset(subfsm)
-	     end
-	  end
+   local function exit_hook(fsm)
+      fsm.post_step_hook=sh_saved
+      for _,subfsm in ipairs(exorder) do
+	 rfsm.exit_state(subfsm, subfsm)
+	 rfsm.reset(subfsm)
+      end
+   end
+   t.exit=utils.advise('before', t.exit, exit_hook)
+
    return t
 end
 

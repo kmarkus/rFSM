@@ -16,6 +16,9 @@ return rfsm.csta {
       -- ordering.
       order = {'s2', 's1'},
 
+      entry=function() print("entering seqand") end,
+      exit=function() print("exiting seqand") end,
+
       -- subfsm 1
       s1=rfsm.init(
 	 rfsm.csta {
