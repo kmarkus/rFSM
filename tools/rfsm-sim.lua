@@ -24,9 +24,13 @@ function add_hook(f)
 end
 
 -- debugging
-function dbg(on_off)
-   if not on_off then fsm.dbg=function(...) return end
-   else fsm.dbg=rfsmpp.gen_dbgcolor(file) end
+function dbg(mode)
+   if not mode then fsm.dbg=function(...) return end
+   elseif mode=='full' then
+      fsm.dbg=rfsmpp.gen_dbgcolor(file)
+   else
+      fsm.dbg=rfsmpp.gen_dbgcolor(file, {STATE_ENTER=true, STATE_EXIT=true, RAISED=true}, false)
+   end
 end
 
 -- operational
@@ -112,7 +116,7 @@ function help()
 
 available commands:
    help()         -- show this information
-   dbg(bool)      -- enable/disable debug info
+   dbg(mode)      -- enable/disable debug info (mode=false|true|"full")
    se(...)        -- send events
    ses(...)       -- send events and step(1)
    ser(...)       -- send events and run()
