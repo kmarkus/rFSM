@@ -1,3 +1,7 @@
+lua5.1:
+  ubuntu: lua5.1
+  debian: lua5.1
+
 lua-gv:
   ubuntu: libgv-lua
   debian: libgv-lua
