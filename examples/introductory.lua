@@ -1,25 +1,27 @@
 -- any rFSM is always contained in a composite_state
-return rfsm.composite_state {
+local state, conn, trans = rfsm.state, rfsm.conn, rfsm.trans
+
+return state {
    dbg = true, -- enable debugging
 
-   on = rfsm.composite_state {
+   on = state {
       entry = function () print("disabling brakes") end,
       exit = function () print("enabling brakes") end,
 
-      moving = rfsm.simple_state {
+      moving = state {
          entry=function () print("starting to move") end,
          exit=function () print("stopping") end,
       },
 
-      waiting = rfsm.simple_state {},
+      waiting = state {},
 
       -- define some transitions
-      rfsm.trans{ src='initial', tgt='waiting' },
-      rfsm.trans{ src='waiting', tgt='moving', events={ 'e_start' } },
-      rfsm.trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
+      trans{ src='initial', tgt='waiting' },
+      trans{ src='waiting', tgt='moving', events={ 'e_start' } },
+      trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
    },
 
-   in_error = rfsm.simple_state {
+   in_error = state {
       doo = function (fsm) 
                  print ("Error detected - trying to fix") 
                  rfsm.yield()
@@ -35,11 +37,11 @@ return rfsm.composite_state {
               end,
    },
 
-   fatal_error = rfsm.simple_state {},
+   fatal_error = state {},
 
-   rfsm.trans{ src='initial', tgt='on', effect=function () print("initalizing system") end },
-   rfsm.trans{ src='on', tgt='in_error', events={ 'e_error' } },
-   rfsm.trans{ src='in_error', tgt='on', events={ 'e_error_fixed' } },
-   rfsm.trans{ src='in_error', tgt='fatal_error', events={ 'e_fatal_error' } },
-   rfsm.trans{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
+   trans{ src='initial', tgt='on', effect=function () print("initalizing system") end },
+   trans{ src='on', tgt='in_error', events={ 'e_error' } },
+   trans{ src='in_error', tgt='on', events={ 'e_error_fixed' } },
+   trans{ src='in_error', tgt='fatal_error', events={ 'e_fatal_error' } },
+   trans{ src='fatal_error', tgt='initial', events={ 'e_reset' } },
 }
