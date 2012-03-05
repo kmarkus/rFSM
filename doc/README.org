@@ -825,6 +825,8 @@
 * Download
 
   The code can be found in [[https://github.com/kmarkus/rFSM][this]] git repository.
+  
+  A cheatsheet summarizing the DSL is available [[https://github.com/kmarkus/rfsm-cheatsheet/raw/master/cheatsheet.pdf][here]].
 
 * Acknowledgement
 

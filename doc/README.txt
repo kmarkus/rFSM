@@ -875,9 +875,12 @@ Table of Contents
 ------------
 
   The code can be found in [this] git repository.
+  
+  A cheatsheet summarizing the DSL is available [here].
 
 
   [this]: https://github.com/kmarkus/rFSM
+  [here]: https://github.com/kmarkus/rfsm-cheatsheet/raw/master/cheatsheet.pdf
 
 12 Acknowledgement 
 -------------------
