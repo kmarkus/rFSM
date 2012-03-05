@@ -5,7 +5,9 @@ require "rfsm"
 require "rfsm_ext"
 require "rfsmpp"
 
-return rfsm.csta {
+local state, conn, trans = rfsm.state, rfsm.conn, rfsm.trans
+
+return state {
    dbg=rfsmpp.gen_dbgcolor("parent"),
    and_state = rfsm_ext.seqand {
       seqanddbg=true,
@@ -21,20 +23,20 @@ return rfsm.csta {
 
       -- subfsm 1
       s1=rfsm.init(
-	 rfsm.csta {
+	 state {
 	    dbg=rfsmpp.gen_dbgcolor("subfsm1"),
-	    s11=rfsm.sista{},
-	    s12=rfsm.sista{},
-	    rfsm.trans{src="initial", tgt="s11", },
-	    rfsm.trans{src="s11", tgt="s12", events={"e_one"}},
-	    rfsm.trans{src="s12", tgt="s11", events={"e_two"}},
+	    s11=state{},
+	    s12=state{},
+	    trans{src="initial", tgt="s11", },
+	    trans{src="s11", tgt="s12", events={"e_one"}},
+	    trans{src="s12", tgt="s11", events={"e_two"}},
 	 }),
 
       -- subfsm 2
       s2=rfsm.init(
-	 rfsm.csta {
+	 state {
 	    dbg=rfsmpp.gen_dbgcolor("subfsm2"),
-	    s21 = rfsm.sista {
+	    s21 = state {
 	       doo = function(fsm)
 			while true do
 			   print("hi from s2 doo!")
@@ -42,12 +44,12 @@ return rfsm.csta {
 			end
 		     end
 	    },
-	    rfsm.trans{src="initial", tgt="s21" },
+	    trans{src="initial", tgt="s21" },
 	 }),
    },
 
-   off = rfsm.sista{},
-   rfsm.trans{src="initial", tgt="off"},
-   rfsm.trans{src="off", tgt="and_state", events={"e_on"}},
-   rfsm.trans{src="and_state", tgt="off", events={"e_off"}},
+   off = state{},
+   trans{src="initial", tgt="off"},
+   trans{src="off", tgt="and_state", events={"e_on"}},
+   trans{src="and_state", tgt="off", events={"e_off"}},
 }
