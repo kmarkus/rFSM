@@ -398,7 +398,10 @@ end
 local function index_events(fsm)
    mapfsm(function (tr, p)
 	     if tr.events then
-		for i,e in ipairs(tr.events) do tr.events[e]=true end
+		tr._idx_events={}
+		for i,e in ipairs(tr.events) do
+		   tr._idx_events[e]=true
+		end
 	     end
 	  end, fsm, is_trans)
 end
@@ -1154,8 +1157,11 @@ end
 -- important: no events is "null event"
 local function is_enabled(fsm, tr, events)
 
-   local function is_triggered(tr_ev, evq)
-      for _,e in ipairs(evq) do if tr_ev[e] then return true end end
+   local function is_triggered(tr, evq)
+      local idx_ev = tr._idx_events -- indexed events
+      for _,e in ipairs(evq) do
+	 if idx_ev[e] then return true end
+      end
       return false
    end
 
@@ -1172,7 +1178,7 @@ local function is_enabled(fsm, tr, events)
 
    -- Is transition enabled by current events?
    if tr.events and #tr.events > 0 then
-      return is_triggered(tr.events, events)
+      return is_triggered(tr, events)
    end
 
    return true
