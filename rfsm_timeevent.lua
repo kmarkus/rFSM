@@ -102,19 +102,25 @@ local function gen_rel_timeevent_mgr(name, timespec, sendf, fsm)
    local ts = { sec=math.floor(timespec), nsec=((timespec%1)*100000000) }
    local tend = { sec=false, nsec=false }
    local tcur = { sec=false, nsec=false }
+   local fired=false
 
    local reset = function ()
 		    tcur.sec, tcur.nsec = gettime()
 		    tend.sec, tend.nsec = time.add(tcur, ts)
+		    fired=false
 		    fsm.dbg("TIMEEVENT", "reset timevent " .. name ..
 			    " cur: " .. ts2str(tcur) .. ", end: " .. ts2str(tend))
 		 end
 
    local check = function ()
+		    if fired then return end
 		    tcur.sec, tcur.nsec = gettime()
 		    fsm.dbg("TIMEEVENT", "checking timevent " .. name ..
 			    " cur: " .. ts2str(tcur) .. ", end: " .. ts2str(tend))
-		    if time.cmp(tcur, tend) == 1 then sendf(name) end
+		    if time.cmp(tcur, tend) == 1 then
+		       sendf(name)
+		       fired=true
+		    end
 		 end
 
    return reset, check
