@@ -16,26 +16,31 @@ local us_per_s = 1000000
 -- @param sec seconds
 -- @param nsec nanoseconds
 function normalize(sec, nsec)
-   if sec > 0 and nsec > 0 then
-      while nsec >= ns_per_s do
-	 sec = sec + 1
-	 nsec = nsec - ns_per_s
-      end
-   elseif sec > 0 and nsec < 0 then
-      while nsec <= -ns_per_s do
-	 sec = sec - 1
-	 nsec = nsec + ns_per_s
-      end
-   elseif sec < 0 and nsec > 0 then
-      while nsec > 0 do
-	 sec = sec + 1
-	 nsec = nsec - ns_per_s
-      end
-   elseif sec < 0 and nsec < 0 then
-      while nsec <= -ns_per_s do
-	 sec = sec - 1
-	 nsec = nsec + ns_per_s
-      end
+   -- normalize too big ns
+   while(nsec>ns_per_s) do
+      sec = sec + 1
+      nsec = nsec - ns_per_s
+   end
+
+   -- normalize to small ns
+   while( nsec <= -ns_per_s) do
+      sec = sec - 1
+      nsec = nsec + ns_per_s
+   end
+
+   -- fix special negative cases
+   --
+   -- perferred: either sec and ns less than zero or sec=0 and ns less
+   -- than zero.
+   if (sec>0 and nsec<0) then
+      sec = sec - 1
+      nsec = nsec + ns_per_s
+   end
+
+   -- prefer negative sign on nsec
+   if(sec<0 and nsec>0) then
+      sec=sec + 1
+      nsec=nsec-ns_per_s
    end
    return sec, nsec
 end
