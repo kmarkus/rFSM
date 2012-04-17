@@ -37,6 +37,7 @@
 require "time"
 require "rfsm"
 
+local utils=require("utils")
 local assert = assert
 local type = type
 local tonumber = tonumber
@@ -142,10 +143,7 @@ local function expand_timeevent(fsm)
 			local eexp = e .. '@' .. tr.src._fqn
 			tr.events[i] = eexp
 			local reset, check = gen_rel_timeevent_mgr(eexp, timespec, se, fsm)
-			if tr.src.entry then
-			   local old_entry = tr.src.entry
-			   tr.src.entry = function() reset(); old_entry() end
-			else tr.src.entry = reset end
+			tr.src.entry=utils.advise('before', tr.src.entry, reset)
 			tr.src._check_timeevent = check
 		     end
 		  end
