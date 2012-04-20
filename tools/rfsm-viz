@@ -4,40 +4,87 @@ require("rfsmpp")
 require("rfsm2uml")
 require("rfsm2tree")
 require("rfsm")
+-- require "strict"
 
-if arg and #arg < 2 then
-   print("usage: rfsmviz [noinit|text|tree|uml|umldot|all] <fsm-model-file>")
-   os.exit(1)
+local opt_tree=false
+local opt_text=false
+local opt_uml=true
+local opt_dot=false
+local opt_all=false
+local opt_format='png'
+local infile=false
+local verbose=false
+
+function usage()
+   print[[
+rfsm-viz <options> -f <file> generate different rFSM representations.
+  options:
+    -f <fsm-file>          fsm input file
+    -tree		   generate tree representation
+    -text		   dump to simple textual format
+    -uml                   generate uml state machine figure
+    -dot		   generate a graphviz dot-file.
+    -all		   generate all represesentations
+    -format (svg|png|...)  generate different file format.
+    -v 			   be verbose
+    -h 			   print this
+   ]]
 end
 
-arglt={}
-for k,v in ipairs(arg) do
-   arglt[v] = true
+local opttab=utils.proc_args(arg)
+
+if opttab['-h'] then
+   usage()
+   return -1
+end
+if opttab['-v'] then verbose=true end
+if opttab['-tree'] then opt_tree=true end
+if opttab['-text'] then opt_text=true end
+if opttab['-uml'] then opt_uml=true end
+if opttab['-dot'] then opt_dot=true end
+
+if opttab['-f'] then
+   infile=opttab['-f'][1]
+else
+   print("missing file (-f) argument")
+   return -1
 end
 
--- last
-file = arg[#arg]
-outfile = string.gsub(file, "\.%w*$", "")
-fsm_tpl = assert(rfsm.load(file), "failed to open fsm file " .. file)
+if opttab['-all'] then
+   opt_tree=true
+   opt_text=true
+   opt_uml=true
+   opt_dot=true
+end
+
+if opttab['-format'] then opt_format=opttab['-format'][1] end
+
+if verbose then
+   print(utils.tab2str(opttab))
+   print("input file:      ", infile)
+   print("generating tree: ", opt_tree)
+   print("generating text: ", opt_text)
+   print("generating uml:  ", opt_uml)
+   print("generating dot:  ", opt_dot)
+   print("file format:     ", opt_format)
+end
+
+outfile = string.gsub(infile, "\.%w*$", "")
+fsm_tpl = assert(rfsm.load(infile), "failed to open fsm file " .. infile)
 fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
 
--- use initialized or unitialized
-if arglt['noinit'] then
-   src = fsm_tpl
-   fsm_tpl._id = 'root'
-else
-   src = fsm
+if opt_tree then
+   print("generating fsmtree... ", rfsm2tree.rfsm2tree(fsm, opt_format, outfile .. "-tree."..opt_format))
 end
 
-if arglt['tree'] or arglt['all'] then
-   print("generating fsmtree... ", rfsm2tree.rfsm2tree(src, "png", outfile .. "-tree.png"))
+if opt_uml then
+   print("generating uml... ", rfsm2uml.rfsm2uml(fsm, opt_format, outfile .. "-uml."..opt_format))
 end
-if arglt['uml'] or arglt['all'] then
-   print("generating uml... ", rfsm2uml.rfsm2uml(src, "png", outfile .. "-uml.png"))
+
+if opt_text then
+   print(rfsmpp.fsm2str(fsm))
 end
-if arglt['text'] or arglt['all'] then
-   print(rfsmpp.fsm2str(src))
-end
-if arglt['umldot'] or arglt['all'] then
-   print("generating umldot... ", rfsm2uml.rfsm2dot(src, outfile .. "-uml.dot"))
+
+if opt_dot then
+   print("generating umldot... ", rfsm2uml.rfsm2dot(fsm, outfile .. "-uml.dot"))
 end
