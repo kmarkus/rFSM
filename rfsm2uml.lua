@@ -208,15 +208,6 @@ local function new_csta(gh, state, label)
    gv.setv(ch, "style", "bold")
    setup_color(state, ch)
 
-   -- add invisible dummy node as transition endpoint at boundary of
-   -- this composite state
-   local dnh = gv.node(ch, state._fqn .. "_dummy")
-   gv.setv(dnh, "shape", "point")
-   gv.setv(dnh, "fixedsize", "true")
-   gv.setv(dnh, "height", "0.000001")
-   gv.setv(dnh, "style", "invisible") -- bug in gv, doesn't work
-
-
    --if label then gv.setv(ch, "label", state._id .. "\n" .. label)
    --else gv.setv(ch, "label", state._id) end
 
@@ -246,7 +237,7 @@ local function new_tr(gh, src, tgt, events)
 
    -- if src/tgt is a cluster then src/tgt is fqn_dummy
    if shtype == "subgraph" then
-      realsh = gv.findnode(sh, src .. "_dummy")
+      realsh = gv.findnode(sh, src .. "initial")
    else realsh = sh end
 
    -- assert(shtype ~= "subgraph")

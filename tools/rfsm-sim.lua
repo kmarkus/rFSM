@@ -80,6 +80,10 @@ function tree()
    rfsm2tree.rfsm2tree(fsm, "png",  tmpdir .. "rfsm-tree-tmp.png")
 end
 
+function dot()
+   rfsm2uml.rfsm2dot(fsm, tmpdir .. "rfsm-tmp-uml.dot")
+end
+
 function vizuml()
    local viewer = os.getenv("RFSM_VIEWER") or "firefox"
    uml()
@@ -90,6 +94,11 @@ function viztree()
    tree()
    local viewer = os.getenv("RFSM_VIEWER") or "firefox"
    os.execute(viewer .. " " .. tmpdir .. "rfsm-tree-tmp.png" .. "&")
+end
+
+function vizxdot()
+   dot()
+   os.execute("xdot " .. tmpdir .. "rfsm-tmp-uml.dot &")
 end
 
 function showfqn()
@@ -125,9 +134,10 @@ available commands:
    pp()           -- pretty print fsm
    showeq()       -- show current event queue
    uml()          -- generate uml figure
-   vizuml()       -- show uml figure ($RFSM_VIEWER)
+   vizuml()       -- show uml figure ($RFSM_VIEWER) (deprecated)
+   vizxdot()      -- show uml using xdot viewer. (recommended)
    tree()         -- generate tree figure
-   viztree()      -- show tree figure ($RFSM_VIEWER)
+   viztree()      -- show tree figure ($RFSM_VIEWER) (deprecated)
    add_hook(func) -- add a function to be called after state changes (e.g. 'add_hook(pp)')
 	 ]=])
 end
@@ -143,6 +153,7 @@ end
 
 add_hook(uml)
 add_hook(tree)
+add_hook(dot)
 add_hook(showfqn)
 add_hook(showeq)
 dbg(false)
