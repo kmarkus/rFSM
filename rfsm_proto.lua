@@ -178,4 +178,5 @@ function install(fsm, host, port, read_timeout)
 				getmodel=getmodel,
 				getactleaf=getactleaf })
    rfsm.post_step_hook_add(fsm, updater)
+   return fsm
 end
