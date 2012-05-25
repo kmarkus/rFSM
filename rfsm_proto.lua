@@ -168,7 +168,7 @@ function gen_updater(conf)
    return function () process(proto_inf) end
 end
 
-function setup_proto(fsm)
+function install(fsm, host, port, read_timeout)
    fsm.info("rfsm_proto: rfsm introspection protocol loaded")
 
    local getmodel = function () return rfsm_marsh.model2tab(fsm) end
@@ -178,5 +178,3 @@ function setup_proto(fsm)
 				getactleaf=getactleaf })
    rfsm.post_step_hook_add(fsm, updater)
 end
-
-rfsm.preproc[#rfsm.preproc+1] = setup_proto
