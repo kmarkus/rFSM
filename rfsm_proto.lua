@@ -173,7 +173,8 @@ function install(fsm, host, port, read_timeout)
 
    local getmodel = function () return rfsm_marsh.model2tab(fsm) end
    local getactleaf = function () return rfsm_marsh.actinfo2tab(fsm) end
-   local updater = gen_updater({read_timeout=0,
+   local updater = gen_updater({read_timeout=read_timeout,
+				host=host, port=port,
 				getmodel=getmodel,
 				getactleaf=getactleaf })
    rfsm.post_step_hook_add(fsm, updater)
