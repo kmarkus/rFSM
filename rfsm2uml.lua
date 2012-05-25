@@ -83,7 +83,7 @@ local function setup_color(state, nh)
       gv.setv(nh, "fillcolor", "green")
    elseif state._mode == 'done' then
       gv.setv(nh, "fillcolor", "chocolate")
-   else gv.setv(nh, "fillcolor", "dimgrey") end
+   else gv.setv(nh, "fillcolor", "white") end
 end
 
 -- return handle, type for state fqn
@@ -237,8 +237,10 @@ local function new_tr(gh, src, tgt, events)
 
    -- if src/tgt is a cluster then src/tgt is fqn_dummy
    if shtype == "subgraph" then
-      realsh = gv.findnode(sh, src .. "initial")
-   else realsh = sh end
+      realsh = gv.findnode(sh, src .. ".initial")
+   else
+      realsh = sh
+   end
 
    -- assert(shtype ~= "subgraph")
 
@@ -246,9 +248,12 @@ local function new_tr(gh, src, tgt, events)
    -- on a connector or sista.
    assert(thtype ~= "subgraph", "tgt should be a subgraph but isn't: " .. tgt)
 
-   -- if thtype == "subgraph" then realth = gv.findnode(th, tgt .. "_dummy")
-   -- else realth = th end
-   realth = th
+   if thtype == "subgraph" then
+      realth = gv.findnode(th, tgt .. ".initial")
+   else
+      realth = th
+   end
+   -- realth = th
 
    local eh = gv.edge(realsh, realth)
    set_trprops(eh)
