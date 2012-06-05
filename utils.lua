@@ -3,14 +3,14 @@
 -- some own ones, some collected from the lua wiki
 --
 
-local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack =
-   type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack
+local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack, error =
+   type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack, error
 
 module('utils')
 
 -- increment major on API breaks
 -- increment minor on non breaking changes
-VERSION=0.93
+VERSION=0.97
 
 function append(car, ...)
    assert(type(car) == 'table')
@@ -100,6 +100,12 @@ function rpad(str, len, char)
    return str .. string.rep(char, len - #str)
 end
 
+--- Strip ANSI color escape sequence from string.
+-- @param str string
+-- @return stripped string
+-- @return number of replacements
+function strip_ansi(str) return string.gsub(str, "\27%[%d+m", "") end
+
 --- Convert string to string of fixed lenght.
 -- Will either pad with whitespace if too short or will cut of tail if
 -- too long. If dots is true add '...' to truncated string.
@@ -109,9 +115,9 @@ end
 -- @return processed string.
 function strsetlen(str, len, dots)
    if string.len(str) > len and dots then
-      return string.sub(str, len - 3) .. "..."
+      return string.sub(str, 1, len - 4) .. "... "
    elseif string.len(str) > len then
-      return string.sub(str, len)
+      return string.sub(str, 1, len)
    else return rpad(str, len, ' ') end
 end
 
@@ -149,7 +155,7 @@ function basename(n)
    if not string.find(n, '[\\.]') then
       return n
    else
-      local t = utils.split(n, "[\\.]")
+      local t = split(n, "[\\.]")
       return t[#t]
    end
 end
@@ -372,4 +378,30 @@ function memoize (f)
 	     end
 	     return r
 	  end
+end
+
+--- call thunk every s+ns seconds.
+function gen_do_every(s, ns, thunk, gettime)
+   local next = { sec=0, nsec=0 }
+   local cur = { sec=0, nsec=0 }
+   local inc = { sec=s, nsec=ns }
+
+   return function()
+	     cur.sec, cur.nsec = gettime()
+
+	     if time.cmp(cur, next) == 1 then
+		thunk()
+		next.sec, next.nsec = time.add(cur, inc)
+	     end
+	  end
+end
+
+function expand(tpl, params)
+   return string.gsub(tpl, "%$([%a_]+)",
+		      function(w)
+			 if not params[w] then
+			    error("expand: no param for variable " .. w)
+			 end
+			 return params[w]
+		      end)
 end
