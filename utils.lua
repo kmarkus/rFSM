@@ -10,7 +10,7 @@ module('utils')
 
 -- increment major on API breaks
 -- increment minor on non breaking changes
-VERSION=0.98
+VERSION=0.99
 
 function append(car, ...)
    assert(type(car) == 'table')
@@ -90,14 +90,16 @@ function pp(val)
    else print(val) end
 end
 
-function lpad(str, len, char)
+function lpad(str, len, char, strlen)
+   strlen = strlen or #str
    if char == nil then char = ' ' end
-   return string.rep(char, len - #str) .. str
+   return string.rep(char, len - strlen) .. str
 end
 
-function rpad(str, len, char)
+function rpad(str, len, char, strlen)
+   strlen = strlen or #str
    if char == nil then char = ' ' end
-   return str .. string.rep(char, len - #str)
+   return str .. string.rep(char, len - strlen)
 end
 
 --- Strip ANSI color escape sequence from string.
