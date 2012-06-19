@@ -744,11 +744,9 @@ end
 ----------------------------------------
 -- send events to the local fsm event queue
 function send_events(fsm, ...)
-   if not is_initialized_root(fsm) then fsm.err("ERROR send_events: invalid fsm") end
+   if not fsm or not is_initialized_root(fsm) then error("ERROR send_events: invalid fsm argument") end
    fsm.dbg("RAISED", ...)
-   for _,v in ipairs({...}) do
-      table.insert(fsm._intq, v)
-   end
+   for _,v in ipairs({...}) do table.insert(fsm._intq, v) end
 end
 
 -- 1. walk up source path until root
