@@ -122,11 +122,12 @@
 <li><a href="#sec-7-1">7.1 The event memory extension (<code>rfsm_emem</code> module) #EventMemory</a></li>
 <li><a href="#sec-7-2">7.2 Timeevents (<code>rfsm_timeevent</code> module)</a></li>
 <li><a href="#sec-7-3">7.3 Configurable and colorized <code>dbg</code> info (<code>rfsmpp</code> module)</a></li>
-<li><a href="#sec-7-4">7.4 Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules)</a></li>
-<li><a href="#sec-7-5">7.5 <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree</a></li>
-<li><a href="#sec-7-6">7.6 <code>rfsm-sim</code> simple rfsm simulator</a></li>
-<li><a href="#sec-7-7">7.7 Lua fsm to json conversion (<code>rfsm2json</code> command line tool)</a></li>
-<li><a href="#sec-7-8">7.8 <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt</a></li>
+<li><a href="#sec-7-4">7.4 <code>rfsm_checkevents</code> plugin</a></li>
+<li><a href="#sec-7-5">7.5 Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules)</a></li>
+<li><a href="#sec-7-6">7.6 <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree</a></li>
+<li><a href="#sec-7-7">7.7 <code>rfsm-sim</code> simple rfsm simulator</a></li>
+<li><a href="#sec-7-8">7.8 Lua fsm to json conversion (<code>rfsm2json</code> command line tool)</a></li>
+<li><a href="#sec-7-9">7.9 <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt</a></li>
 </ul>
 </li>
 <li><a href="#sec-8">8 More examples, tips and tricks</a>
@@ -964,14 +965,34 @@ fsm.dbg=rfsmpp.gen_dbgcolor(<span style="color: #00cd00;">"fsm1"</span>,
 <p>
    Will show only <code>STATE_ENTER</code> and <code>STATE_EXIT</code> debug messages.
 </p>
-
 </div>
 
 </div>
 
 <div id="outline-container-7-4" class="outline-3">
-<h3 id="sec-7-4"><span class="section-number-3">7.4</span> Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules)</h3>
+<h3 id="sec-7-4"><span class="section-number-3">7.4</span> <code>rfsm_checkevents</code> plugin</h3>
 <div class="outline-text-3" id="text-7-4">
+
+
+<p>
+   This debugging helper plugin will at load-time construct a list of
+   all events used in the FSM. If at runtime an event is received
+   which is not known in the known list, a warning message will be
+   printed.
+</p>
+<p>
+   To use, just require the modeule before creating your
+   fsm. Important: load it <i>after</i> other plugins that transform events
+   (such as timevents), so that it picks up the transformed events.
+</p>
+
+</div>
+
+</div>
+
+<div id="outline-container-7-5" class="outline-3">
+<h3 id="sec-7-5"><span class="section-number-3">7.5</span> Generate graphical representations (<code>rfsm2uml</code> and <code>fsm2dbg</code> modules)</h3>
+<div class="outline-text-3" id="text-7-5">
 
 
 <p>
@@ -1024,9 +1045,9 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 </div>
 
-<div id="outline-container-7-5" class="outline-3">
-<h3 id="sec-7-5"><span class="section-number-3">7.5</span> <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree</h3>
-<div class="outline-text-3" id="text-7-5">
+<div id="outline-container-7-6" class="outline-3">
+<h3 id="sec-7-6"><span class="section-number-3">7.6</span> <code>rfsm-viz</code>: command line front end to rfsm2uml/rfsm2tree</h3>
+<div class="outline-text-3" id="text-7-6">
 
 
 <p>
@@ -1047,9 +1068,9 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 </div>
 
-<div id="outline-container-7-6" class="outline-3">
-<h3 id="sec-7-6"><span class="section-number-3">7.6</span> <code>rfsm-sim</code> simple rfsm simulator</h3>
-<div class="outline-text-3" id="text-7-6">
+<div id="outline-container-7-7" class="outline-3">
+<h3 id="sec-7-7"><span class="section-number-3">7.7</span> <code>rfsm-sim</code> simple rfsm simulator</h3>
+<div class="outline-text-3" id="text-7-7">
 
 
 <p>
@@ -1072,9 +1093,9 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 </div>
 
-<div id="outline-container-7-7" class="outline-3">
-<h3 id="sec-7-7"><span class="section-number-3">7.7</span> Lua fsm to json conversion (<code>rfsm2json</code> command line tool)</h3>
-<div class="outline-text-3" id="text-7-7">
+<div id="outline-container-7-8" class="outline-3">
+<h3 id="sec-7-8"><span class="section-number-3">7.8</span> Lua fsm to json conversion (<code>rfsm2json</code> command line tool)</h3>
+<div class="outline-text-3" id="text-7-8">
 
 
 <p>
@@ -1085,9 +1106,9 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 
 </div>
 
-<div id="outline-container-7-8" class="outline-3">
-<h3 id="sec-7-8"><span class="section-number-3">7.8</span> <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt</h3>
-<div class="outline-text-3" id="text-7-8">
+<div id="outline-container-7-9" class="outline-3">
+<h3 id="sec-7-9"><span class="section-number-3">7.9</span> <code>rfsm_rtt</code> Useful functions for using rFSM with OROCOS rtt</h3>
+<div class="outline-text-3" id="text-7-9">
 
 
 <p>

@@ -1,8 +1,8 @@
-rFSM Statecharts
-================
+@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta5
+=================================================================================================================================
 
 Author: Markus Klotzbuecher
-Date: [2012-02-20 Mon]
+Date: 2012-02-20
 
 
 
@@ -23,11 +23,12 @@ Table of Contents
     7.1 The event memory extension (=rfsm_emem= module) #EventMemory
     7.2 Timeevents (=rfsm_timeevent= module)
     7.3 Configurable and colorized =dbg= info (=rfsmpp= module)
-    7.4 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
-    7.5 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree
-    7.6 =rfsm-sim= simple rfsm simulator
-    7.7 Lua fsm to json conversion (=rfsm2json= command line tool)
-    7.8 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt
+    7.4 =rfsm_checkevents= plugin
+    7.5 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
+    7.6 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree
+    7.7 =rfsm-sim= simple rfsm simulator
+    7.8 Lua fsm to json conversion (=rfsm2json= command line tool)
+    7.9 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt
 8 More examples, tips and tricks
     8.1 A more complete example
     8.2 How to compose state machines
@@ -633,8 +634,20 @@ Table of Contents
 
    Will show only =STATE_ENTER= and =STATE_EXIT= debug messages.
 
+7.4 =rfsm_checkevents= plugin 
+==============================
 
-7.4 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
+   This debugging helper plugin will at load-time construct a list of
+   all events used in the FSM. If at runtime an event is received
+   which is not known in the known list, a warning message will be
+   printed.
+
+   To use, just require the modeule before creating your
+   fsm. Important: load it /after/ other plugins that transform events
+   (such as timevents), so that it picks up the transformed events.
+
+
+7.5 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
 ==========================================================================
 
      Modules to transform rFSM models to graphical
@@ -669,7 +682,7 @@ Table of Contents
      pictures.
 
 
-7.5 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree 
+7.6 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree 
 =============================================================
 
      to generate all possible formats run:
@@ -682,7 +695,7 @@ Table of Contents
      generates various representations (in =examples/=)
 
 
-7.6 =rfsm-sim= simple rfsm simulator 
+7.7 =rfsm-sim= simple rfsm simulator 
 =====================================
 
      small command line simulator for running a fsm
@@ -697,13 +710,13 @@ Table of Contents
      file displayed changes. For example =evince= works nicely.
 
 
-7.7 Lua fsm to json conversion (=rfsm2json= command line tool) 
+7.8 Lua fsm to json conversion (=rfsm2json= command line tool) 
 ===============================================================
 
    Based on =rfsm2json.lua= module and requires lua-json.
 
 
-7.8 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt 
+7.9 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt 
 ===============================================================
 
    See the Orocos [LuaCookbook] for more details.
@@ -909,6 +922,7 @@ Table of Contents
 
 [1] See [this] Real-time Linux Workshop paper, [lua-tlsf] and the
  [minimal Lua real-time POSIX bindings]
+
 
 [2] The reason for this choice of default is that it fails more
   obviously (100% CPU load) than the opposite (doo function not

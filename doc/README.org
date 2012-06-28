@@ -583,6 +583,17 @@
 
    Will show only =STATE_ENTER= and =STATE_EXIT= debug messages.
 
+** =rfsm_checkevents= plugin
+
+   This debugging helper plugin will at load-time construct a list of
+   all events used in the FSM. If at runtime an event is received
+   which is not known in the known list, a warning message will be
+   printed.
+
+   To use, just require the modeule before creating your
+   fsm. Important: load it /after/ other plugins that transform events
+   (such as timevents), so that it picks up the transformed events.
+
 
 ** Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
 
