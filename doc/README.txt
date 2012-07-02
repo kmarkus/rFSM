@@ -1,5 +1,5 @@
-rFSM Statecharts v1.0-beta6
-===========================
+rFSM Statecharts - v1.0-beta6
+=============================
 
 Author: Markus Klotzbuecher
 Date: 2012-02-20
@@ -190,7 +190,7 @@ Table of Contents
 4 Specifying rFSM models 
 -------------------------
 
-  rFSM state machines are constructed using four model elements:
+  rFSM state machines are constructed using three model elements:
   *states*, *connectors* and *transitions*.
 
   (all functions are part of the rfsm module, thus need to be called

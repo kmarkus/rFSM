@@ -167,7 +167,7 @@
 
 * Specifying rFSM models
 
-  rFSM state machines are constructed using four model elements:
+  rFSM state machines are constructed using three model elements:
   *states*, *connectors* and *transitions*.
 
   (all functions are part of the rfsm module, thus need to be called
