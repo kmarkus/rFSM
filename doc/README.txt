@@ -1,5 +1,5 @@
-@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta5
-=================================================================================================================================
+rFSM Statecharts v1.0-beta6
+===========================
 
 Author: Markus Klotzbuecher
 Date: 2012-02-20
