@@ -40,7 +40,7 @@ local function setup_preview(fsm)
    
    rfsm.mapfsm(function (tr)
 		  if tr.likely and type(tr.likely) ~= 'function' then
-		     error("ERROR: invalid 'preview' attribute on " .. 
+		     error("ERROR: invalid 'likely' attribute on " ..
 			   tostring(tr)..". Should be a function")
 		  end
 	       end, fsm, rfsm.is_trans)
@@ -54,5 +54,5 @@ local function setup_preview(fsm)
    rfsm.post_step_hook_add(fsm, do_preview)
 end
 
--- install setup_emem as preproc hook
+-- install setup_preview as preproc hook
 rfsm.preproc[#rfsm.preproc+1] = setup_preview
