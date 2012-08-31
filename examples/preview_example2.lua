@@ -25,7 +25,7 @@ function gen_call_it_once(func)
    local function reload() loaded=true end
 
    local function caller(...)
-      if loaded then loaded=false; return func() end
+      if loaded then loaded=false; return func(...) end
    end
    return caller, reload
 end
