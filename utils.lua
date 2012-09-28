@@ -10,7 +10,7 @@ module('utils')
 
 -- increment major on API breaks
 -- increment minor on non breaking changes
-VERSION=0.99
+VERSION=0.991
 
 function append(car, ...)
    assert(type(car) == 'table')
@@ -100,6 +100,22 @@ function rpad(str, len, char, strlen)
    strlen = strlen or #str
    if char == nil then char = ' ' end
    return str .. string.rep(char, len - strlen)
+end
+
+-- Trim functions: http://lua-users.org/wiki/CommonFunctions
+-- Licensed under the same terms as Lua itself.--DavidManura
+function trim(s)
+   return (s:gsub("^%s*(.-)%s*$", "%1"))    -- from PiL2 20.4
+end
+
+-- remove leading whitespace from string.
+function ltrim(s) return (s:gsub("^%s*", "")) end
+
+-- remove trailing whitespace from string.
+function rtrim(s)
+   local n = #s
+   while n > 0 and s:find("^%s", n) do n = n - 1 end
+   return s:sub(1, n)
 end
 
 --- Strip ANSI color escape sequence from string.
