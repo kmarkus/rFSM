@@ -1,4 +1,4 @@
-rFSM Statecharts (v1.0-beta5)
+rFSM Statecharts (v1.0-beta6)
 =============================
 
 What is it?

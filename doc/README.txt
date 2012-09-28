@@ -1,5 +1,5 @@
-rFSM Statecharts - v1.0-beta6
-=============================
+@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0-beta6
+=================================================================================================================================
 
 Author: Markus Klotzbuecher
 Date: 2012-02-20
@@ -21,14 +21,15 @@ Table of Contents
 6 Common pitfalls
 7 Tools and helper modules
     7.1 The event memory extension (=rfsm_emem= module) #EventMemory
-    7.2 Timeevents (=rfsm_timeevent= module)
-    7.3 Configurable and colorized =dbg= info (=rfsmpp= module)
-    7.4 =rfsm_checkevents= plugin
-    7.5 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
-    7.6 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree
-    7.7 =rfsm-sim= simple rfsm simulator
-    7.8 Lua fsm to json conversion (=rfsm2json= command line tool)
-    7.9 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt
+    7.2 Await: trigger transition only after receiving multipe events
+    7.3 Timeevents (=rfsm_timeevent= module)
+    7.4 Configurable and colorized =dbg= info (=rfsmpp= module)
+    7.5 =rfsm_checkevents= plugin
+    7.6 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules)
+    7.7 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree
+    7.8 =rfsm-sim= simple rfsm simulator
+    7.9 Lua fsm to json conversion (=rfsm2json= command line tool)
+    7.10 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt
 8 More examples, tips and tricks
     8.1 A more complete example
     8.2 How to compose state machines
@@ -568,7 +569,35 @@ Table of Contents
    module. Checkout the =examples/emem_test.lua= for more details.
 
 
-7.2 Timeevents (=rfsm_timeevent= module) 
+7.2 Await: trigger transition only after receiving multipe events 
+==================================================================
+
+   In a nutshell, this plugin permits to trigger transitions only
+   after multiple events have been received. These events can be
+   received in different steps.
+
+   This is basically a specialized version of the emem plugin. This
+   one should be preferred if no counting is required, since it is
+   computationally much less expensive.
+
+   Behavior: When loaded, the plugin scans for events with the syntax
+   await(event1, event2)". This statement is transformed as follows:
+
+    - a guard condition is generated and added to possibly existing
+      guard conditions. It will only enable the transition if the both
+      events have been received while the source state is active.
+
+    - a second hook is installed in the exit function of the source
+      state to reset the event counting. So when the source state is
+      exited (either via or not via the await transition) and
+      reentered again, the counting start from the beginning. It would
+      be trivial to provide a variant of await that resets the counts
+      only if the await transition is taken, however it is not clear
+      right now if that would be useful at all.
+
+   For more information checkout the =await.lua= example.
+
+7.3 Timeevents (=rfsm_timeevent= module) 
 =========================================
 
    This module extends the rFSM engine with time events. Time events
@@ -600,7 +629,7 @@ Table of Contents
     "stepped" at a fixed frequency or that never go idle.
 
 
-7.3 Configurable and colorized =dbg= info (=rfsmpp= module) 
+7.4 Configurable and colorized =dbg= info (=rfsmpp= module) 
 ============================================================
 
    The =rfsmpp.gen_dbgcolor= function generates a configurable and
@@ -634,7 +663,7 @@ Table of Contents
 
    Will show only =STATE_ENTER= and =STATE_EXIT= debug messages.
 
-7.4 =rfsm_checkevents= plugin 
+7.5 =rfsm_checkevents= plugin 
 ==============================
 
    This debugging helper plugin will at load-time construct a list of
@@ -647,7 +676,7 @@ Table of Contents
    (such as timevents), so that it picks up the transformed events.
 
 
-7.5 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
+7.6 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
 ==========================================================================
 
      Modules to transform rFSM models to graphical
@@ -682,7 +711,7 @@ Table of Contents
      pictures.
 
 
-7.6 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree 
+7.7 =rfsm-viz=: command line front end to rfsm2uml/rfsm2tree 
 =============================================================
 
      to generate all possible formats run:
@@ -695,7 +724,7 @@ Table of Contents
      generates various representations (in =examples/=)
 
 
-7.7 =rfsm-sim= simple rfsm simulator 
+7.8 =rfsm-sim= simple rfsm simulator 
 =====================================
 
      small command line simulator for running a fsm
@@ -710,14 +739,14 @@ Table of Contents
      file displayed changes. For example =evince= works nicely.
 
 
-7.8 Lua fsm to json conversion (=rfsm2json= command line tool) 
+7.9 Lua fsm to json conversion (=rfsm2json= command line tool) 
 ===============================================================
 
    Based on =rfsm2json.lua= module and requires lua-json.
 
 
-7.9 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt 
-===============================================================
+7.10 =rfsm_rtt= Useful functions for using rFSM with OROCOS rtt 
+================================================================
 
    See the Orocos [LuaCookbook] for more details.
 

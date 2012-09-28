@@ -522,6 +522,33 @@
    module. Checkout the =examples/emem_test.lua= for more details.
 
 
+** Await: trigger transition only after receiving multipe events
+
+   In a nutshell, this plugin permits to trigger transitions only
+   after multiple events have been received. These events can be
+   received in different steps.
+
+   This is basically a specialized version of the emem plugin. This
+   one should be preferred if no counting is required, since it is
+   computationally much less expensive.
+
+   Behavior: When loaded, the plugin scans for events with the syntax
+   await(event1, event2)". This statement is transformed as follows:
+
+    - a guard condition is generated and added to possibly existing
+      guard conditions. It will only enable the transition if the both
+      events have been received while the source state is active.
+
+    - a second hook is installed in the exit function of the source
+      state to reset the event counting. So when the source state is
+      exited (either via or not via the await transition) and
+      reentered again, the counting start from the beginning. It would
+      be trivial to provide a variant of await that resets the counts
+      only if the await transition is taken, however it is not clear
+      right now if that would be useful at all.
+
+   For more information checkout the =await.lua= example.
+
 ** Timeevents (=rfsm_timeevent= module)
 
    This module extends the rFSM engine with time events. Time events
