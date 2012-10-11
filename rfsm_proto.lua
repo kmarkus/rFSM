@@ -10,14 +10,15 @@ local pairs = pairs
 local print = print
 local assert = assert
 local type = type
+local ts = tostring
 
 module("rfsm_proto")
 
 --- Default configuration
-local host = "localhost" 	-- use '*' for host to bind to all local interfaces.
-local port = 44044
+local def_host = "localhost" 	-- use '*' for host to bind to all local interfaces.
+local def_port = 44044
+local def_read_timeout = 1	-- block in read for this time
 
-local read_timeout = 1		-- block in read for this time
 local heartbeat_timeout = 15	-- drop a subscriber after not receiving a heartbeat for this time
 local idle_update = 3		-- send a state update after this time if no changes take place.
 
@@ -140,9 +141,9 @@ end
 function gen_updater(conf)
    -- initalize
    local sock = assert(socket.udp())
-   local read_timeout = conf.read_timeout or read_timeout
-   local host = conf.host or host
-   local port = conf.port or port
+   local read_timeout = conf.read_timeout
+   local host = conf.host
+   local port = conf.port
 
    assert(type(conf.getmodel)=='function')
    assert(type(conf.getactleaf)=='function')
@@ -168,8 +169,13 @@ function gen_updater(conf)
    return function () process(proto_inf) end
 end
 
-function install(fsm, host, port, read_timeout)
-   fsm.info("rfsm_proto: rfsm introspection protocol loaded")
+function __install(fsm, host, port, read_timeout)
+   host = host or def_host
+   port = port or def_port
+   read_timeout = read_timeout or def_read_timeout
+
+   fsm.info("rfsm_proto: rfsm introspection protocol loaded ("
+	    ..host..":"..ts(port).."/"..ts(read_timeout)..")")
 
    local getmodel = function () return rfsm_marsh.model2tab(fsm) end
    local getactleaf = function () return rfsm_marsh.actinfo2tab(fsm) end
@@ -178,5 +184,11 @@ function install(fsm, host, port, read_timeout)
 				getmodel=getmodel,
 				getactleaf=getactleaf })
    rfsm.post_step_hook_add(fsm, updater)
-   return fsm
+end
+
+function install(host, port, read_timeout)
+   rfsm.preproc[#rfsm.preproc+1] =
+      function(fsm)
+	 __install(fsm, host, port, read_timeout)
+      end
 end
