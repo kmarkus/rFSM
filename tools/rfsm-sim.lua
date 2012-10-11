@@ -5,7 +5,7 @@ require "rfsm2uml"
 require "rfsm2tree"
 
 if arg and #arg < 1 then
-   print("usage: run <fsmfile>")
+   print("usage: rfsm-sim <fsmfile>")
    os.exit(1)
 end
 
