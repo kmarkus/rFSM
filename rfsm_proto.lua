@@ -31,6 +31,7 @@ local VERSION=2
 --   type: 'subscribe'
 --   type: 'unsubscribe'
 --   type: 'heartbeat'
+--   type: 'event' { event="string_event"|number_event }
 
 -- Outgoing
 --   type: 'rfsm_model': sent initially or when the model changes
@@ -41,14 +42,14 @@ local VERSION=2
 --      'path':     path taken to reach this state
 
 --- Update heartbeat timestamp.
-function update_timestamp(key, subs)
+local function update_timestamp(key, subs)
    -- print("received heartbeat from " .. key)
    if subs[key] then subs[key].last_heartbeat = os.time() end
 end
 
 -- Send updated state information to all subscribers
 -- TODO: Extend this to only send state if it changed or once every X seconds.
-function send_state(inf)
+local function send_state(inf)
    local subs, sock = inf.subscribers, inf.socket
    local act_leaf, state, path = inf.getactleaf()
 
@@ -65,7 +66,7 @@ function send_state(inf)
 end
 
 -- Process timeouts and drop zombies.
-function process_timeouts(inf)
+local function process_timeouts(inf)
    local subs, sock = inf.subscribers, inf.socket
    local cur_time = os.time()
    utils.foreach(
@@ -82,7 +83,7 @@ end
 -- @param subs list of subscribers
 -- @param ip ip address
 -- @param port port
-function add_subscriber(ip, port, inf)
+local function add_subscriber(ip, port, inf)
    local key = ip..':'..port
    local subs, sock = inf.subscribers, inf.socket
    if subs[key] then print("Resubscribing " .. key )
@@ -96,7 +97,7 @@ function add_subscriber(ip, port, inf)
 end
 
 --- Remove a subscriber
-function rm_subscriber(ip, port, subs)
+local function rm_subscriber(ip, port, subs)
    local key = ip..':'..port
    subs[key] = nil
 end
@@ -107,18 +108,19 @@ end
 --   ...
 -- }
 
-function dispatch(msg, ip, port, inf)
+local function dispatch(msg, ip, port, inf)
    local msg_type = msg.type
    local key = ip..':'..port
    local subs = inf.subscribers
 
    -- dispatch
    if msg_type == 'subscribe' then add_subscriber(ip, port, inf)
+   elseif msg_type == 'event' then inf.send_event(msg.event)
    elseif msg_type == 'unsubscribe' then rm_subscriber(ip, port, subs)
    elseif msg_type  == 'heartbeat' then update_timestamp(key, subs) end
 end
 
-function process(inf)
+local function process(inf)
    local sock, subs = inf.socket, inf.subscribers
    local data, ip, port = sock:receivefrom() -- data is max 8k
    if data then
@@ -138,7 +140,7 @@ end
 --  host
 --  port
 --
-function gen_updater(conf)
+local function gen_updater(conf)
    -- initalize
    local sock = assert(socket.udp())
    local read_timeout = conf.read_timeout
@@ -159,6 +161,7 @@ function gen_updater(conf)
 
       getmodel = conf.getmodel,
       getactleaf = conf.getactleaf,
+      send_event = conf.send_event,
 
       -- counters/statistics
       cnt_state_update = 0,
@@ -169,26 +172,35 @@ function gen_updater(conf)
    return function () process(proto_inf) end
 end
 
-function __install(fsm, host, port, read_timeout)
-   host = host or def_host
-   port = port or def_port
-   read_timeout = read_timeout or def_read_timeout
+local function __install(fsm, t)
+   host = t.host or def_host
+   port = t.port or def_port
+   read_timeout = t.read_timeout or def_read_timeout
+   allow_send = t.allow_send or false
 
    fsm.info("rfsm_proto: rfsm introspection protocol loaded ("
 	    ..host..":"..ts(port).."/"..ts(read_timeout)..")")
+
+   local send_event = nil
+   if allow_send then
+      print("received event "..ts(e))
+      send_event = function (e) rfsm.send_events(fsm, e) end
+   end
 
    local getmodel = function () return rfsm_marsh.model2tab(fsm) end
    local getactleaf = function () return rfsm_marsh.actinfo2tab(fsm) end
    local updater = gen_updater({read_timeout=read_timeout,
 				host=host, port=port,
 				getmodel=getmodel,
+				send_event=send_event,
 				getactleaf=getactleaf })
    rfsm.post_step_hook_add(fsm, updater)
 end
 
-function install(host, port, read_timeout)
+--- Install the
+function install(t)
    rfsm.preproc[#rfsm.preproc+1] =
       function(fsm)
-	 __install(fsm, host, port, read_timeout)
+	 __install(fsm, t or {})
       end
 end

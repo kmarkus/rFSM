@@ -58,6 +58,7 @@ end
 function sim()
    require "rfsm_proto"
    fsm.idle_hook = function () os.execute("sleep 0.1") end
+   rfsm_proto.install(fsm)
    run()
 end
 
