@@ -501,6 +501,13 @@
      flag). Therefore the rFSM engine calls the =doo= function in a
      tight loop.
 
+  5. My FSM is doing nothing, my guard are not executed, ... ,
+     although I'm running =step= or =run= periodically!
+
+     rFSM will only attempt to transition if it has at least one event
+     in the queue! If you only want to transition based on guards,
+     raise a dummy event (e.g. "e_any").
+
 
 * Tools and helper modules
 
@@ -863,7 +870,7 @@
 * Download
 
   The code can be found in [[https://github.com/kmarkus/rFSM][this]] git repository.
-  
+
   A cheatsheet summarizing the DSL is available [[https://github.com/kmarkus/rfsm-cheatsheet/raw/master/cheatsheet.pdf][here]].
 
 * Acknowledgement
