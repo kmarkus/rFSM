@@ -114,7 +114,7 @@ function seqand:type() return 'state' end
 -- parameters:
 --   t.andseqdbg: if true print dbg information
 --   t.idle_doo: returned in rfsm.yield(idle_doo) of seqand state.
---   t.step: number of steps to advance each subfsm
+--   t.step: number of steps to advance each subfsm (default: 1)
 --   t.run: if true, don't step but run.
 --   t.order: table of substate names that indicate the desired
 --            execution order. Not mentioned states will be executed
@@ -127,11 +127,15 @@ function seqand:new(t)
    self.__index = self
 
    if t.run and t.step then
-      error("Sequential AND state must define step or run")
+      error("Sequential AND: states must define step _OR_ run")
+   end
+
+   if not ( t.run or t.step ) then
+      t.step = 1
    end
 
    if t.step and (type(t.step) ~= 'number' or t.step <= 0) then
-      error("step must be a positive number")
+      error("Sequential AND: step must be a positive number")
    end
 
    if t.run then t.step = math.huge end
