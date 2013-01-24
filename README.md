@@ -18,6 +18,5 @@ That page is also available in the git repository:
 
 
 Information about how to use rFSM using the OROCOS RTT Framework can
-be found [here
-http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook].
+be found [here](http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook).
 
