@@ -91,7 +91,7 @@
 </div>
 
 <div id="content">
-<h1 class="title"><img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0-beta6</h1>
+<h1 class="title"><img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> <br/@><br/@>v1.0</h1>
 
 
 
@@ -825,6 +825,15 @@ exit(fsm, state, <span style="color: #00cd00;">'exit'</span>)
      does not call <code>rfsm.yield</code> with a <code>true</code> argument (the idle
      flag). Therefore the rFSM engine calls the <code>doo</code> function in a
      tight loop.
+</p>
+</li>
+<li>My FSM is doing nothing, my guard are not executed, &hellip; ,
+     although I'm running <code>step</code> or <code>run</code> periodically!
+
+<p>
+     rFSM will only attempt to transition if it has at least one event
+     in the queue! If you only want to transition based on guards,
+     raise a dummy event (e.g. "e_any").
 </p></li>
 </ol>
 
@@ -1428,7 +1437,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 <p>
   The code can be found in <a href="https://github.com/kmarkus/rFSM">this</a> git repository.
 </p>
-<p>  
+<p>
   A cheatsheet summarizing the DSL is available <a href="https://github.com/kmarkus/rfsm-cheatsheet/raw/master/cheatsheet.pdf">here</a>.
 </p>
 </div>
@@ -1492,7 +1501,7 @@ rfsm2tree.rfsm2tree(fsm, <span style="color: #00cd00;">'png'</span>, <span style
 <div id="postamble">
 <p class="date">Date: 2012-02-20</p>
 <p class="author">Author: Markus Klotzbuecher</p>
-<p class="creator">Org version 7.8.09 with Emacs version 23</p>
+<p class="creator">Org version 7.8.11 with Emacs version 23</p>
 <a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
 
 </div>

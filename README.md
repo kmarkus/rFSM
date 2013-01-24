@@ -1,5 +1,5 @@
-rFSM Statecharts (v1.0-beta6)
-=============================
+rFSM Statecharts (v1.0)
+=======================
 
 What is it?
 -----------
@@ -15,4 +15,9 @@ That page is also available in the git repository:
  - doc/README.txt
  - doc/README.html
  - doc/README.org
+
+
+Information about how to use rFSM using the OROCOS RTT Framework can
+be found [here
+http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook].
 
