@@ -88,17 +88,20 @@ end
 function vizuml()
    local viewer = os.getenv("RFSM_VIEWER") or "firefox"
    uml()
+   add_hook(uml)
    os.execute(viewer .. " " ..  tmpdir .. "rfsm-uml-tmp.png" .. "&")
 end
 
 function viztree()
    tree()
+   add_hook(tree)
    local viewer = os.getenv("RFSM_VIEWER") or "firefox"
    os.execute(viewer .. " " .. tmpdir .. "rfsm-tree-tmp.png" .. "&")
 end
 
 function vizxdot()
    dot()
+   add_hook(dot)
    os.execute("xdot " .. tmpdir .. "rfsm-tmp-uml.dot &")
 end
 
@@ -152,9 +155,6 @@ if not ret or not fsm then
    os.exit(1)
 end
 
-add_hook(uml)
-add_hook(tree)
-add_hook(dot)
 add_hook(showfqn)
 add_hook(showeq)
 dbg(false)
