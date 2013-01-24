@@ -1,8 +1,8 @@
-@<img src="./rFSM_logo.jpg" width="71%" height="70%" title="rFSM Statecharts" alt="rFSM Statecharts" /@> @<br/@>@<br/@>v1.0
-===========================================================================================================================
+rFSM Statecharts v1.0
+=====================
 
 Author: Markus Klotzbuecher
-Date: 2012-02-20
+Date: 2013-01-24
 
 
 
@@ -21,7 +21,7 @@ Table of Contents
 6 Common pitfalls
 7 Tools and helper modules
     7.1 The event memory extension (=rfsm_emem= module) #EventMemory
-    7.2 Await: trigger transition only after receiving multipe events
+    7.2 Await: trigger transition only after receiving multiple events
     7.3 Timeevents (=rfsm_timeevent= module)
     7.4 Configurable and colorized =dbg= info (=rfsmpp= module)
     7.5 =rfsm_checkevents= plugin
@@ -81,7 +81,7 @@ Table of Contents
 3 Introduction 
 ---------------
 
-  rFSM is minimal Statechart flavour designed for /Coordinating/ of
+  rFSM is minimal Statechart flavor designed for /Coordinating/ of
   complex systems such as robots. It has the following features:
 
   - Hierarchical (composite) states
@@ -165,7 +165,7 @@ Table of Contents
 
 
   ... causes a transition to =world=. As the =world= state completion
-  event does not trigger any transitons, running =step()= again does
+  event does not trigger any transitions, running =step()= again does
   not have any effect:
 
 
@@ -223,7 +223,7 @@ Table of Contents
 4.1.1 The doo function 
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-    Leaf states may additionaly define a do function (it is called
+    Leaf states may additionally define a do function (it is called
     =doo= in rFSM to avoid clashes with the identically named Lua
     keyword).
 
@@ -240,7 +240,7 @@ Table of Contents
     Implementationwise, this function is treated as a Lua
     coroutine. This enables the following two use-cases:
 
-     1. =doo= is a regular function: =doo= is excuted once and a
+     1. =doo= is a regular function: =doo= is executed once and a
         completion event =e_done= is raised afterwards (if no =doo=
         function is defined this event is raised immediately after
         execution of the =entry= function).
@@ -250,7 +250,7 @@ Table of Contents
         a longer time, because this would prevent incoming events to
         trigger transitions. Therefore, the =rfsm.yield()= call can be
         inserted at appropriate points into a long running =doo= to
-        explicitely return control to the rfsm engine, that then
+        explicitly return control to the rfsm engine, that then
         checks for new events and potentially executes transitions.
 
     (Note: rfsm.yield is currently only an alias to =coroutine.yield=)
@@ -273,7 +273,7 @@ Table of Contents
     "e_close_obj" event if it is true. Each cycle the control is
     returned to the rFSM core by calling =rfsm.yield()=.
 
-    =rfsm.yield(idle_flag)= accepts a boolean argument (called the
+    =rfsm.yield(idle_flag)= accepts a Boolean argument (called the
     "idle flag") that influences how =doo= is called by the rFSM core:
     if =true= it will cause the rFSM core to go idle, provided there
     are no other events. If =false= (the default[2] if no arguments
@@ -304,7 +304,7 @@ Table of Contents
     is the central mechanism to integrate rFSM into existing
     systems. The expected behavior is to return a Lua table of events
     (array part only). These events are then used to check for enabled
-    transtions.
+    transitions.
 
 4.2 Transitions (=rfsm.transition=) 
 ====================================
@@ -437,7 +437,7 @@ Table of Contents
    generate.
 
    /Note/: defining cycles is possible, but dangerous, unsupported and
-   discouraged. It may make the yoghurt in your fridge grow fine grey
+   discouraged. It may make the yogurt in your fridge grow fine grey
    beards.
 
 
@@ -448,7 +448,7 @@ Table of Contents
   validate the fsm model and transform the fsm to be suitable for
   execution. Initalization is done using the =rfsm.init(fsm)=
   function, that takes a (string) rfsm description as input and
-  returns an initalized fsm. To load an rfsm from a file and initalize
+  returns an initalized fsm. To load an rfsm from a file and initialize
   it, the =rfsm.load(filename)= function can be used:
 
 
@@ -470,7 +470,7 @@ Table of Contents
   For each step the rfsm engine will invoke the =getevents= hook to
   retrieve new events and then reason about what to do (which
   transitions to execute or =doo='s to run). After that these events
-  are disgarded. If this seems inconvenient, checkout the [event memory]
+  are discarded. If this seems inconvenient, checkout the [event memory]
   extension.
 
   When omitted, the number of steps argument =n= to =rfsm.step=
@@ -525,7 +525,7 @@ Table of Contents
   3. Why doesn't my statemachine react if I send a completion event
      =e_done= from the outside?
 
-     Short anwer: because it is a syntactic shortcut for the
+     Short answer: because it is a syntactic shortcut for the
      completion event *of the source state* of the transition which it
      is defined on. During initalization it is transformed to
      =e_done@fqn= (e.g. =e_root@root.stateA.stateB=) If you send in
@@ -560,7 +560,7 @@ Table of Contents
 7.1 The event memory extension (=rfsm_emem= module) #EventMemory 
 =================================================================
 
-   This extension adds /memory/ of events that occured to an rFSM
+   This extension adds /memory/ of events that occurred to an rFSM
    statechart. This is done maintaining a table =emem= for every
    state. The keys in this table are event names and the values the
    number of times that event occurred while the respective state was
@@ -568,7 +568,7 @@ Table of Contents
    setting all values to 0.
 
    This extension is useful for defining transitions that are taken
-   only after certain events have occured, but that do not necessarily
+   only after certain events have occurred, but that do not necessarily
    occur within one step. Because the rFSM engine drops events after
    each steps this information would otherwise be lost.
 
@@ -576,8 +576,8 @@ Table of Contents
    module. Checkout the =examples/emem_test.lua= for more details.
 
 
-7.2 Await: trigger transition only after receiving multipe events 
-==================================================================
+7.2 Await: trigger transition only after receiving multiple events 
+===================================================================
 
    In a nutshell, this plugin permits to trigger transitions only
    after multiple events have been received. These events can be
@@ -655,7 +655,7 @@ Table of Contents
        setting them to true or false. Known debug ids are:
        =STATE_ENTER=, =STATE_EXIT=, =EFFECT=, =DOO=, =EXEC_PATH=,
        =ERROR=, =HIBERNATING=, =RAISED=, =TIMEEVENT=
-     - =defshow= (bool) defines wether debug id's not mentioned in the dbgids
+     - =defshow= (bool) defines whether debug id's not mentioned in the dbgids
        table are shown or not.
 
 
@@ -678,9 +678,9 @@ Table of Contents
    which is not known in the known list, a warning message will be
    printed.
 
-   To use, just require the modeule before creating your
+   To use, just require the module before creating your
    fsm. Important: load it /after/ other plugins that transform events
-   (such as timevents), so that it picks up the transformed events.
+   (such as timeevents), so that it picks up the transformed events.
 
 
 7.6 Generate graphical representations (=rfsm2uml= and =fsm2dbg= modules) 
@@ -817,7 +817,7 @@ Table of Contents
      fatal_error = rfsm.state {},
   
      rfsm.trans{ src='initial', tgt='on',
-                 effect=function() print("initalizing system") end },
+                 effect=function() print("initializing system") end },
      rfsm.trans{ src='on', tgt='error', events={ 'e_error' } },
      rfsm.trans{ src='error', tgt='on', events={ 'e_error_fixed' } },
      rfsm.trans{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
