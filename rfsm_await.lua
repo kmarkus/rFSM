@@ -74,7 +74,13 @@ local function expand_await(fsm)
 
 			rfsm.pre_step_hook_add(fsm, update) -- update prior to each step
 			tr.src.exit = utils.advise('after', tr.src.exit, reset) -- reset on src state exit
-			tr.guard = utils.advise('before', tr.guard, cond) -- add check before guard
+
+			if tr.guard then
+			   old_guard = tr.guard
+			   tr.guard=function(...) return cond(...) and old_guard(...) end
+			else
+			   tr.guard = cond
+			end
 		     end
 		  end
 	       end, fsm, rfsm.is_trans)
