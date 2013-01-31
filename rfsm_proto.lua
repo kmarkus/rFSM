@@ -17,7 +17,7 @@ module("rfsm_proto")
 --- Default configuration
 local def_host = "localhost" 	-- use '*' for host to bind to all local interfaces.
 local def_port = 44044
-local def_read_timeout = 1	-- block in read for this time
+local def_read_timeout = 0	-- block in read for this time
 
 local heartbeat_timeout = 3	-- drop a subscriber after not receiving a heartbeat for this time
 local idle_update = 1		-- send a state update after this time if no changes take place.
