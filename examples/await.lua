@@ -30,24 +30,31 @@ require "rfsm_await"
 require "rfsmpp"
 
 x= rfsm.state {
-   off=rfsm.state{},
-   on=rfsm.state{},
+   notready=rfsm.state{},
 
-   rfsm.trans{ src='initial', tgt='off' },
+   ready=rfsm.state{
+      off=rfsm.state{},
+      on=rfsm.state{},
 
-   -- this transiton will only be enabled after e_motor_on and
-   -- e_checks_passed have been received.
-   rfsm.trans{ src='off', tgt='on', events={"await(e_motor_on, e_checks_passed)"} },
+      rfsm.trans{ src='initial', tgt='off' },
 
+      -- this transiton will only be enabled after e_motor_on and
+      -- e_checks_passed have been received.
+      rfsm.trans{ src='off', tgt='on', events={"await(e_motor_on, e_checks_passed)"} },
 
-   -- this is a regular transition triggering on 'e_stop'
-   rfsm.trans{ src='on', tgt='off', events={"e_stop"} },
+      -- this is a regular transition triggering on 'e_stop'
+      rfsm.trans{ src='on', tgt='off', events={"e_stop"} },
+   },
+
+   rfsm.trans{src='initial', tgt='notready'},
+   rfsm.trans{src='notready', tgt='ready', events={'e_ready'}},
 
 }
 
+x.dbg=rfsmpp.gen_dbgcolor("await", { STATE_ENTER=true, STATE_EXIT=true, AWAIT=true,
+				     EFFECT=true, HIBERNATING=true, RAISED=true}, false)
+
 fsm=rfsm.init(x)
-fsm.dbg=rfsmpp.gen_dbgcolor("await", { STATE_ENTER=true, STATE_EXIT=true,
-				       EFFECT=true, HIBERNATING=true, RAISED=true}, false)
 
 -- enter the fsm
 rfsm.run(fsm)
@@ -64,6 +71,10 @@ rfsm.run(fsm)
 rfsm.send_events(fsm,'e_checks_passed')
 rfsm.run(fsm)
 
+-- send a e_checks_passed, transition as both
+rfsm.send_events(fsm,'e_ready')
+rfsm.run(fsm)
+
 -- a single events takes us back to off
-rfsm.send_events(fsm,'e_stop')
+rfsm.send_events(fsm,'e_checks_passed')
 rfsm.run(fsm)

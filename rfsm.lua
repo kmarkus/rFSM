@@ -833,7 +833,9 @@ end
 function actchild_get(state) return state._actchild end
 
 -- get state mode
-function get_sta_mode(s) return s._mode end
+function get_sta_mode(s)
+   return s._mode or "inactive"
+end
 
 -- set state mode
 function set_sta_mode(s, m)

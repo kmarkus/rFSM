@@ -12,10 +12,9 @@
 local rfsm = require "rfsm"
 local utils = require "utils"
 local string, print, ipairs, pairs = string, print, ipairs, pairs
+local get_sta_mode = rfsm.get_sta_mode
 
 module("rfsm_await")
-
-dbg=false
 
 --- Pre-process await and setup handlers.
 -- @param fsm initalized root fsm.
@@ -36,25 +35,40 @@ local function expand_await(fsm)
 
    --- Generate await handlers.
    -- Generate update, reset and guard functions.
-   local function gen_await_handlers(await_events)
+   local function gen_await_handlers(await_events, tr)
       local etab={}
+      local aw_src_sta=tr.src -- caching this is OK in terms of
+			      -- dynamic FSM changes, since if this
+			      -- state is replaced, then its
+			      -- transitions will need an update too.
 
       local function reset()
+	 fsm.dbg("AWAIT", "reset await monitoring")
 	 for _,e in ipairs(await_events) do etab[e]=false end
       end
 
       -- make sure that only await_events get set
       local function update(fsm, events)
+	 if get_sta_mode(aw_src_sta) == 'inactive' then return end
 	 for _,e in ipairs(events) do
-	    if etab[e]~=nil then etab[e]=true end
+	    if etab[e]~=nil and etab[e]==false then
+	       etab[e]=true
+	       fsm.dbg("AWAIT", "update received:", e)
+	    end
 	 end
       end
 
-      local function cond(events)
+      local function _cond(events)
 	 for e,v in pairs(etab) do
 	    if not v then return false end
 	 end
 	 return true
+      end
+
+      local function cond(events)
+	 local res = _cond(events)
+	 fsm.dbg("AWAIT", "checking await condition:", res)
+	 return res
       end
 
       reset()
@@ -68,7 +82,7 @@ local function expand_await(fsm)
 		     local await_events = parse_await(tr.events[i])
 		     if await_events then
 			fsm.dbg("AWAIT", "matched await spec " .. tr.events[i])
-			local update, reset, cond = gen_await_handlers(await_events)
+			local update, reset, cond = gen_await_handlers(await_events, tr)
 
 			for _,e in ipairs(await_events) do tr.events[#tr.events+1] = e end
 
