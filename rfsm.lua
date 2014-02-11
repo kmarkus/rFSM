@@ -1166,30 +1166,22 @@ local function is_enabled(fsm, tr, events)
    end
 
    -- guard condition?
-   local function check_guard(tr,events)
-      if tr.guard then
-	 local succ, ret = pcall(tr.guard, tr, events)
-	 if succ == false then
-	    fsm.err('GUARD', "error executing guard of " ..  tostring(tr) .. ": ", ret)
-	    -- tdb: raise event
-	    return false
-	 end
-	 if ret == false then return false end
+   if tr.guard then
+      local succ, ret = pcall(tr.guard, tr, events)
+      if succ == false then
+	 fsm.err('GUARD', "error executing guard of " ..  tostring(tr) .. ": ", ret)
+	 -- tdb: raise event
+	 return false
       end
-      return true
+      if ret == false then return false end
    end
 
    -- Is transition enabled by current events?
    if tr.events and #tr.events > 0 then
-      local triggered = is_triggered(tr, events)
-      if triggered == true then
-	 return check_guard(tr,events)
-      end
-      return false
-   else
-      return check_guard(tr,events)
+      return is_triggered(tr, events)
    end
 
+   return true
 end
 
 ----------------------------------------
