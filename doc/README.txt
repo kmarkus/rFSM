@@ -612,7 +612,7 @@ Table of Contents
    a state has elapsed. To enable time events, it suffices to load the
    =rfsm_timeevent= module. Currently only relative (opposed to
    absolute) timeevents are supported. These can be specified on
-   transitions using the =e_done(duration)= syntax, as show in the
+   transitions using the =e_after(duration)= syntax, as show in the
    following example:
 
 
