@@ -35,7 +35,7 @@ end
 
 -- operational
 function se(...)
-   rfsm.send_events(fsm, unpack(arg))
+   rfsm.send_events(fsm, ...)
 end
 
 function ses(...)
