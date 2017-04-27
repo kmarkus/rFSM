@@ -69,7 +69,7 @@ if verbose then
    print("file format:     ", opt_format)
 end
 
-outfile = string.gsub(infile, "\.%w*$", "")
+outfile = string.gsub(infile, ".%w*$", "")
 fsm_tpl = assert(rfsm.load(infile), "failed to open fsm file " .. infile)
 fsm = assert(rfsm.init(fsm_tpl), "error: state machine checking failed.")
 
