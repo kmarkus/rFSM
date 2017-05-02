@@ -107,8 +107,7 @@ local ctab = {
    TIMEEVENT = ac.yellow .. ac.bright
 }
 
---- Colorized fsm.dbg hook replacement.
-function dbgcolor(name, ...)
+function dbgcolorize(name, ...)
    local str = ""
    local args = { ... }
 
@@ -123,21 +122,29 @@ function dbgcolor(name, ...)
    else
       str = str .. utils.rpad(ptab[1], pad) .. table.concat(ptab, ' ', 2)
    end
-   print(str)
+
+   return str
+end
+
+--- Colorized fsm.dbg hook replacement.
+function dbgcolor(name, ...)
+    print(dbgcolorize(name, ...))
 end
 
 --- Generate a configurable dbgcolor function.
 -- @param name string name to prepend to printed message.
 -- @param ftab table of the dbg ids to print.
 -- @param defshow if false fields not mentioned in ftab are not shown. If true they are.
-function gen_dbgcolor(name, ftab, defshow)
+-- @param print_fcn a function actually used for printing. Defaults to print.
+function gen_dbgcolor(name, ftab, defshow, print_fcn)
    name = name or "<unnamed SM>"
    ftab = ftab or {}
    if defshow == nil then defshow = true end
+   if print_fcn == nil then print_fcn = print end
 
    return function (tag, ...)
-	     if ftab[tag] == true then dbgcolor(name, tag, ...)
-	     elseif ftab[tag] == false then return
-	     else if defshow then dbgcolor(name, tag, ...) end end
-	  end
+      if ftab[tag] == true then print_fcn(dbgcolorize(name, tag, ...))
+      elseif ftab[tag] == false then return
+      else if defshow then print_fcn(dbgcolorize(name, tag, ...)) end end
+   end
 end
