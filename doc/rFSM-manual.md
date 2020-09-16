@@ -513,7 +513,7 @@ automatically raised *after* the specified time after entering a state
 has elapsed. To enable time events, it suffices to load the
 `rfsm_timeevent` module. Currently only relative (opposed to absolute)
 timeevents are supported. These can be specified on transitions using
-the `e_done(duration)` syntax, as show in the following example:
+the `e_after(duration)` syntax, as show in the following example:
 
 ```Lua
 rfsm.trans{ src='A', tgt='B', events={ 'e_after(0.1)' } },
