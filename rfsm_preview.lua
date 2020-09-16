@@ -1,5 +1,10 @@
 --- rFSM discrete preview coordination
--- 
+--
+-- (C) 2010-2013 Markus Klotzbuecher <markus.klotzbuecher@mech.kuleuven.be>
+-- (C) 2014-2020 Markus Klotzbuecher <mk@mkio.de>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+--
 -- This extension extends transitions with a 'likely' predicate (side
 -- effect free function) states with a 'prepare' function.. When the
 -- source state is active and the likely function returns true, then

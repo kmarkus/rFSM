@@ -1,4 +1,9 @@
---- Checkevents rFSM plugin.
+-- Checkevents rFSM plugin
+--
+-- (C) 2010-2013 Markus Klotzbuecher <markus.klotzbuecher@mech.kuleuven.be>
+-- (C) 2014-2020 Markus Klotzbuecher <mk@mkio.de>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
 --
 -- this little plugin checks if the received events are actually
 -- events that may trigger transitions and prints a warning message

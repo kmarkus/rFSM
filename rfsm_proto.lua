@@ -1,3 +1,10 @@
+-- rfsm remote control interaction protocol
+--
+-- (C) 2010-2013 Markus Klotzbuecher <markus.klotzbuecher@mech.kuleuven.be>
+-- (C) 2014-2020 Markus Klotzbuecher <mk@mkio.de>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+--
 
 local socket = require("socket")
 local json = require("json")

@@ -34,7 +34,7 @@ A cheatsheet summarizing the DSL is available
 License
 -------
 
-rFSM is dual licensed under LGPL/BSD.
+rFSM is licensed under the [BSD-3-Clause](COPYING)
 
 Contact
 -------

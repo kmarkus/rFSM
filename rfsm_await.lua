@@ -1,6 +1,10 @@
-
---- rFSM await extension.
+-- rFSM await extension.
 -- Trigger on events received in different steps.
+--
+-- (C) 2010-2013 Markus Klotzbuecher <markus.klotzbuecher@mech.kuleuven.be>
+-- (C) 2014-2020 Markus Klotzbuecher <mk@mkio.de>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
 --
 -- syntax: events={ "await('e_foo', 'e_bar')" } will trigger when both
 -- e_foo and e_bar have been received.

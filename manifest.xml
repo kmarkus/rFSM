@@ -2,8 +2,8 @@
   <description brief="rFSM reduced Statecharts">
     This package contains the rFSM flavor of Statecharts.
   </description>
-  <author>Markus Klotzbuecher, markus.klotzbuecher@mech.kuleuven.be</author>
-  <url>http://people.mech.kuleuven.be/~mklotzbucher/rfsm/README.html</url>
-  <license>Dual LGPL/BSD</license>
+  <author>Markus Klotzbuecher, mk@mkio.de</author>
+  <url>https://github.com/kmarkus/rFSM</url>
+  <license>BSD-3-Clause</license>
   <review status="unreviewed" notes=""/>
 </package>

@@ -5,18 +5,17 @@
   <description>This package contains the rFSM flavor of Statecharts.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
-  <maintainer email="orocos-dev@lists.mech.kuleuven.be">Orocos Developers</maintainer>
+  <maintainer email="mk@mkio.de">Markus Klotzbuecher</maintainer>
 
   <!-- One license tag required, multiple allowed, one license per tag -->
-  <license>LGPL</license>
-  <license>BSD</license>
+    <license>BSD-3-Clause</license>
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <url type="website">http://people.mech.kuleuven.be/~mklotzbucher/rfsm/README.html</url>
+  <url type="website">https://github.com/kmarkus/rFSM</url>
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
-  <author email="markus.klotzbuecher@mech.kuleuven.be">Markus Klotzbuecher</author>
+  <author email="mk@mkio.de">Markus Klotzbuecher</author>
 
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
