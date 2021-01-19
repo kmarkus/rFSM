@@ -1,4 +1,11 @@
 --- rFSM event memory extension.
+--
+-- (C) 2010-2013 Markus Klotzbuecher <markus.klotzbuecher@mech.kuleuven.be>
+-- (C) 2014-2020 Markus Klotzbuecher <mk@mkio.de>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+--
+--
 -- This extension adds "memory" of occured events to an rFSM
 -- chart. This is done maintaining a table <code>emem</code> for every
 -- state. The <code>emem</code> table is cleared when a state is
