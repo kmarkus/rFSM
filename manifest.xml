@@ -1,9 +1,0 @@
-<package>
-  <description brief="rFSM reduced Statecharts">
-    This package contains the rFSM flavor of Statecharts.
-  </description>
-  <author>Markus Klotzbuecher, mk@mkio.de</author>
-  <url>https://github.com/kmarkus/rFSM</url>
-  <license>BSD-3-Clause</license>
-  <review status="unreviewed" notes=""/>
-</package>
