@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rfsm</name>
-  <version>1.0.0</version>
+  <version>1.0.2</version>
   <description>This package contains the rFSM flavor of Statecharts.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
