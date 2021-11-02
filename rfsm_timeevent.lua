@@ -36,8 +36,6 @@
 -- function (check_act_timeevents) calls all check_ handlers of the
 -- current active states during post_step_hook.
 
-require "time"
-require "rfsm"
 
 local utils=require("utils")
 local assert = assert
@@ -45,8 +43,8 @@ local type = type
 local tonumber = tonumber
 local math = math
 local string = string
-local rfsm = rfsm
-local time = time
+local rfsm = require('rfsm')
+local time = require('time')
 local ts2str = time.ts2str
 
 module 'rfsm_timeevent'
