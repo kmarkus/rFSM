@@ -70,7 +70,7 @@ local function gen_rel_timeevent_mgr(name, timespec, sendf, fsm)
    assert(type(gettime) == 'function',
 	  "rfsm_timeevent error. Failed to install handlers: no gettime function set.")
 
-   local ts = { sec=math.floor(timespec), nsec=((timespec%1)*100000000) }
+   local ts = { sec=math.floor(timespec), nsec=((timespec%1)*10^9) }
    local tend = { sec=false, nsec=false }
    local tcur = { sec=false, nsec=false }
    local fired=false
