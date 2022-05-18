@@ -100,7 +100,7 @@ end
 --- Convert a timespec to a string (in micro-seconds)
 --- for pretty printing purposes
 function M.ts2str(ts)
-   return ("%dus"):format(M.ts2us(ts))
+    return ("%sus"):format(tostring(M.ts2us(ts)))
 end
 
 --- Convert timespec to us
