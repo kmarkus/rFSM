@@ -20,7 +20,7 @@ local assert = assert
 local error = error
 local tostring = tostring
 
-module("rfsm_ext")
+local M = {}
 
 --- gen_monitor_state argument table
 -- Description of the table expected by the gen_monitor_state function
@@ -43,7 +43,7 @@ module("rfsm_ext")
 -- @param t montab table
 -- @retval an rfsm.simple_state object
 
-function gen_monitor_state(t)
+function M.gen_monitor_state(t)
    if t.montab==nil or type(t.montab) ~= 'table' then
       error("gen_monitor_state: missing or invalid 'montab' argument")
    end
@@ -70,9 +70,9 @@ end
 
 
 --- Sequential AND state
-seqand = {}
-seqand.rfsm=true
-function seqand:type() return 'state' end
+M.seqand = {}
+M.seqand.rfsm=true
+function M.seqand:type() return 'state' end
 
 --- Sequential AND state (experimental)
 -- Permits declaration of multiple subfsm which are executed
@@ -90,7 +90,7 @@ function seqand:type() return 'state' end
 --
 -- @param t table initalized sub rfsms + above parameters
 -- @return new seqand state
-function seqand:new(t)
+function M.seqand:new(t)
    setmetatable(t, self)
    self.__index = self
 
@@ -188,4 +188,6 @@ function seqand:new(t)
 end
 
 -- nice constructor
-setmetatable(seqand, {__call=seqand.new})
+setmetatable(M.seqand, {__call=M.seqand.new})
+
+return M

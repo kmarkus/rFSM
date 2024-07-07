@@ -23,26 +23,26 @@ local tostring = tostring
 local setmetatable = setmetatable
 local schar = string.char
 
-module 'ansicolors'
+local M = {}
 
-local colormt = {}
+M.colormt = {}
 
-function colormt:__tostring()
+function M.colormt:__tostring()
     return self.value
 end
 
-function colormt:__concat(other)
+function M.colormt:__concat(other)
     return tostring(self) .. tostring(other)
 end
 
-function colormt:__call(s)
-    return self .. s .. _M.reset
+function M.colormt:__call(s)
+    return self .. s .. M.reset
 end
 
-colormt.__metatable = {}
+M.colormt.__metatable = {}
 
 local function makecolor(value)
-    return setmetatable({ value = schar(27) .. '[' .. tostring(value) .. 'm' }, colormt)
+    return setmetatable({ value = schar(27) .. '[' .. tostring(value) .. 'm' }, M.colormt)
 end
 
 local colors = {
@@ -78,5 +78,7 @@ local colors = {
 }
 
 for c, v in pairs(colors) do
-    _M[c] = makecolor(v)
+    M[c] = makecolor(v)
 end
+
+return M

@@ -4,11 +4,8 @@
 
 package.path = package.path .. ';../?.lua'
 
-require("rfsm")
-require("rfsm2tree")
-require("rfsm_testing")
-require("rfsmpp")
-require("utils")
+local rfsm = require("rfsm")
+local rfsm_testing = require("rfsm_testing")
 
 local function puts(...)
    return function () print(unpack(arg)) end

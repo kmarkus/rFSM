@@ -23,12 +23,11 @@
 local rfsm = require("rfsm")
 local print, ipairs, pairs = print, ipairs, pairs
 
-
-module 'rfsm_emem'
+local M = {}
 
 --- Reset the event memory of a state
 -- @param state the state of which memory shall be cleared.
-function emem_reset(s)
+function M.emem_reset(s)
    local et = s.emem
    if et then
       for e,x in pairs(et) do et[e] = 0 end
@@ -85,3 +84,5 @@ end
 
 -- install setup_emem as preproc hook
 rfsm.preproc[#rfsm.preproc+1] = setup_emem
+
+return M

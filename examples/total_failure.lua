@@ -1,4 +1,5 @@
 -- an *extremly* bug ridden fsm
+local rfsm = require("rfsm")
 
 return rfsm.csta{
    a=rfsm.sista{

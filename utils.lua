@@ -6,13 +6,13 @@
 local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack, error =
    type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack, error
 
-module('utils')
+local M = {}
 
 -- increment major on API breaks
 -- increment minor on non breaking changes
-VERSION=0.991
+M.VERSION=0.991
 
-function append(car, ...)
+function M.append(car, ...)
    assert(type(car) == 'table')
    local new_array = {}
 
@@ -27,7 +27,7 @@ function append(car, ...)
    return new_array
 end
 
-function tab2str( tbl )
+function M.tab2str( tbl )
 
    local function val_to_str ( v )
       if "string" == type( v ) then
@@ -70,7 +70,7 @@ end
 -- @param limit maximum line length
 -- @param indent regular indentation
 -- @param indent1 indentation of first line
-function wrap(str, limit, indent, indent1)
+function M.wrap(str, limit, indent, indent1)
    indent = indent or ""
    indent1 = indent1 or indent
    limit = limit or 72
@@ -85,18 +85,18 @@ function wrap(str, limit, indent, indent1)
 end
 
 
-function pp(val)
+function M.pp(val)
    if type(val) == 'table' then print(tab2str(val))
    else print(val) end
 end
 
-function lpad(str, len, char, strlen)
+function M.lpad(str, len, char, strlen)
    strlen = strlen or #str
    if char == nil then char = ' ' end
    return string.rep(char, len - strlen) .. str
 end
 
-function rpad(str, len, char, strlen)
+function M.rpad(str, len, char, strlen)
    strlen = strlen or #str
    if char == nil then char = ' ' end
    return str .. string.rep(char, len - strlen)
@@ -104,15 +104,15 @@ end
 
 -- Trim functions: http://lua-users.org/wiki/CommonFunctions
 -- Licensed under the same terms as Lua itself.--DavidManura
-function trim(s)
+function M.trim(s)
    return (s:gsub("^%s*(.-)%s*$", "%1"))    -- from PiL2 20.4
 end
 
 -- remove leading whitespace from string.
-function ltrim(s) return (s:gsub("^%s*", "")) end
+function M.ltrim(s) return (s:gsub("^%s*", "")) end
 
 -- remove trailing whitespace from string.
-function rtrim(s)
+function M.rtrim(s)
    local n = #s
    while n > 0 and s:find("^%s", n) do n = n - 1 end
    return s:sub(1, n)
@@ -122,7 +122,7 @@ end
 -- @param str string
 -- @return stripped string
 -- @return number of replacements
-function strip_ansi(str) return string.gsub(str, "\27%[%d+m", "") end
+function M.strip_ansi(str) return string.gsub(str, "\27%[%d+m", "") end
 
 --- Convert string to string of fixed lenght.
 -- Will either pad with whitespace if too short or will cut of tail if
@@ -131,7 +131,7 @@ function strip_ansi(str) return string.gsub(str, "\27%[%d+m", "") end
 -- @param len lenght to set to.
 -- @param dots boolean, if true append dots to truncated strings.
 -- @return processed string.
-function strsetlen(str, len, dots)
+function M.strsetlen(str, len, dots)
    if string.len(str) > len and dots then
       return string.sub(str, 1, len - 4) .. "... "
    elseif string.len(str) > len then
@@ -139,16 +139,16 @@ function strsetlen(str, len, dots)
    else return rpad(str, len, ' ') end
 end
 
-function stderr(...)
+function M.stderr(...)
    io.stderr:write(...)
    io.stderr:write("\n")
 end
 
-function stdout(...)
+function M.stdout(...)
    print(...)
 end
 
-function split(str, pat)
+function M.split(str, pat)
    local t = {}  -- NOTE: use {n = 0} in Lua-5.0
    local fpat = "(.-)" .. pat
    local last_end = 1
@@ -169,7 +169,7 @@ end
 
 -- basename("aaa") -> "aaa"
 -- basename("aaa.bbb.ccc") -> "ccc"
-function basename(n)
+function M.basename(n)
    if not string.find(n, '[\\.]') then
       return n
    else
@@ -178,11 +178,11 @@ function basename(n)
    end
 end
 
-function car(tab)
+function M.car(tab)
    return tab[1]
 end
 
-function cdr(tab)
+function M.cdr(tab)
    local new_array = {}
    for i = 2, table.getn(tab) do
       table.insert(new_array, tab[i])
@@ -190,7 +190,7 @@ function cdr(tab)
    return new_array
 end
 
-function cons(car, cdr)
+function M.cons(car, cdr)
    local new_array = {car}
   for _,v in cdr do
      table.insert(new_array, v)
@@ -198,7 +198,7 @@ function cons(car, cdr)
   return new_array
 end
 
-function flatten(t)
+function M.flatten(t)
    function __flatten(res, t)
       if type(t) == 'table' then
 	 for k,v in ipairs(t) do __flatten(res, v) end
@@ -211,7 +211,7 @@ function flatten(t)
    return __flatten({}, t)
 end
 
-function deepcopy(object)
+function M.deepcopy(object)
    local lookup_table = {}
    local function _copy(object)
       if type(object) ~= "table" then
@@ -229,7 +229,7 @@ function deepcopy(object)
    return _copy(object)
 end
 
-function imap(f, tab)
+function M.imap(f, tab)
    local newtab = {}
    if tab == nil then return newtab end
    for i,v in ipairs(tab) do
@@ -239,7 +239,7 @@ function imap(f, tab)
    return newtab
 end
 
-function map(f, tab)
+function M.map(f, tab)
    local newtab = {}
    if tab == nil then return newtab end
    for i,v in pairs(tab) do
@@ -249,7 +249,7 @@ function map(f, tab)
    return newtab
 end
 
-function filter(f, tab)
+function M.filter(f, tab)
    local newtab= {}
    if not tab then return newtab end
    for i,v in pairs(tab) do
@@ -260,12 +260,12 @@ function filter(f, tab)
    return newtab
 end
 
-function foreach(f, tab)
+function M.foreach(f, tab)
    if not tab then return end
    for i,v in pairs(tab) do f(v,i) end
 end
 
-function foldr(func, val, tab)
+function M.foldr(func, val, tab)
    if not tab then return val end
    for i,v in pairs(tab) do
       val = func(val, v)
@@ -275,24 +275,24 @@ end
 
 -- O' Scheme, where art thou?
 -- turn operator into function
-function AND(a, b) return a and b end
+function M.AND(a, b) return a and b end
 
 -- and which takes table
-function andt(...)
+function M.andt(...)
    local res = true
    local tab = {...}
    for _,t in ipairs(tab) do
-      res = res and foldr(AND, true, t)
+      res = res and M.foldr(M.AND, true, t)
    end
    return res
 end
 
-function eval(str)
+function M.eval(str)
    return assert(loadstring(str))()
 end
 
 -- compare two tables
-function table_cmp(t1, t2)
+function M.table_cmp(t1, t2)
    local function __cmp(t1, t2)
       -- t1 _and_ t2 are not tables
       if not (type(t1) == 'table' and type(t2) == 'table') then
@@ -316,7 +316,7 @@ function table_cmp(t1, t2)
    return __cmp(t1,t2) and __cmp(t2,t1)
 end
 
-function table_has(t, x)
+function M.table_has(t, x)
    for _,e in ipairs(t) do
       if e==x then return true end
    end
@@ -324,10 +324,10 @@ function table_has(t, x)
 end
 
 --- Return a new table with unique elements.
-function table_unique(t)
+function M.table_unique(t)
    local res = {}
    for i,v in ipairs(t) do
-      if not table_has(res, v) then res[#res+1]=v end
+      if not M.table_has(res, v) then res[#res+1]=v end
    end
    return res
 end
@@ -337,7 +337,7 @@ end
 -- value is an array of zero to many option parameters.
 -- @param standard Lua argument table
 -- @return key-value table
-function proc_args(args)
+function M.proc_args(args)
    local function is_opt(s) return string.sub(s, 1, 1) == '-' end
    local res = { [0]={} }
    local last_key = 0
@@ -362,7 +362,7 @@ end
 -- @param where string <code>before</code>' or <code>after</code>
 -- @param oldfun (can be nil)
 -- @param newfunc
-function advise(where, oldfun, newfun)
+function M.advise(where, oldfun, newfun)
    assert(where == 'before' or where == 'after',
 	  "advise: Invalid value " .. tostring(where) .. " for where")
 
@@ -378,14 +378,14 @@ end
 --- Check wether a file exists.
 -- @param fn filename to check.
 -- @return true or false
-function file_exists(fn)
+function M.file_exists(fn)
    local f=io.open(fn);
    if f then io.close(f); return true end
    return false
 end
 
 --- From Book  "Lua programming gems", Chapter 2, pg. 26.
-function memoize (f)
+function M.memoize (f)
    local mem = {} 			-- memoizing table
    setmetatable(mem, {__mode = "kv"}) 	-- make it weak
    return function (x) 			-- new version of ’f’, with memoizing
@@ -399,7 +399,7 @@ function memoize (f)
 end
 
 --- call thunk every s+ns seconds.
-function gen_do_every(s, ns, thunk, gettime)
+function M.gen_do_every(s, ns, thunk, gettime)
    local next = { sec=0, nsec=0 }
    local cur = { sec=0, nsec=0 }
    local inc = { sec=s, nsec=ns }
@@ -420,7 +420,7 @@ end
 -- @param warn optionally warn if there are nonexpanded parameters.
 -- @return new string
 -- @return number of unexpanded parameters
-function expand(tpl, params, warn)
+function M.expand(tpl, params, warn)
    if warn==nil then warn=true end
    local unexp = 0
 
@@ -436,3 +436,5 @@ function expand(tpl, params, warn)
 
    return tpl, unexp
 end
+
+return M

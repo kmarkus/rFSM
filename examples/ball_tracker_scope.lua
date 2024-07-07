@@ -2,6 +2,8 @@
 -- The ball tracking example
 --
 
+local rfsm = require("rfsm")
+
 return rfsm.csta {
    tracked = rfsm.csta{ 
       following = rfsm.sista{ },

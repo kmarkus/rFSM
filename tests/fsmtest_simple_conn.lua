@@ -4,12 +4,8 @@
 
 package.path = package.path .. ';../?.lua'
 
-require("rfsm2uml")
-require("rfsm2tree")
-require("rfsm")
-require("rfsm_testing")
-require("rfsmpp")
-require("utils")
+local rfsm = require("rfsm")
+local rfsm_testing = require("rfsm_testing")
 
 testfsm = rfsm.load("../examples/connector_simple.lua")
 testfsm.dbg=false

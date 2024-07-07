@@ -1,5 +1,4 @@
-
-
+local rfsm = require("rfsm")
 
 return rfsm.csta{
    busy = rfsm.sista{

@@ -4,9 +4,9 @@
 -- https://github.com/kmarkus/rtp.gitg 
 --
 
-require "rfsm"
-require "rfsm_timeevent"
-require "rtp"
+local rfsm = require("rfsm")
+local rfsm_timeevent = require("rfsm_timeevent")
+local rtp = require("rtp")
 
 if rtt then
    require "rttlib"

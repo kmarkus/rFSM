@@ -26,8 +26,8 @@
 --    to me right now if that would be useful at all.
 --
 
-require "rfsm_await"
-require "rfsmpp"
+rfsmpp = require("rfsmpp")
+rfsm = require("rfsm")
 
 x= rfsm.state {
    notready=rfsm.state{},

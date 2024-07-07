@@ -7,9 +7,10 @@
 -- be prepared by providing a 'prepare' function, that is called when
 -- and while a transition to grasping becomes/is likely.
 
-require "rfsm_timeevent"
-require "rfsm_preview"
-local ac=require "ansicolors"
+local rfsm = require("rfsm")
+local rfsm_timeevent = require("rfsm_timeevent")
+local ac=require("ansicolors")
+
 local state, trans = rfsm.state, rfsm.trans
 
 rfsm_timeevent.set_gettime_hook(function () return os.time(), 0 end)

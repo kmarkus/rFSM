@@ -1,4 +1,4 @@
-
+local rfsm = require("rfsm")
 local state, trans, conn = rfsm.state, rfsm.trans, rfsm.conn
 
 local fsm_model=rfsm.load("base_fsm.lua")

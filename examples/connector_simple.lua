@@ -1,3 +1,5 @@
+local rfsm = require("rfsm")
+
 return rfsm.csta{
 
    start = rfsm.sista{},

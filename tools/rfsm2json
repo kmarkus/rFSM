@@ -1,16 +1,16 @@
 #!/usr/bin/env lua
 -- -*- lua -*-
-require("rfsm")
-require("rfsmpp")
-require("rfsm2json")
-require("utils")
+local rfsm = require("rfsm")
+local rfsmpp = require("rfsmpp")
+local rfsm2json = require("rfsm2json")
+local utils = require("utils")
 
 if arg and #arg < 1 then
    print("usage: rfsm2json <file1> <file2>...")
    os.exit(1)
 end
 
-function fsm2json(file)
+local function fsm2json(file)
    outfile = string.gsub(file, "\.%w*$", "")
    fsm_tpl = assert(rfsm.load(file), "failed to open fsm file " .. file)
    fsm = rfsm.init(fsm_tpl)

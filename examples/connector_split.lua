@@ -1,4 +1,4 @@
-require "rfsm"
+local rfsm = require("rfsm")
 
 local csta = rfsm.csta
 

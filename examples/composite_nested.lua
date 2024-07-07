@@ -1,4 +1,4 @@
-require ("rfsmpp")
+local rfsm = require("rfsm")
 
 local function puts(...)
    return function () print(unpack(arg)) end

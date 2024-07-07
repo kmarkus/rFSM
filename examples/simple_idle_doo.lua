@@ -7,6 +7,7 @@
 -- not return doo idle and therefore is (automatically) repeatedly
 -- called while no other events are in the queue
 --
+local rfsm = require("rfsm")
 
 return rfsm.csta {
    on = rfsm.sista {

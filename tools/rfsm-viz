@@ -1,9 +1,10 @@
 #!/usr/bin/env lua
 -- -*- lua -*-
-require("rfsmpp")
-require("rfsm2uml")
-require("rfsm2tree")
-require("rfsm")
+local rfsmpp = require("rfsmpp")
+local rfsm2uml = require("rfsm2uml")
+local rfsm2tree = require("rfsm2tree")
+local rfsm = require("rfsm")
+local utils = require("utils")
 -- require "strict"
 
 local opt_tree=false
