@@ -7,16 +7,15 @@
 -- SPDX-License-Identifier: BSD-3-Clause
 --
 
-require("gv")
-require("utils")
-require("rfsm")
-
+local gv = require("gv")
+local utils = require("utils")
+local rfsm = require("rfsm")
 local pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
    = pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
 
-module("rfsm2uml")
+local M = {}
 
-param = {}
+local param = {}
 param.fontsize = 12.0
 param.trfontsize = 7.0
 param.ndfontsize = 8.0
@@ -275,7 +274,7 @@ local function fsm2gh(root, caption)
    return gh
 end
 
-function rfsm2uml(root, format, outfile, caption)
+function M.rfsm2uml(root, format, outfile, caption)
 
    if not root._initialized then
       param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
@@ -289,7 +288,7 @@ function rfsm2uml(root, format, outfile, caption)
    param.dbg("rfsm2uml: rendering to " .. format .. ", written result to " .. outfile)
 end
 
-function rfsm2dot(root, outfile, caption)
+function M.rfsm2dot(root, outfile, caption)
    if not root._initialized then
       param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
       return false
@@ -298,3 +297,5 @@ function rfsm2dot(root, outfile, caption)
    local gh = fsm2gh(root, caption or " ")
    gv.write(gh, outfile)
 end
+
+return M

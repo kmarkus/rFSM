@@ -9,8 +9,9 @@
 -- events that may trigger transitions and prints a warning message
 -- otherwise.
 --
+local rfsm = require("rfsm")
 
-module("rfsm_checkevents", package.seeall)
+local M = {}
 
 local function setup_checkevents(fsm)
 
@@ -48,3 +49,5 @@ local function setup_checkevents(fsm)
 end
 
 rfsm.preproc[#rfsm.preproc+1] = setup_checkevents
+
+return M

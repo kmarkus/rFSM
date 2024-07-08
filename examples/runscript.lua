@@ -1,4 +1,4 @@
-require("rfsm")
+local rfsm = require("rfsm")
 
 -- load state machine model and initalize it
 fsm_model=rfsm.load("examples/hello_world.lua")

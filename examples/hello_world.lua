@@ -1,3 +1,5 @@
+local rfsm = require("rfsm")
+
 return rfsm.state {
 
    hello = rfsm.state{ entry=function() print("hello") end },

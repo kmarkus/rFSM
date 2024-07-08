@@ -13,12 +13,12 @@
 -- events table plus a guard condition.
 --
 
-local rfsm = require "rfsm"
-local utils = require "utils"
+local rfsm = require("rfsm")
+local utils = require("utils")
 local string, print, ipairs, pairs = string, print, ipairs, pairs
 local get_sta_mode = rfsm.get_sta_mode
 
-module("rfsm_await")
+local M = {}
 
 --- Pre-process await and setup handlers.
 -- @param fsm initalized root fsm.
@@ -106,3 +106,5 @@ end
 
 
 rfsm.preproc[#rfsm.preproc+1] = expand_await
+
+return M

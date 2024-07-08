@@ -16,7 +16,7 @@ local print, ipairs, pairs, error, type = print, ipairs, pairs, error, type
 
 local actchild_get = rfsm.actchild_get
 
-module 'rfsm_preview'
+local M = {}
 
 local function do_preview(fsm)
    local function preview_otrs(state)
@@ -61,3 +61,5 @@ end
 
 -- install setup_preview as preproc hook
 rfsm.preproc[#rfsm.preproc+1] = setup_preview
+
+return M

@@ -2,7 +2,8 @@
 -- simple example to illustrate the use of gen_monitor_state.
 --
 
-require("rfsm_ext")
+rfsm = require("rfsm")
+rfsm_ext = require("rfsm_ext")
 
 --- generate a function which ramdomly returns true n of m times
 -- @param n

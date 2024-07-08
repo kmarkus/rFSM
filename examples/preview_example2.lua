@@ -2,10 +2,9 @@
 -- Variant that shows how the prepare function can be setup to only be
 -- called once.
 
-
-require "rfsm_timeevent"
-require "rfsm_preview"
-local ac=require "ansicolors"
+local rfsm = require("rfsm")
+local rfsm_timeevent = require("rfsm_timeevent")
+local ac=require("ansicolors")
 local state, trans = rfsm.state, rfsm.trans
 
 rfsm_timeevent.set_gettime_hook(function () return os.time(), 0 end)

@@ -9,9 +9,9 @@
 -- statecharts together with OROCOS RTT.
 --
 
-require "rttlib"
-require "utils"
-require "rfsm"
+local rttlib = require("rttlib")
+local utils = require("utils")
+local rfsm = require("rfsm")
 
 local rtt = rtt
 local rfsm = rfsm
@@ -21,8 +21,7 @@ local utils = utils
 local print = print
 local assert, ipairs, pairs, type, error, tostring = assert, ipairs, pairs, type, error, tostring
 
-module("rfsm_rtt")
-
+local M = {}
 
 --- Generate an event reader function.
 --
@@ -31,7 +30,7 @@ module("rfsm_rtt")
 --
 -- @param ... list of ports to read events from
 -- @return getevent function
-function gen_read_events(...)
+function M.gen_read_events(...)
    local str_ev = rtt.Variable("string")
 
    local function read_events(tgttab, port)
@@ -65,7 +64,7 @@ end
 --
 -- @param ... list of ports to read events from
 -- @return getevent function
-function gen_read_str_events(...)
+function M.gen_read_str_events(...)
    local str_ev = rtt.Variable("string")
    local function read_events(tgttab, port)
       local fs
@@ -94,7 +93,7 @@ end
 -- @param port outport to write events to
 -- @param fsm events are sent to this fsm's internal queue (optional)
 -- @return function to send events to the port
-function gen_raise_event(port, fsm)
+function M.gen_raise_event(port, fsm)
    assert(port, "No port specified")
    return function (...) for
 	  _,e in ipairs{...} do port:write(e) end
@@ -110,7 +109,7 @@ end
 -- active leaf to the given string rtt.OutputPort. To be added to the
 -- fsm post_step_hook.
 -- @param port rtt OutputPort to which the fqn shall be written
-function gen_write_fqn(port)
+function M.gen_write_fqn(port)
    assert(port:info().type==rtt.Variable('string'):getType(), "gen_write_fqn: port must be of type string")
 
    local act_fqn = ""
@@ -140,7 +139,7 @@ end
 -- @param execstr_f exec_string function of the service. retrieve with compX:provides("Lua"):getOperation("exec_str")
 -- @param eehook boolean flag, if true eehook for periodic triggering is setup
 -- @param env table with a environment of key value pairs which will be defined in the service before anything else
-function service_launch_rfsm(file, execstr_f, eehook, env)
+function M.service_launch_rfsm(file, execstr_f, eehook, env)
    local s = {}
 
    s[#s+1] = "require 'rttlib'"
@@ -205,7 +204,7 @@ end
 -- (that must contain input ports!), it will add those as parameters
 -- to the getevents call
 --
-function component_launch_rfsm(argtab)
+function M.component_launch_rfsm(argtab)
    assert(argtab and type(argtab) == 'table', "No argument table given")
    assert(type(argtab.name) == 'string', "No 'name' specified")
    assert(type(argtab.fsmfile) == 'string', "No 'fsmfile' specified")
@@ -289,3 +288,5 @@ function component_launch_rfsm(argtab)
 
    return comp
 end
+
+return M

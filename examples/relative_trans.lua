@@ -5,6 +5,7 @@
 -- "layered" on from the parent state using the relative, leading dot
 -- syntax.
 --
+local rfsm = require("rfsm")
 
 local sista, csta, trans, conn = rfsm.sista, rfsm.csta, rfsm.trans, rfsm.conn
 

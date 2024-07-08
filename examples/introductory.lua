@@ -1,3 +1,5 @@
+local rfsm = require("rfsm")
+
 -- any rFSM is always contained in a composite_state
 local state, conn, trans = rfsm.state, rfsm.conn, rfsm.trans
 

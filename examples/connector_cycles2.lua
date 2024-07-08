@@ -6,6 +6,7 @@
 --
 -- Most likely doing this is not a good idea for real systems.
 --
+local rfsm = require("rfsm")
 
 max=50
 cnt=0

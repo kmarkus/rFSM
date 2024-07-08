@@ -6,7 +6,7 @@
 -- SPDX-License-Identifier: BSD-3-Clause
 --
 
-require ('utils')
+local utils = require("utils")
 
 local table = table
 local io = io
@@ -28,12 +28,12 @@ local unpack = unpack
 local error = error
 local utils = utils
 
-module("rfsm")
+local M = {}
 
 local map = utils.map
 local foreach = utils.foreach
 
-preproc = {}
+M.preproc = {}
 
 --------------------------------------------------------------------------------
 -- Model Elements and generic helper functions
@@ -43,16 +43,16 @@ preproc = {}
 -- required: -
 -- optional: entry, doo (only if leaf) exit, states, connectors, transitions
 -- 'root' is a composite state which requires an 'initial' connector
-state = {}
-state.rfsm=true
+M.state = {}
+M.state.rfsm=true
 
-function state:type() return 'state' end
-function state:new(t)
+function M.state:type() return 'state' end
+function M.state:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
 end
-setmetatable(state, {__call=state.new})
+setmetatable(M.state, {__call=M.state.new})
 
 
 --
@@ -68,19 +68,19 @@ local function events2str(ev)
    end
 end
 
-trans = {}
-trans.rfsm=true
+M.trans = {}
+M.trans.rfsm=true
 
-function trans:new(t)
+function M.trans:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
 end
-setmetatable(trans, {__call=trans.new})
+setmetatable(M.trans, {__call=M.trans.new})
 
-function trans:type() return 'transition' end
+function M.trans:type() return 'transition' end
 
-function trans:__tostring()
+function M.trans:__tostring()
    local src, tgt = "none", "none"
    local pn = ""
 
@@ -102,29 +102,29 @@ function trans:__tostring()
 --
 -- connector
 --
-conn = {}
-conn.rfsm=true
+M.conn = {}
+M.conn.rfsm=true
 
-function conn:type() return 'connector' end
-function conn:new(t)
+function M.conn:type() return 'connector' end
+function M.conn:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
 end
-setmetatable(conn, {__call=conn.new})
+setmetatable(M.conn, {__call=M.conn.new})
 
 -- aliases
-sista = state; simple_state = state
-csta = state; composite_state = state
-connector = conn
-transition = trans
-yield = coroutine.yield
+M.sista = M.state; M.simple_state = M.state
+M.csta = M.state; M.composite_state = M.state
+M.connector = M.conn
+M.transition = M.trans
+M.yield = coroutine.yield
 
 -- check if a table key is metadata (for now starts with a '_')
-function is_meta(key) return string.sub(key, 1, 1) == '_' end
+function M.is_meta(key) return string.sub(key, 1, 1) == '_' end
 
 -- usefull predicates
-function is_fsmobj(s)
+function M.is_fsmobj(s)
    local mt = getmetatable(s)
    if mt and mt.rfsm then return true
    else return false end
@@ -133,38 +133,38 @@ end
 -- type predicates
 -- @param state
 -- @return true if yes, false otherwise
-function is_state(s) return is_fsmobj(s) and s:type() == 'state' end
-function is_trans(s) return is_fsmobj(s) and s:type() == 'transition' end
-function is_conn(s)  return is_fsmobj(s) and s:type() == 'connector' end
-function is_node(s)  return is_state(s) or is_conn(s) end
+function M.is_state(s) return M.is_fsmobj(s) and s:type() == 'state' end
+function M.is_trans(s) return M.is_fsmobj(s) and s:type() == 'transition' end
+function M.is_conn(s)  return M.is_fsmobj(s) and s:type() == 'connector' end
+function M.is_node(s)  return M.is_state(s) or M.is_conn(s) end
 
 --- check if a state has subnodes
 local function has_subnodes(s)
    for name,val in pairs(s) do
-      if not is_meta(name) and is_node(val) then return true end
+      if not M.is_meta(name) and M.is_node(val) then return true end
    end
    return false
 end
 
 -- derived properties: is_composite/is_leaf
-function is_composite_slow(s) return is_state(s) and has_subnodes(s) end
-function is_leaf_slow(s) return is_state(s) and not is_composite(s) end
-is_composite=utils.memoize(is_composite_slow)
-is_leaf=utils.memoize(is_leaf_slow)
+function M.is_composite_slow(s) return M.is_state(s) and has_subnodes(s) end
+function M.is_leaf_slow(s) return M.is_state(s) and not M.is_composite(s) end
+M.is_composite=utils.memoize(M.is_composite_slow)
+M.is_leaf=utils.memoize(M.is_leaf_slow)
 
 -- check for valid and initalized 'root'
-function is_root(s) return is_composite(s) and s._id == 'root' end
-function is_initialized_root(s) return is_composite(s) and s._id == 'root' and s._initialized end
+function M.is_root(s) return M.is_composite(s) and s._id == 'root' end
+function M.is_initialized_root(s) return M.is_composite(s) and s._id == 'root' and s._initialized end
 
 -- a not but not root
-function is_nr_node(s) return is_node(s) and not is_root(s) end
+function M.is_nr_node(s) return M.is_node(s) and not M.is_root(s) end
 
 -- type->char, e.g. 'Composite'-> 'C'
-function fsmobj_tochar(obj)
-   if is_composite(obj) then return "CS"
-   elseif is_leaf(obj) then return "LS"
-   elseif is_trans(obj) then return "TR"
-   elseif is_conn(obj) then return "c"
+function M.fsmobj_tochar(obj)
+   if M.is_composite(obj) then return "CS"
+   elseif M.is_leaf(obj) then return "LS"
+   elseif M.is_trans(obj) then return "TR"
+   elseif M.is_conn(obj) then return "c"
    else return end
 end
 
@@ -182,9 +182,9 @@ end
 -- The file must contain an rfsm simple or composite state that is returned.
 -- @param file name of file
 -- @return uninitalized fsm.
-function load(file)
+function M.load(file)
    local fsm = dofile(file)
-   if not is_state(fsm) then
+   if not M.is_state(fsm) then
       error("rfsm.load: no valid rfsm in file '" .. tostring(file) .. "' found.")
    end
    return fsm
@@ -196,7 +196,7 @@ end
 -- @param fsm fsm root to which the hook should be added
 -- @param hook hook function to be called
 -- @param where where to insert the new hook 'before' or 'after' the existing ones.
-function post_step_hook_add(fsm, hook, where)
+function M.post_step_hook_add(fsm, hook, where)
    where = where or 'after'
    fsm.post_step_hook=utils.advise(where, fsm.post_step_hook, hook)
 end
@@ -207,7 +207,7 @@ end
 -- @param fsm fsm root to which the hook should be added
 -- @param hook hook function to be called
 -- @param where where to insert the new hook 'before' or 'after' the existing ones.
-function pre_step_hook_add(fsm, hook, where)
+function M.pre_step_hook_add(fsm, hook, where)
    where = where or 'after'
    fsm.pre_step_hook=utils.advise(where, fsm.pre_step_hook, hook)
 end
@@ -221,24 +221,24 @@ end
 -- @param pred predicate function
 -- @depth depth maximum depth to enter (default: no limit)
 -- @return flat table with results of function application
-function mapfsm(func, fsm, pred, depth)
+function M.mapfsm(func, fsm, pred, depth)
    local res = {}
    local depth = depth or -1
    local function __mapfsm(states, depth)
       if depth == 0 then return end
       map(function (s, k)
 	     -- ugly: ignore entries starting with '_'
-	     if not is_meta(k) then
+	     if not M.is_meta(k) then
 		if pred(s) then
 		   res[#res+1] = func(s, states, k)
 		end
-		if is_composite(s) then
+		if M.is_composite(s) then
 		   __mapfsm(s, depth-1)
 		end
 	     end
 	  end, states)
    end
-   if is_root(fsm) then
+   if M.is_root(fsm) then
       if pred(fsm) then res[#res+1] = func(fsm, fsm, "root") end
    end
    __mapfsm(fsm, depth)
@@ -247,7 +247,7 @@ end
 
 -- execute func on all vertical states between from and to
 -- from must be a child of to (for now)
-function map_from_to(fsm, func, from, to)
+function M.map_from_to(fsm, func, from, to)
    local walker = from
    local res = {}
    while true do
@@ -263,11 +263,11 @@ end
 -- add obj with id under parent
 -- tbd: should reuse the initalization functions like add_otrs...
 -- whereever possible!
-function fsm_merge(fsm, parent, obj, id)
+function M.fsm_merge(fsm, parent, obj, id)
 
    -- do some checking
    local mes = {}
-   if not is_state(parent) then
+   if not M.is_state(parent) then
       mes[#mes+1] = "parent " .. parent._fqn .. " of " .. id .. " not a state"
    end
 
@@ -279,11 +279,11 @@ function fsm_merge(fsm, parent, obj, id)
       mes[#mes+1] = "parent " .. parent._fqn .. " already contains a sub element " .. id
    end
 
-   if not is_trans(obj) and id == nil then
+   if not M.is_trans(obj) and id == nil then
       mes[#mes+1] = "requested to merge node object without id"
    end
 
-   if is_trans(obj) and not is_node(obj.src) and not is_node(obj.tgt) then
+   if M.is_trans(obj) and not M.is_node(obj.src) and not M.is_node(obj.tgt) then
       mes[#mes+1] = "trans src or tgt is not a node: " .. tostring(obj)
    end
 
@@ -293,13 +293,13 @@ function fsm_merge(fsm, parent, obj, id)
    end
 
    -- merge the object
-   if is_leaf(obj) or is_conn(obj) then
+   if M.is_leaf(obj) or M.is_conn(obj) then
       parent[id] = obj
       obj._parent = parent
       obj._id = id
       obj._fqn = parent._fqn ..'.' .. id
       -- tbd: update otrs?
-   elseif is_trans(obj) then
+   elseif M.is_trans(obj) then
       parent[#parent+1] = obj
       obj.src._otrs[#obj.src._otrs+1] = obj
    else
@@ -320,13 +320,13 @@ end
 
 local function add_parent_links(fsm)
    fsm._parent = fsm
-   mapfsm(function (s, p) s._parent = p end, fsm, is_node)
+   M.mapfsm(function (s, p) s._parent = p end, fsm, M.is_node)
 end
 
 ----------------------------------------
 -- add id fields
 local function add_ids(fsm)
-   mapfsm(function (s,p,n) s._id = n end, fsm, is_node)
+   M.mapfsm(function (s,p,n) s._id = n end, fsm, M.is_node)
 end
 
 ----------------------------------------
@@ -343,7 +343,7 @@ local function add_fqns(fsm)
       end
    end
 
-   mapfsm(__add_fqn, fsm, is_node)
+   M.mapfsm(__add_fqn, fsm, M.is_node)
 end
 
 ----------------------------------------
@@ -354,53 +354,53 @@ local function add_defconn(fsm)
    -- if transition *locally* references a non-existant initial or
    -- final connector create it
    local function __add_trans_defconn(tr, p)
-      if is_composite(p) then
+      if M.is_composite(p) then
 	 if tr.src == 'initial' and p.initial == nil then
-	    fsm_merge(fsm, p, conn:new{}, 'initial')
+	    M.fsm_merge(fsm, p, M.conn:new{}, 'initial')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
 	 end
       end
    end
 
-   mapfsm(__add_trans_defconn, fsm, is_trans)
+   M.mapfsm(__add_trans_defconn, fsm, M.is_trans)
 end
 
 --- Set event table t[event]=true of each event.
 -- @param fsm initialized root fsm.
 local function index_events(fsm)
-   mapfsm(function (tr, p)
+   M.mapfsm(function (tr, p)
 	     if tr.events then
 		tr._idx_events={}
 		for i,e in ipairs(tr.events) do
 		   tr._idx_events[e]=true
 		end
 	     end
-	  end, fsm, is_trans)
+	  end, fsm, M.is_trans)
 end
 
 ----------------------------------------
 -- build a table for each node of all outgoing transitions in node._otrs
 local function add_otrs(fsm)
-   mapfsm(function (nd)
+   M.mapfsm(function (nd)
 	     if nd._otrs == nil then nd._otrs={} end
-	  end, fsm, is_node)
+	  end, fsm, M.is_node)
 
-   mapfsm(function (tr, p)
+   M.mapfsm(function (tr, p)
 	     table.insert(tr.src._otrs, tr)
-	  end, fsm, is_trans)
+	  end, fsm, M.is_trans)
 end
 
 ----------------------------------------
 -- expand e_done events into e_done@fqn
 local function expand_e_done(fsm)
-   mapfsm(function (tr, p)
+   M.mapfsm(function (tr, p)
 	     if not tr.events then return end
 	     for i=1,#tr.events do
 		if tr.events[i] == 'e_done' then
 		   tr.events[i] = 'e_done' .. '@' .. tr.src._fqn
 		end
 	     end
-	  end, fsm, is_trans)
+	  end, fsm, M.is_trans)
 end
 
 ----------------------------------------
@@ -414,9 +414,9 @@ local function sort_otrs_pn(fsm)
       return pn1 > pn2
    end
 
-   mapfsm(function (nd)
+   M.mapfsm(function (nd)
 	     table.sort(nd._otrs, tr_gt)
-	  end, fsm, is_node)
+	  end, fsm, M.is_node)
 end
 
 ----------------------------------------
@@ -494,7 +494,7 @@ local function resolve_trans(fsm)
 	 return false
       else
 	 -- complex state, connect to 'initial'
-	 if is_composite(tgt) then
+	 if M.is_composite(tgt) then
 	    if tgt.initial == nil then
 	       fsm.err("ERROR: transition " .. tostring(tr) .. " ends on composite state without initial connector")
 	       return false
@@ -512,7 +512,7 @@ local function resolve_trans(fsm)
       return __resolve_src(tr, parent) and __resolve_tgt(tr, parent)
    end
 
-   return utils.andt(mapfsm(__resolve_trans, fsm, is_trans))
+   return utils.andt(M.mapfsm(__resolve_trans, fsm, M.is_trans))
 end
 
 
@@ -521,7 +521,7 @@ end
 -- test should bark loudly about problems and return false if
 -- initialization is to fail
 -- depends on parent links for more useful output
-function verify_early(fsm)
+function M.verify_early(fsm)
    local mes, res = {}, true
 
    local function check_node(s, p)
@@ -532,7 +532,7 @@ function verify_early(fsm)
 	 ret = false
       end
 
-      if not is_node(p) then
+      if not M.is_node(p) then
 	 fsm.err("ERROR: parent of " .. s._fqn .. " is not a node but of type " .. p:type())
 	 ret = false
       end
@@ -542,7 +542,7 @@ function verify_early(fsm)
 
    local function check_composite(s, p)
       local ret = true
-      if s.initial and not is_conn(s.initial) then
+      if s.initial and not M.is_conn(s.initial) then
 	 fsm.err("ERROR: in composite " .. p._fqn .. ".initial is not of type connector but " .. s.initial:type())
 	 ret = false
       end
@@ -581,7 +581,7 @@ function verify_early(fsm)
    end
 
    -- root
-   if not is_state(fsm)  then
+   if not M.is_state(fsm)  then
       mes[#mes+1] = "ERROR: fsm not a composite state but of type " .. fsm:type()
       res = false
    end
@@ -592,21 +592,21 @@ function verify_early(fsm)
    end
 
    -- no side effects, order does not matter
-   res = res and utils.andt(mapfsm(check_node, fsm, is_node))
-   res = res and utils.andt(mapfsm(check_composite, fsm, is_composite))
-   res = res and utils.andt(mapfsm(check_trans, fsm, is_trans))
+   res = res and utils.andt(M.mapfsm(check_node, fsm, M.is_node))
+   res = res and utils.andt(M.mapfsm(check_composite, fsm, M.is_composite))
+   res = res and utils.andt(M.mapfsm(check_trans, fsm, M.is_trans))
 
    return res, mes
 end
 
-function check_no_otrs(fsm)
+function M.check_no_otrs(fsm)
    local function __check_no_otrs(s, p)
       if s._otrs == nil or #s._otrs == 0 then
 	 fsm.warn("WARNING: no outgoing transitions from node '" .. s._fqn .. "'")
 	 return false
       else return true end
    end
-   return utils.andt(mapfsm(__check_no_otrs, fsm, is_nr_node))
+   return utils.andt(M.mapfsm(__check_no_otrs, fsm, M.is_nr_node))
 end
 
 ----------------------------------------
@@ -638,9 +638,9 @@ end
 --- initialize fsm from rfsm template
 -- @param rfsm template to initialize
 -- @return inialized fsm
-function init(fsm_templ)
+function M.init(fsm_templ)
 
-   assert(is_state(fsm_templ), "invalid fsm model passed to rfsm.init")
+   assert(M.is_state(fsm_templ), "invalid fsm model passed to rfsm.init")
 
    local fsm = utils.deepcopy(fsm_templ)
 
@@ -654,7 +654,7 @@ function init(fsm_templ)
    add_defconn(fsm)
 
    -- verify (early)
-   local ret, errs = verify_early(fsm)
+   local ret, errs = M.verify_early(fsm)
 
    -- don't fail on warnings
    if #errs > 0 then
@@ -668,7 +668,7 @@ function init(fsm_templ)
    end
 
    add_otrs(fsm) -- add outgoing transition table
-   check_no_otrs(fsm)
+   M.check_no_otrs(fsm)
    expand_e_done(fsm)
    sort_otrs_pn(fsm)
 
@@ -684,7 +684,7 @@ function init(fsm_templ)
    end
 
    -- run user preproc hooks
-   for k,f in ipairs(preproc) do f(fsm) end
+   for k,f in ipairs(M.preproc) do f(fsm) end
 
    -- This has to take place so late because some preproc hooks might
    -- transform events (e.g. timeevent)
@@ -699,13 +699,13 @@ end
 -- This clears all events, and makes it inactive so the next step or
 -- run will enter via root initial again.
 -- @param fsm root fsm.
-function reset(fsm)
+function M.reset(fsm)
    assert(fsm._initialized, "Can't reset an uninitalized fsm")
    fsm._intq = { 'e_init_fsm' }
    fsm._curq = {}
    fsm._act_leaf = false
-   mapfsm(function (c) c._actchild = nil end, fsm, is_composite)
-   mapfsm(function (s) s._doo_co = nil end, fsm, is_leaf)
+   mapfsm(function (c) c._actchild = nil end, fsm, M.is_composite)
+   mapfsm(function (s) s._doo_co = nil end, fsm, M.is_leaf)
 end
 
 
@@ -715,8 +715,8 @@ end
 
 ----------------------------------------
 -- send events to the local fsm event queue
-function send_events(fsm, ...)
-   if not fsm or not is_initialized_root(fsm) then error("ERROR send_events: invalid fsm argument") end
+function M.send_events(fsm, ...)
+   if not fsm or not M.is_initialized_root(fsm) then error("ERROR send_events: invalid fsm argument") end
    fsm.dbg("RAISED", ...)
    for _,v in ipairs({...}) do table.insert(fsm._intq, v) end
 end
@@ -774,7 +774,7 @@ end
 ----------------------------------------
 -- check for new external events and merge them into the internal
 -- queue. return the number of events in the queue.
-function check_events(fsm)
+function M.check_events(fsm)
    local extq = fsm.getevents()
    local intq = fsm._intq
    for _,v in ipairs(extq) do table.insert(intq, v) end
@@ -782,7 +782,7 @@ function check_events(fsm)
 end
 
 local function get_events(fsm)
-   check_events(fsm)
+   M.check_events(fsm)
    local ret = fsm._intq
    fsm._intq = {}
    return ret
@@ -802,18 +802,18 @@ local function actchild_rm(parent, child)
 end
 
 -- return actchild, can be nil!
-function actchild_get(state) return state._actchild end
+function M.actchild_get(state) return state._actchild end
 
 -- get state mode
-function get_sta_mode(s)
+function M.get_sta_mode(s)
    return s._mode or "inactive"
 end
 
 -- set state mode
-function set_sta_mode(s, m)
-   assert(is_state(s), "can't set_mode on non state type")
+function M.set_sta_mode(s, m)
+   assert(M.is_state(s), "can't set_mode on non state type")
 
-   if is_leaf(s) then assert(m=='active' or m=='inactive' or m=='done')
+   if M.is_leaf(s) then assert(m=='active' or m=='inactive' or m=='done')
    else assert(m=='active' or m=='inactive') end -- must be a csta
 
    s._mode = m
@@ -836,7 +836,7 @@ local function run_doos(fsm)
 
    -- can safely assume an act_leaf exists, because run_doos is never
    -- called during transitions.
-   if get_sta_mode(fsm._act_leaf) ~= 'active' then
+   if M.get_sta_mode(fsm._act_leaf) ~= 'active' then
       return true
    else
       local state = fsm._act_leaf
@@ -854,15 +854,15 @@ local function run_doos(fsm)
 	    fsm.err("DOO", "doo program of state '" .. state._fqn .. "' failed: ", cr_ret)
 	    doo_done = true
 	    state._doo_co = nil
-	    set_sta_mode(state, 'done')
+	    M.set_sta_mode(state, 'done')
 	    -- tbd: raise event
 	 else
 	    doo_idle = cr_ret or doo_idle -- this allows to provide a default, see above.
 	    if coroutine.status(state._doo_co) == 'dead' then
 	       doo_done = true
 	       state._doo_co = nil
-	       set_sta_mode(state, 'done')
-	       send_events(fsm, "e_done@" .. state._fqn)
+	       M.set_sta_mode(state, 'done')
+	       M.send_events(fsm, "e_done@" .. state._fqn)
 	       fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
 	    end
 	 end
@@ -877,8 +877,8 @@ end
 -- @param hot hot entry: resume an previous coroutine if available
 local function enter_one_state(fsm, state, hot)
 
-   if not is_state(state) then return end
-   set_sta_mode(state, 'active')
+   if not M.is_state(state) then return end
+   M.set_sta_mode(state, 'active')
    if state.entry then
       local succ, err = pcall(state.entry, fsm, state, 'entry')
       if not succ then
@@ -887,11 +887,11 @@ local function enter_one_state(fsm, state, hot)
       end
    end
 
-   if is_leaf(state) then
+   if M.is_leaf(state) then
       fsm._act_leaf = state
       if not state.doo then
-	 set_sta_mode(state, 'done')
-	 send_events(fsm, "e_done@" .. state._fqn)
+	 M.set_sta_mode(state, 'done')
+	 M.send_events(fsm, "e_done@" .. state._fqn)
       else -- is there an old coroutine lingering?
 	 if not hot and state._doo_co then state._doo_co = nil end
       end
@@ -904,19 +904,19 @@ end
 --- Exit a state including its substates
 -- @param fsm root fsm
 -- @param state state to exit
-function exit_state(fsm, state)
+function M.exit_state(fsm, state)
 
-   if not is_state(state) then return end  -- don't try to exit connectors.
+   if not M.is_state(state) then return end  -- don't try to exit connectors.
 
    -- if composite exit child states first
-   if is_composite(state) then exit_state(fsm, actchild_get(state)) end
+   if M.is_composite(state) then M.exit_state(fsm, M.actchild_get(state)) end
 
-   if is_state(state) then
+   if M.is_state(state) then
       -- save this for possible history entry
       state._parent._last_active = state
-      state._parent._last_active_mode = get_sta_mode(state)
+      state._parent._last_active_mode = M.get_sta_mode(state)
 
-      set_sta_mode(state, 'inactive')
+      M.set_sta_mode(state, 'inactive')
 
       if state.exit then
 	 local succ, err = pcall(state.exit, fsm, state, 'exit')
@@ -927,7 +927,7 @@ function exit_state(fsm, state)
       end
 
       -- don't cleanup coroutine, could be used later
-      if is_leaf(state) then fsm._act_leaf = false end
+      if M.is_leaf(state) then fsm._act_leaf = false end
    end
    fsm.dbg("STATE_EXIT", state._fqn)
 end
@@ -984,7 +984,7 @@ local function __exec_trans_exit(fsm, tr, lca, up_path)
    assert(#up_path >= 1)
 
    fsm.dbg("TRANS_EXIT", "exiting all up to (including):", up_path[#up_path]._fqn, ", lca:", lca._fqn)
-   exit_state(fsm, up_path[#up_path])
+   M.exit_state(fsm, up_path[#up_path])
 end
 
 local function exec_trans_exit(fsm, tr)
@@ -1050,7 +1050,7 @@ local function path2str(path, indc, indmul)
 
    local function __path2str(pnode, ind)
       strtab[#strtab+1] = pnode.node._fqn
-      strtab[#strtab+1] = '[' .. fsmobj_tochar(pnode.node) .. ']'
+      strtab[#strtab+1] = '[' .. M.fsmobj_tochar(pnode.node) .. ']'
 
       if not pnode.nextl then return end
 
@@ -1096,13 +1096,13 @@ local function exec_path(fsm, path)
 	 if pn.nextl == false then
 	    -- We have reached a stable configuration!
 	    return
-	 elseif is_state(pn.node) then
+	 elseif M.is_state(pn.node) then
 	    -- todo: why not check for conflicts here? because they
 	    -- are currently not possible...
 	    seg = pn.nextl[1]
 	    exec_trans(fsm, seg.trans)
 	    next_head = seg.next
-	 elseif is_conn(pn.node) then -- step a connector
+	 elseif M.is_conn(pn.node) then -- step a connector
 	    if #pn.nextl > 1 then seg = conflict_resolve(fsm, pn)
 	    else seg = pn.nextl[1] end
 	    exec_trans(fsm, seg.trans)
@@ -1167,7 +1167,7 @@ end
 -- table { node=stateX, nextl=...}. The nextl field is a table of
 -- tables which specify transition segments: { trans=transZ next=next_node_desc }
 
-function node_find_enabled(fsm, start, events)
+function M.node_find_enabled(fsm, start, events)
 
    -- find a path starting from node
    function __find_path(nde, events)
@@ -1183,8 +1183,8 @@ function node_find_enabled(fsm, start, events)
 	    -- find continuation
 	    local tgt = tr.tgt
 	    local tail
-	    if is_leaf(tgt) then tail = { node=tgt, nextl=false }
-	    elseif is_conn(tgt) then tail = __find_path(tgt, events)
+	    if M.is_leaf(tgt) then tail = { node=tgt, nextl=false }
+	    elseif M.is_conn(tgt) then tail = __find_path(tgt, events)
 	    else fsm.err("ERROR: node_find_path invalid starting node"
 			 .. start._fqn .. ", type" .. start:type()) end
  	    if tail then cur.nextl[#cur.nextl+1] = {trans=tr, next=tail} end
@@ -1196,7 +1196,7 @@ function node_find_enabled(fsm, start, events)
       return cur
    end
 
-   assert(is_node(start), "node type expected")
+   assert(M.is_node(start), "node type expected")
    return __find_path(start, events)
 end
 
@@ -1208,9 +1208,9 @@ local function fsm_find_enabled(fsm, events)
    -- states is table of active states at a certain depth
    local function __find_enabled(state)
       fsm.dbg("CHECKING", "depth:", depth, "for transitions from " .. state._fqn)
-      path = node_find_enabled(fsm, state, events)
+      path = M.node_find_enabled(fsm, state, events)
       if path then return path end
-      local next = actchild_get(state)
+      local next = M.actchild_get(state)
       if not next then return end
       depth = depth + 1
       return __find_enabled(next)
@@ -1237,7 +1237,7 @@ end
 ----------------------------------------
 -- enter fsm for the first time
 local function enter_fsm(fsm, events)
-   local path = node_find_enabled(fsm, fsm.initial, events)
+   local path = M.node_find_enabled(fsm, fsm.initial, events)
 
    if path == false then
       fsm._mode = 'inactive'
@@ -1272,8 +1272,8 @@ end
 -- @param fsm initialized rfsm state machine
 -- @param n number of steps to execute. default: 1.
 -- @return idle boolean if fsm is idle or not
-function step(fsm, n)
-   if not is_initialized_root(fsm) then fsm.err("ERROR step: invalid fsm") end
+function M.step(fsm, n)
+   if not M.is_initialized_root(fsm) then fsm.err("ERROR step: invalid fsm") end
 
    local idle = true
    local n = n or 1
@@ -1302,7 +1302,7 @@ function step(fsm, n)
 	 -- if doo is idle we still check for events (which might have
 	 -- been generated by the doo itself) and if available try to
 	 -- transition:
-	 if check_events(fsm) > 0 then idle = false else idle = true end
+	 if M.check_events(fsm) > 0 then idle = false else idle = true end
       else idle = false end -- doo not idle
    end
 
@@ -1323,7 +1323,7 @@ function step(fsm, n)
       end
    end
    -- tail call
-   return step(fsm, n)
+   return M.step(fsm, n)
 end
 
 --- run the fsm until there is nothing else to do.
@@ -1331,7 +1331,9 @@ end
 -- the doo function has completed or is idle.
 -- @param fsm initialized rfsm state machine
 -- @return idle boolean if fsm is idle or not
-function run(fsm)
-   if not is_initialized_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
-   return step(fsm, math.huge)
+function M.run(fsm)
+   if not M.is_initialized_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
+   return M.step(fsm, math.huge)
 end
+
+return M

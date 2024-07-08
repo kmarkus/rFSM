@@ -2,6 +2,7 @@
 -- The ball tracking example
 --
 
+local rfsm = require("rfsm")
 local state, conn, trans = rfsm.state, rfsm.conn, rfsm.trans
 
 return state {

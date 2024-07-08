@@ -2,7 +2,7 @@
 -- invalid state machine which creates a cycle.
 -- Just for testing purposes
 --
-
+local rfsm = require("rfsm")
 
 return rfsm.csta {
    rfsm.trans{ src='initial', tgt='conn1' },

@@ -43,18 +43,19 @@ local type = type
 local tonumber = tonumber
 local math = math
 local string = string
-local rfsm = require('rfsm')
-local time = require('time')
+local rfsm = require("rfsm")
+local time = require("time")
 local ts2str = time.ts2str
 
-module 'rfsm_timeevent'
+local M = {}
 
 local gettime = false
-debug=false
+
+M.debug=false
 
 --- Setup the gettime function to be used by this module.
 -- @param f function which is expected to return two values sec and nsec.
-function set_gettime_hook(f)
+function M.set_gettime_hook(f)
    assert(type(f) == 'function', "set_gettime_hook: parameter not a function")
    gettime = f
 end
@@ -130,3 +131,5 @@ local function expand_timeevent(fsm)
 end
 
 rfsm.preproc[#rfsm.preproc+1] = expand_timeevent
+
+return M

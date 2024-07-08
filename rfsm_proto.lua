@@ -19,7 +19,7 @@ local assert = assert
 local type = type
 local ts = tostring
 
-module("rfsm_proto")
+local M = {}
 
 --- Default configuration
 local def_host = "localhost" 	-- use '*' for host to bind to all local interfaces.
@@ -205,9 +205,11 @@ local function __install(fsm, t)
 end
 
 --- Install the
-function install(t)
+function M.install(t)
    rfsm.preproc[#rfsm.preproc+1] =
       function(fsm)
 	 __install(fsm, t or {})
       end
 end
+
+return M

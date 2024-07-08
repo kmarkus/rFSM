@@ -12,8 +12,8 @@
 -- to final the history is manually cleared in final.entry using the
 -- emem_reset function.
 
-require "rfsm"
-require "rfsm_emem"
+local rfsm = require("rfsm")
+local rfsm_emem = require("rfsm_emem")
 
 local ping_max = 5
 local pong_max = 40000
