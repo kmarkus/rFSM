@@ -3,8 +3,9 @@
 -- some own ones, some collected from the lua wiki
 --
 
-local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack, error =
-   type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, unpack, error
+local type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, error =
+   type, pairs, ipairs, setmetatable, getmetatable, assert, table, print, tostring, string, io, error
+local unpack = rawget(_G, "unpack") or table.unpack -- unpack is a global function for Lua 5.1, otherwise use table.unpack
 
 local M = {}
 

@@ -1,4 +1,5 @@
 local rfsm = require("rfsm")
+local unpack = rawget(_G, "unpack") or table.unpack -- unpack is a global function for Lua 5.1, otherwise use table.unpack
 
 local function puts(...)
    return function () print(unpack(arg)) end
