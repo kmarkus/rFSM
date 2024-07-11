@@ -28,6 +28,7 @@ param.show_fqn = false
 param.err = print
 param.warn = print
 param.dbg = function () return true end
+param.trace = function () return true end
 
 -- setup common properties
 local function set_props(h)
@@ -58,19 +59,58 @@ local function setup_color(state, nh)
    else gv.setv(nh, "fillcolor", "white") end
 end
 
+
+-- recursively search the graph looking for the fully qualified name
+function recurse_for_handle(gh, fqn, padding)
+
+   if padding == nil then
+      padding = ""
+   end
+
+   param.trace(padding .. "* " .. gv.nameof(gh))
+   if "cluster_" .. fqn == gv.nameof(gh) then
+      param.trace("found")
+      return gh, "subgraph"
+   end
+
+   -- discover the subgraphs at this level, to search in the next step
+   visit = {}
+   h = gv.firstsubg(gh)
+   while gv.ok(h) do
+      visit[#visit+1] = h
+      h = gv.nextsubg(h,h)
+   end
+
+   -- search each subgraph for the fqn
+   for i,h in ipairs(visit) do
+      local rh, type = recurse_for_handle(h, fqn, padding .. "| ")
+      if gv.ok(rh) then
+         return rh, type
+      end
+   end
+
+   -- search the graph at this level for the target fqn
+   nh = gv.firstnode(gh)
+   while gv.ok(nh) do
+      param.trace(padding .. "|-- " .. gv.nameof(nh))
+      if fqn == gv.nameof(nh) then
+         param.trace("found")
+         return nh, "node"
+      end
+      nh = gv.nextnode(gh, nh)
+   end
+   return nil, "unknown"
+end
+
+
 -- return handle, type for state fqn
 local function get_shandle(gh, fqn)
 
+   param.dbg("get_shandle of fqn: " .. fqn .. " begin at " .. gv.nameof(gh))
+   
    if fqn == gv.nameof(gh) then return gh, "graph" end
 
-   local sh = gv.findsubg(gh, "cluster_" .. fqn)
-   if sh then return sh, "subgraph" end
-
-   local nh = gv.findnode(gh, fqn)
-   if nh then return nh, "node" end
-
-   param.err("No state '" .. fqn .. "'")
-   return false
+   return recurse_for_handle(gh, fqn)
 end
 
 -- create a new graph
@@ -246,7 +286,7 @@ end
 
 local function proc_node(gh, node)
    if rfsm.is_composite(node) then new_csta(gh, node)
-      elseif rfsm.is_leaf(node) then new_sista(gh, node)
+   elseif rfsm.is_leaf(node) then new_sista(gh, node)
    elseif rfsm.is_conn(node) then new_conn(gh, node)
    else
       param.err("unknown node type: " .. node:type() .. ", name=" .. node._fqn)
