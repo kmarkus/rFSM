@@ -1,5 +1,0 @@
-#!/bin/sh
-if [ "x$LUA_PATH" = "x" ]; then
-   LUA_PATH=";"
-fi
-export LUA_PATH="$LUA_PATH;@CMAKE_CURRENT_SOURCE_DIR@/?.lua"

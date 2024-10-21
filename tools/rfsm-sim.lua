@@ -1,8 +1,9 @@
 -- -*- lua -*-
-require "rfsm"
-require "rfsmpp"
-require "rfsm2uml"
-require "rfsm2tree"
+local rfsm = require("rfsm")
+local rfsmpp = require("rfsmpp")
+local utils = require("utils")
+
+local fsm
 
 if arg and #arg < 1 then
    print("usage: rfsm-sim <fsmfile>")
@@ -73,38 +74,6 @@ function pp()
    print(rfsmpp.fsm2str(fsm))
 end
 
-function uml()
-   rfsm2uml.rfsm2uml(fsm, "png", tmpdir .. "rfsm-uml-tmp.png")
-end
-
-function tree()
-   rfsm2tree.rfsm2tree(fsm, "png",  tmpdir .. "rfsm-tree-tmp.png")
-end
-
-function dot()
-   rfsm2uml.rfsm2dot(fsm, tmpdir .. "rfsm-tmp-uml.dot")
-end
-
-function vizuml()
-   local viewer = os.getenv("RFSM_VIEWER") or "firefox"
-   uml()
-   add_hook(uml)
-   os.execute(viewer .. " " ..  tmpdir .. "rfsm-uml-tmp.png" .. "&")
-end
-
-function viztree()
-   tree()
-   add_hook(tree)
-   local viewer = os.getenv("RFSM_VIEWER") or "firefox"
-   os.execute(viewer .. " " .. tmpdir .. "rfsm-tree-tmp.png" .. "&")
-end
-
-function vizxdot()
-   dot()
-   add_hook(dot)
-   os.execute("xdot " .. tmpdir .. "rfsm-tmp-uml.dot &")
-end
-
 function showfqn()
    local actfqn
    if fsm._actchild then
@@ -137,20 +106,17 @@ available commands:
    step(n)        -- step FSM n times
    pp()           -- pretty print fsm
    showeq()       -- show current event queue
-   uml()          -- generate uml figure
-   vizuml()       -- show uml figure ($RFSM_VIEWER) (deprecated)
-   vizxdot()      -- show uml using xdot viewer. (recommended)
-   tree()         -- generate tree figure
-   viztree()      -- show tree figure ($RFSM_VIEWER) (deprecated)
    add_hook(func) -- add a function to be called after state changes (e.g. 'add_hook(pp)')
 	 ]=])
 end
 
 boiler()
-_fsm=rfsm.load(file)
-ret, fsm = pcall(rfsm.init, _fsm)
+local _fsm=rfsm.load(file)
 
-if not ret or not fsm then
+local ok
+ok, fsm = xpcall(rfsm.init, debug.traceback, _fsm)
+
+if not ok or not fsm then
    print("rfsm-sim: failed to initialize fsm:", fsm)
    os.exit(1)
 end
