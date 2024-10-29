@@ -1,6 +1,6 @@
 ![rFSM logo](/doc/rFSM_logo.jpg)
 
-# Overview
+# rFSM Statecharts
 
 rFSM is a small and powerful Statechart implementation. It is mainly
 designed for *Coordination* of complex systems but is not limited to
@@ -8,7 +8,42 @@ that. rFSM is written in pure Lua and is therefore highly portable and
 embeddable. As a Lua domain specific language rFSM inherits the
 extensibility of its host language.
 
-# Install
+
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
+**Table of Contents**
+- [Install](#install)
+- [Introduction](#introduction)
+- [Specifying rFSM models](#specifying-rfsm-models)
+    - [States (`rfsm.state`)](#states-rfsmstate)
+        - [The doo function](#the-doo-function)
+        - [Configuring a State Machine](#configuring-a-state-machine)
+    - [Transitions (`rfsm.transition`)](#transitions-rfsmtransition)
+    - [Connector (`rfsm.connector`)](#connector-rfsmconnector)
+- [Executing rFSM models](#executing-rfsm-models)
+- [Common pitfalls](#common-pitfalls)
+- [Tools and helper modules](#tools-and-helper-modules)
+    - [The event memory extension (`rfsm_emem` module)](#the-event-memory-extension-rfsm_emem-module)
+    - [Await: trigger transition only after receiving multiple events](#await-trigger-transition-only-after-receiving-multiple-events)
+    - [Timeevents (`rfsm_timeevent` module)](#timeevents-rfsm_timeevent-module)
+    - [Configurable and colorized `dbg` info (`rfsmpp` module)](#configurable-and-colorized-dbg-info-rfsmpp-module)
+    - [`rfsm_checkevents` plugin](#rfsm_checkevents-plugin)
+    - [`rfsm-sim` simple rfsm simulator](#rfsm-sim-simple-rfsm-simulator)
+    - [Lua fsm to json conversion (`rfsm2json` command line tool)](#lua-fsm-to-json-conversion-rfsm2json-command-line-tool)
+    - [`rfsm_rtt` Useful functions for using rFSM with OROCOS rtt](#rfsm_rtt-useful-functions-for-using-rfsm-with-orocos-rtt)
+- [More examples, tips and tricks](#more-examples-tips-and-tricks)
+    - [A more complete example](#a-more-complete-example)
+    - [How to compose state machines](#how-to-compose-state-machines)
+    - [Using rfsm with Orocos RTT](#using-rfsm-with-orocos-rtt)
+- [API Summary](#api-summary)
+    - [State specification](#state-specification)
+    - [Operational functions](#operational-functions)
+    - [Hooks](#hooks)
+- [Footnotes](#footnotes)
+- [Acknowledgement](#acknowledgement)
+<!-- markdown-toc end -->
+
+
+## Install
 
 Just run `make install` to install for 5.1, 5.2, 5.3 and 5.4.
 
@@ -18,7 +53,7 @@ The only dependency is the (pure Lua)
 [`uutils`](https://github.com/kmarkus/uutils) modules (which
 themselves have no dependencies).
 
-# Introduction
+## Introduction
 
 rFSM is minimal Statechart flavor designed for *Coordinating* of
 complex systems such as robots. It has the following features:
@@ -118,7 +153,7 @@ active: root.hello(done)
 queue:  e_done@root.hello
 ```
 
-# Specifying rFSM models
+## Specifying rFSM models
 
 rFSM state machines are constructed using three model elements:
 **states**, **connectors** and **transitions**.
@@ -126,7 +161,7 @@ rFSM state machines are constructed using three model elements:
 (all functions are part of the rfsm module, thus need to be called in
 Lua with the `rfsm` prefix, e.g. `rfsm.state{}`)
 
-## States (`rfsm.state`)
+### States (`rfsm.state`)
 
 States are used to model discrete states of the system and can be
 either composite or leaf states. A composite state contains other
@@ -145,7 +180,7 @@ arguments and should not change them either. (The rationale behind the
 second and third argument is to permit one function to handle entry
 and exit of multiple states and hence needs to identify these).
 
-### The doo function
+#### The doo function
 
 Leaf states may additionally define a do function (it is called `doo`
 in rFSM to avoid clashes with the identically named Lua keyword).
@@ -204,7 +239,7 @@ called in a tight loop. It depends on each application which
 true unless the intention is that the `doo` function is executed as
 fast as possible (potentially consuming a lot of CPU!).
 
-### Configuring a State Machine
+#### Configuring a State Machine
 
 The root composite state honors some extra fields to refine the global
 FSM behavior.
@@ -224,7 +259,7 @@ the central mechanism to integrate rFSM into existing systems. The
 expected behavior is to return a Lua table of events (array part
 only). These events are then used to check for enabled transitions.
 
-## Transitions (`rfsm.transition`)
+### Transitions (`rfsm.transition`)
 
 Transitions define how a state machine changes state upon receiving
 events:
@@ -308,7 +343,7 @@ rfsm.trans{ src='following', tgt='hitting', pn=10, events={ 't6' } },
 If possible, statecharts should be designed not to depend on priority
 numbers and introduce these rather as an optimization.
 
-## Connector (`rfsm.connector`)
+### Connector (`rfsm.connector`)
 
 Connectors permit to define so called compound transitions by chaining
 multiple transition segments together. Connectors are similar to the
@@ -350,7 +385,7 @@ to different exit connectors based on the events they generate.
 discouraged. It may make the yogurt in your fridge grow fine grey
 beards.
 
-# Executing rFSM models
+## Executing rFSM models
 
 Before running a statemachine must be initalized. This serves to
 validate the fsm model and transform the fsm to be suitable for
@@ -391,7 +426,7 @@ To directly send events to the fsm the function `rfsm.send_events(fsm,
 e1, e2, ...)` can be used. The first argument is the fsm to which all
 subsequent event arguments are sent to.
 
-# Common pitfalls
+## Common pitfalls
 
 1. Name clashes between state/connector names with reserved Lua
    keywords.
@@ -452,9 +487,9 @@ returned a function as a result!
 	in the queue! If you only want to transition based on guards,
 	raise a dummy event (e.g. "e\_any").
 
-# Tools and helper modules
+## Tools and helper modules
 
-## The event memory extension (`rfsm_emem` module)
+### The event memory extension (`rfsm_emem` module)
 
 This extension adds *memory* of events that occurred to an rFSM
 statechart. This is done maintaining a table `emem` for every
@@ -471,7 +506,7 @@ this information would otherwise be lost.
 To enable event memory, all you need to do is load the `rfsm_emem`
 module. Checkout the `examples/emem_test.lua` for more details.
 
-## Await: trigger transition only after receiving multiple events
+### Await: trigger transition only after receiving multiple events
 
 In a nutshell, this plugin permits to trigger transitions only after
 multiple events have been received. These events can be received in
@@ -498,7 +533,7 @@ await(event1, event2)". This statement is transformed as follows:
 
 For more information checkout the `await.lua` example.
 
-## Timeevents (`rfsm_timeevent` module)
+### Timeevents (`rfsm_timeevent` module)
 
 This module extends the rFSM engine with time events. Time events are
 automatically raised *after* the specified time after entering a state
@@ -525,7 +560,7 @@ running and can not magically wake up an idle fsm. Therefore this type
 of timeevents typically only makes sense for fsm that are "stepped" at
 a fixed frequency or that never go idle.
 
-## Configurable and colorized `dbg` info (`rfsmpp` module)
+### Configurable and colorized `dbg` info (`rfsmpp` module)
 
 The `rfsmpp.gen_dbgcolor` function generates a configurable and
 colorful `dbg` hook.
@@ -556,7 +591,7 @@ fsm.dbg=rfsmpp.gen_dbgcolor("fsm1",
 
 Will show only `STATE_ENTER` and `STATE_EXIT` debug messages.
 
-## `rfsm_checkevents` plugin
+### `rfsm_checkevents` plugin
 
 This debugging helper plugin will at load-time construct a list of all
 events used in the FSM. If at runtime an event is received which is
@@ -566,46 +601,7 @@ To use, just require the module before creating your fsm. Important:
 load it *after* other plugins that transform events (such as
 timeevents), so that it picks up the transformed events.
 
-## Generate graphical representations (`rfsm2uml` and `fsm2dbg` modules)
-
-Modules to transform rFSM models to graphical descriptions. `rfsm2uml`
-generates classical statechart figures and `rfsm2tree` generates a
-tree representation (useful to see check priorities).
-
-Usage:
-
-- `rfsm2uml.rfsm2uml(root_fsm, format, outfile, caption)`
-- `rfsm2tree.rfsm2tree(root_fsm, format, outfile)`
-
-Examples:
-
-```Lua
-require("rfsm2uml")
-fsm = rfsm.init(rfsm.load("fsm.lua"))
-rfsm2uml.rfsm2uml(fsm, 'png', "fsm.png", "Figure caption")
-```
-
-or
-
-```Lua
-require("rfsm2tree")
-fsm = rfsm.init(rfsm.load("fsm.lua"))
-rfsm2tree.rfsm2tree(fsm, 'png', "fsm-tree.png")
-```
-
-The `rfsm-viz` command line uses these modules to generate pictures.
-
-## `rfsm-viz`: command line front end to rfsm2uml/rfsm2tree
-
-to generate all possible formats run:
-
-```sh
-$ tools/rfsm-viz all examples/composite_nested.lua
-```
-
-generates various representations (in `examples/`)
-
-## `rfsm-sim` simple rfsm simulator
+### `rfsm-sim` simple rfsm simulator
 
 small command line simulator for running a fsm interactively.
 
@@ -616,17 +612,17 @@ $ tools/rfsm-sim all examples/ball_tracker_scope.lua
 It requires an image viewer which automatically updates once the file
 displayed changes. For example `evince` works nicely.
 
-## Lua fsm to json conversion (`rfsm2json` command line tool)
+### Lua fsm to json conversion (`rfsm2json` command line tool)
 
 Based on `rfsm2json.lua` module and requires lua-json.
 
-## `rfsm_rtt` Useful functions for using rFSM with OROCOS rtt
+### `rfsm_rtt` Useful functions for using rFSM with OROCOS rtt
 
 See the Orocos [LuaCookbook](http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook) for more details.
 
-# More examples, tips and tricks
+## More examples, tips and tricks
 
-## A more complete example
+### A more complete example
 
 The graphical model:
 
@@ -683,7 +679,7 @@ return rfsm.state {
 }
 ```
 
-## How to compose state machines
+### How to compose state machines
 
 This is easy! Let's assume the state machine is is a file "subfsm.lua"
 and uses the strongly recommended `return rfsm.state ...` syntax, it
@@ -701,13 +697,13 @@ return rfsm.state {
 
 Make sure not to forget the ',' after the `rfsm.load()` statement!
 
-## Using rfsm with Orocos RTT
+### Using rfsm with Orocos RTT
 
 The [LuaCookbook](http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook) page describes how to do this.
 
-# API Summary
+## API Summary
 
-## State specification
+### State specification
 
 Functions to define rFSM:
 
@@ -719,7 +715,7 @@ Functions to define rFSM:
 | `transition{}` | `trans{}`     | create a transition |
 
 
-## Operational functions
+### Operational functions
 
 
 |  Function                    |  Description                                         |
@@ -730,7 +726,7 @@ Functions to define rFSM:
 | `rfsm.send_events(fsm, ...)` | send one or more events to internal rfsm event queue |
 
 
-## Hooks
+### Hooks
 
 The following hook functions can be defined for a toplevel
 composite state and allow to refine various behavior of the state
@@ -760,7 +756,7 @@ Use these to manage step hooks. Setting `pre_step_hook` and
 step/run functions. Used only for debugging purposes.
 
 
-# Footnotes
+## Footnotes
 
 <a name="fn1">1</a>: See
 [this](https://lwn.net/images/conf/rtlws-2011/paper.05.html) Real-time
@@ -772,7 +768,7 @@ and the
 fails more obviously (100% CPU load) than the opposite (doo function
 not executed properly).
 
-# Acknowledgement
+## Acknowledgement
 
 - Funding
 
