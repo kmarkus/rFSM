@@ -46,11 +46,11 @@ extensibility of its host language.
 
 Just run `make install` to install for 5.1, 5.2, 5.3 and 5.4.
 
-Alternatively, the rfsm repo in your module path.
+Alternatively, add the `rfsm` repo to your module path.
 
 The only dependency is the (pure Lua)
-[`uutils`](https://github.com/kmarkus/uutils) modules (which
-themselves have no dependencies).
+[`uutils`](https://github.com/kmarkus/uutils) module (which itself has
+no dependencies).
 
 ## Introduction
 
@@ -214,14 +214,14 @@ enables the following two use-cases:
 The following example illustrates the second use case:
 
 ```Lua
- doo = function(fsm)
-		  while true do
-			 if min_distance() < 0.1 then
-				rfsm.send_events(fsm, "e_close_obj")
-			 end
-			 rfsm.yield()
-		  end
-	   end
+doo = function(fsm)
+   while true do
+      if min_distance() < 0.1 then
+         rfsm.send_events(fsm, "e_close_obj")
+      end
+      rfsm.yield()
+   end
+end
 ```
 
 This `doo` will check a certain condition repeatedly and raise the
@@ -267,14 +267,14 @@ Example:
 
 ```Lua
 rfsm.transition {
-	src='stateX', tgt='stateY', events = {"e1", "e2"},
-	guard=function()
-			  if getVal() > 0.3 then
-				  return false
-			  end
-			  return true
-		  end,
-	effect=function () do_this() end
+   src='stateX', tgt='stateY', events = {"e1", "e2"},
+   guard=function()
+      if getVal() > 0.3 then
+         return false
+      end
+      return true
+   end,
+   effect=function () do_this() end
 }
 ```
 
@@ -297,15 +297,15 @@ starts with a leading dot. For example:
 ```Lua
 return rfsm.state{
    operational=rfsm.state{
-	  motors_on = rfsm.state{
-		 moving = rfsm.state{},
-		 stopped = rfsm.state{},
-		 rfsm.trans{src='initial', tgt='stopped'},
-	  },
-	  rfsm.trans{src='initial', tgt='motors_on'},
+      motors_on = rfsm.state{
+         moving = rfsm.state{},
+         stopped = rfsm.state{},
+         rfsm.trans{src='initial', tgt='stopped'},
+      },
+      rfsm.trans{src='initial', tgt='motors_on'},
    },
    off=rfsm.state{},
-   rfsm.trans{src='initial', tgt=".operational.motors_on.moving" }
+   rfsm.trans{src='initial', tgt=".operational.motors_on.moving" },
    rfsm.trans{src=".operational.motors_on.stopped", tgt='off', events={'e_off'} }
 }
 ```
@@ -358,21 +358,21 @@ that hide internals of a composite state. The following example
 defines a error handling state:
 
 ```Lua
-return rfsm.state{
-  software_err = rfsm.state{},
-  hardware_err = rfsm.state{},
+return rfsm.state {
+   software_err = rfsm.state{},
+   hardware_err = rfsm.state{},
 
-  initial = rfsm.conn{},
-  recovered = rfsm.conn{},
-  failed = rfsm.conn{},
+   initial = rfsm.conn{},
+   recovered = rfsm.conn{},
+   failed = rfsm.conn{},
 
-  rfsm.trans{src='initial', tgt='software_err', events={'e_sw_err'}},
-  rfsm.trans{src='initial', tgt='hardware_err', events={'e_hw_err'}},
+   rfsm.trans{src='initial', tgt='software_err', events={'e_sw_err'}},
+   rfsm.trans{src='initial', tgt='hardware_err', events={'e_hw_err'}},
 
-  rfsm.trans{src='software_err', tgt='recovered', events={'e_recovered'}},
-  rfsm.trans{src='hardware_err', tgt='recovered', events={'e_recovered'}},
-  rfsm.trans{src='software_err', tgt='failed', events={'e_failed'}},
-  rfsm.trans{src='hardware_err', tgt='failed', events={'e_failed'}},
+   rfsm.trans{src='software_err', tgt='recovered', events={'e_recovered'}},
+   rfsm.trans{src='hardware_err', tgt='recovered', events={'e_recovered'}},
+   rfsm.trans{src='software_err', tgt='failed', events={'e_failed'}},
+   rfsm.trans{src='hardware_err', tgt='failed', events={'e_failed'}},
 }
 ```
 
@@ -634,42 +634,42 @@ return rfsm.state {
    dbg = true, -- enable debugging
 
    on = rfsm.state {
-	  entry = function () print("disabling brakes") end,
-	  exit = function () print("enabling brakes") end,
+      entry = function () print("disabling brakes") end,
+      exit = function () print("enabling brakes") end,
 
-	  moving = rfsm.state {
-		 entry=function () print("starting to move") end,
-		 exit=function () print("stopping") end,
-	  },
+      moving = rfsm.state {
+         entry=function () print("starting to move") end,
+         exit=function () print("stopping") end,
+      },
 
-	  waiting = rfsm.state {},
+      waiting = rfsm.state {},
 
-	  -- define some transitions
-	  rfsm.trans{ src='initial', tgt='waiting' },
-	  rfsm.trans{ src='waiting', tgt='moving', events={ 'e_start' } },
-	  rfsm.trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
+      -- define some transitions
+      rfsm.trans{ src='initial', tgt='waiting' },
+      rfsm.trans{ src='waiting', tgt='moving', events={ 'e_start' } },
+      rfsm.trans{ src='moving', tgt='waiting', events={ 'e_stop' } },
    },
 
    error = rfsm.state {
-	  doo = function (fsm)
-				 print ("Error detected - trying to fix")
-				 rfsm.yield()
-				 math.randomseed( os.time() )
-				 rfsm.yield()
-				 if math.random(0,100) < 40 then
-					print("unable to fix, raising e_fatal_error")
-					rfsm.send_events(fsm, "e_fatal_error")
-				 else
-					print("repair succeeded!")
-					rfsm.send_events(fsm, "e_error_fixed")
-				 end
-			  end,
+      doo = function (fsm)
+         print ("Error detected - trying to fix")
+         rfsm.yield()
+         math.randomseed( os.time() )
+         rfsm.yield()
+         if math.random(0,100) < 40 then
+            print("unable to fix, raising e_fatal_error")
+            rfsm.send_events(fsm, "e_fatal_error")
+         else
+            print("repair succeeded!")
+            rfsm.send_events(fsm, "e_error_fixed")
+         end
+      end,
    },
 
    fatal_error = rfsm.state {},
 
    rfsm.trans{ src='initial', tgt='on',
-			   effect=function() print("initializing system") end },
+               effect=function() print("initializing system") end },
    rfsm.trans{ src='on', tgt='error', events={ 'e_error' } },
    rfsm.trans{ src='error', tgt='on', events={ 'e_error_fixed' } },
    rfsm.trans{ src='error', tgt='fatal_error', events={ 'e_fatal_error' } },
