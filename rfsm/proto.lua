@@ -1,7 +1,7 @@
 -- rfsm remote control interaction protocol
 --
 -- (C) 2010-2013 Markus Klotzbuecher <markus.klotzbuecher@mech.kuleuven.be>
--- (C) 2014-2020 Markus Klotzbuecher <mk@mkio.de>
+-- (C) 2014-2024 Markus Klotzbuecher <mk@mkio.de>
 --
 -- SPDX-License-Identifier: BSD-3-Clause
 --
