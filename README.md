@@ -22,14 +22,14 @@ extensibility of its host language.
 - [Executing rFSM models](#executing-rfsm-models)
 - [Common pitfalls](#common-pitfalls)
 - [Tools and helper modules](#tools-and-helper-modules)
-    - [The event memory extension (`rfsm_emem` module)](#the-event-memory-extension-rfsm_emem-module)
-    - [Await: trigger transition only after receiving multiple events](#await-trigger-transition-only-after-receiving-multiple-events)
-    - [Timeevents (`rfsm_timeevent` module)](#timeevents-rfsm_timeevent-module)
-    - [Configurable and colorized `dbg` info (`rfsmpp` module)](#configurable-and-colorized-dbg-info-rfsmpp-module)
-    - [`rfsm_checkevents` plugin](#rfsm_checkevents-plugin)
-    - [`rfsm-sim` simple rfsm simulator](#rfsm-sim-simple-rfsm-simulator)
+    - [`rfsm.timeevent`](#rfsmtimeevent)
+    - [`rfsm.emem`: event memory extension](#rfsmemem-event-memory-extension)
+    - [`rfsm.await`: trigger transition only after receiving multiple events](#rfsmawait-trigger-transition-only-after-receiving-multiple-events)
+    - [`rfsm.pp`: configurable and colorized debug output](#rfsmpp-configurable-and-colorized-debug-output)
+    - [`rfsm.checkevents`: check for unknown events](#rfsmcheckevents-check-for-unknown-events)
+    - [`rfsm-sim` tool: simple rfsm simulator](#rfsm-sim-tool-simple-rfsm-simulator)
     - [Lua fsm to json conversion (`rfsm2json` command line tool)](#lua-fsm-to-json-conversion-rfsm2json-command-line-tool)
-    - [`rfsm_rtt` Useful functions for using rFSM with OROCOS rtt](#rfsm_rtt-useful-functions-for-using-rfsm-with-orocos-rtt)
+    - [`rfsm.rtt` Useful functions for using rFSM with OROCOS rtt](#rfsmrtt-useful-functions-for-using-rfsm-with-orocos-rtt)
 - [More examples, tips and tricks](#more-examples-tips-and-tricks)
     - [A more complete example](#a-more-complete-example)
     - [How to compose state machines](#how-to-compose-state-machines)
@@ -41,7 +41,6 @@ extensibility of its host language.
 - [Footnotes](#footnotes)
 - [Acknowledgement](#acknowledgement)
 <!-- markdown-toc end -->
-
 
 ## Install
 
@@ -471,7 +470,7 @@ returned a function as a result!
 	labeled with a higher priority completion event that has nothing
 	to do with the current one.
 
-	The same holds true for `rfsm_timeevent` based timeevents.
+	The same holds true for `rfsm.timeevent` based timeevents.
 
 4.  My FSM is using up 100% CPU, what's wrong?
 
@@ -489,7 +488,35 @@ returned a function as a result!
 
 ## Tools and helper modules
 
-### The event memory extension (`rfsm_emem` module)
+### `rfsm.timeevent`
+
+This module extends the rFSM engine with time events. Time events are
+automatically raised *after* the specified time after entering a state
+has elapsed. To enable time events, it suffices to load the
+`rfsm.timeevent` module. Currently only relative (opposed to absolute)
+timeevents are supported. These can be specified on transitions using
+the `e_after(duration)` syntax, as show in the following example:
+
+```Lua
+rfsm.trans{ src='A', tgt='B', events={ 'e_after(0.1)' } },
+```
+
+The timeevent will be raised 100ms after state `A` was entered.
+
+The only requirement to use `rfsm.timeevent` is that a `gettime`
+function is configured using the `rfsm.timeevent.set_gettime_hook(f)`
+function. This function is expected to return the current time in two
+return values: seconds, nanoseconds.
+
+An example can be found in `examples/timeevent.lua`
+
+**Warning:** these timeevents only work while the rfsm engine is
+running and can not magically wake up an idle fsm. Therefore this type
+of timeevents typically only makes sense for fsm that are "stepped" at
+a fixed frequency or that never go idle.
+
+
+### `rfsm.emem`: event memory extension
 
 This extension adds *memory* of events that occurred to an rFSM
 statechart. This is done maintaining a table `emem` for every
@@ -503,10 +530,10 @@ after certain events have occurred, but that do not necessarily occur
 within one step. Because the rFSM engine drops events after each steps
 this information would otherwise be lost.
 
-To enable event memory, all you need to do is load the `rfsm_emem`
+To enable event memory, all you need to do is load the `rfsm.emem`
 module. Checkout the `examples/emem_test.lua` for more details.
 
-### Await: trigger transition only after receiving multiple events
+### `rfsm.await`: trigger transition only after receiving multiple events
 
 In a nutshell, this plugin permits to trigger transitions only after
 multiple events have been received. These events can be received in
@@ -533,42 +560,15 @@ await(event1, event2)". This statement is transformed as follows:
 
 For more information checkout the `await.lua` example.
 
-### Timeevents (`rfsm_timeevent` module)
+### `rfsm.pp`: configurable and colorized debug output
 
-This module extends the rFSM engine with time events. Time events are
-automatically raised *after* the specified time after entering a state
-has elapsed. To enable time events, it suffices to load the
-`rfsm_timeevent` module. Currently only relative (opposed to absolute)
-timeevents are supported. These can be specified on transitions using
-the `e_after(duration)` syntax, as show in the following example:
-
-```Lua
-rfsm.trans{ src='A', tgt='B', events={ 'e_after(0.1)' } },
-```
-
-The timeevent will be raised 100ms after state `A` was entered.
-
-The only requirement to use rfsm\_timeevents is that a `gettime`
-function is configured using the `rfsm_timeevent.set_gettime_hook(f)`
-function. This function is expected to return the current time in two
-return values: seconds, nanoseconds.
-
-An example can be found in `examples/timeevent.lua`
-
-**Warning:** these timeevents only work while the rfsm engine is
-running and can not magically wake up an idle fsm. Therefore this type
-of timeevents typically only makes sense for fsm that are "stepped" at
-a fixed frequency or that never go idle.
-
-### Configurable and colorized `dbg` info (`rfsmpp` module)
-
-The `rfsmpp.gen_dbgcolor` function generates a configurable and
-colorful `dbg` hook.
+The `pp.gen_dbgcolor` function generates a configurable and colorful
+`dbg` hook.
 
 Usage:
 
 ```Lua
-rfsmpp.gen_dbgcolor(name, dbgids, defshow)
+pp.gen_dbgcolor(name, dbgids, defshow)
 ```
 
 - `name` is the (optional) string name to print prefixing the debug
@@ -583,15 +583,14 @@ rfsmpp.gen_dbgcolor(name, dbgids, defshow)
 Example:
 
 ```Lua
-fsm = rfsm.init(...)
-fsm.dbg=rfsmpp.gen_dbgcolor("fsm1",
-							{ STATE_ENTER=true, STATE_EXIT=true},
-							false)
+local pp = require("rfsm.pp")
+local fsm = rfsm.init(...)
+fsm.dbg = pp.gen_dbgcolor("fsm1", { STATE_ENTER=true, STATE_EXIT=true}, false)
 ```
 
 Will show only `STATE_ENTER` and `STATE_EXIT` debug messages.
 
-### `rfsm_checkevents` plugin
+### `rfsm.checkevents`: check for unknown events
 
 This debugging helper plugin will at load-time construct a list of all
 events used in the FSM. If at runtime an event is received which is
@@ -601,7 +600,7 @@ To use, just require the module before creating your fsm. Important:
 load it *after* other plugins that transform events (such as
 timeevents), so that it picks up the transformed events.
 
-### `rfsm-sim` simple rfsm simulator
+### `rfsm-sim` tool: simple rfsm simulator
 
 small command line simulator for running a fsm interactively.
 
@@ -609,16 +608,15 @@ small command line simulator for running a fsm interactively.
 $ tools/rfsm-sim all examples/ball_tracker_scope.lua
 ```
 
-It requires an image viewer which automatically updates once the file
-displayed changes. For example `evince` works nicely.
-
 ### Lua fsm to json conversion (`rfsm2json` command line tool)
 
 Based on `rfsm2json.lua` module and requires lua-json.
 
-### `rfsm_rtt` Useful functions for using rFSM with OROCOS rtt
+### `rfsm.rtt` Useful functions for using rFSM with OROCOS rtt
 
-See the Orocos [LuaCookbook](http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook) for more details.
+See the Orocos
+[LuaCookbook](http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook)
+for more details.
 
 ## More examples, tips and tricks
 
