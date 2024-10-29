@@ -8,26 +8,6 @@
 
 local utils = require("utils")
 
-local table = table
-local io = io
-local math = math
-local coroutine = coroutine
-local pairs = pairs
-local ipairs = ipairs
-local pcall = pcall
-local print = print
-local tostring = tostring
-local string = string
-local type = type
-local loadstring = loadstring
-local dofile = dofile
-local assert = assert
-local setmetatable = setmetatable
-local getmetatable = getmetatable
-local unpack = unpack
-local error = error
-local utils = utils
-
 local M = {}
 
 local map = utils.map

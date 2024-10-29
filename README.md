@@ -8,23 +8,11 @@ that. rFSM is written in pure Lua and is therefore highly portable and
 embeddable. As a Lua domain specific language rFSM inherits the
 extensibility of its host language.
 
+# Install
 
-# Setup
+Just run `make install` to install for 5.1, 5.2, 5.3 and 5.4.
 
-Make sure you have Lua 5.1 or 5.2 installed and the rFSM folder is in
-your `LUA_PATH`. For example:
-
-```sh
-export LUA_PATH=";;;/home/mk/src/git/rfsm/?.lua"
-```
-
-
-If your `LUA_PATH` is already set to something, then just add the rFSM
-path instead of overwriting it:
-
-```sh
-export LUA_PATH="$LUA_PATH;/home/mk/src/git/rfsm/?.lua"
-```
+Alternatively, the rfsm repo in your module path.
 
 # Introduction
 
