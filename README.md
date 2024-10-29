@@ -14,6 +14,10 @@ Just run `make install` to install for 5.1, 5.2, 5.3 and 5.4.
 
 Alternatively, the rfsm repo in your module path.
 
+The only dependency is the (pure Lua)
+[`uutils`](https://github.com/kmarkus/uutils) modules (which
+themselves have no dependencies).
+
 # Introduction
 
 rFSM is minimal Statechart flavor designed for *Coordinating* of
