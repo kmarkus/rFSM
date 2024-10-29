@@ -779,3 +779,26 @@ and the
 <a name="fn2">2</a>: The reason for this choice of default is that it
 fails more obviously (100% CPU load) than the opposite (doo function
 not executed properly).
+
+# Acknowledgement
+
+- Funding
+
+  The research leading to these results has received funding from
+  the European Community's Seventh Framework Programme
+  (FP7/2007-2013) under grant agreement no. FP7-ICT-231940-BRICS
+  (Best Practice in Robotics)
+
+- Scientific background
+
+  This work borrows many ideas from the Statecharts by David Harel
+  and some from UML 2.1 State Machines. The following publications
+  are the most relevant
+
+  David Harel and Amnon Naamad. 1996. The STATEMATE semantics of
+  statecharts. ACM Trans. Softw. Eng. Methodol. 5, 4 (October 1996),
+  293-333. DOI=10.1145/235321.235322
+  <http://doi.acm.org/10.1145/235321.235322>
+
+  The OMG UML Specification:
+  <http://www.omg.org/spec/UML/2.3/Superstructure/PDF/>
