@@ -157,7 +157,6 @@ local function is_connected(src, tgt)
    return false
 end
 
-
 --- Load fsm from file.
 -- The file must contain an rfsm simple or composite state that is returned.
 -- @param file name of file
@@ -313,7 +312,7 @@ end
 -- add fully qualified names (fqn) to node types
 -- depends on parent links beeing available
 local function add_fqns(fsm)
-   function __add_fqn(s, p)
+   local function __add_fqn(s, p)
       if not s._id then
 	 fsm.err("ERROR: state (" .. s:type() .. ") without id, parent: " .. p._fqn)
       elseif s._id == 'root' and s._parent == s then
@@ -402,7 +401,7 @@ end
 ----------------------------------------
 -- resolve path function
 -- turn string state into the real thing
-function __resolve_path(fsm, state_str, parent)
+local function __resolve_path(fsm, state_str, parent)
 
    -- index tree with array tab
    local function index_tree(tree, tab)
@@ -684,8 +683,8 @@ function M.reset(fsm)
    fsm._intq = { 'e_init_fsm' }
    fsm._curq = {}
    fsm._act_leaf = false
-   mapfsm(function (c) c._actchild = nil end, fsm, M.is_composite)
-   mapfsm(function (s) s._doo_co = nil end, fsm, M.is_leaf)
+   M.mapfsm(function (c) c._actchild = nil end, fsm, M.is_composite)
+   M.mapfsm(function (s) s._doo_co = nil end, fsm, M.is_leaf)
 end
 
 
@@ -967,11 +966,6 @@ local function __exec_trans_exit(fsm, tr, lca, up_path)
    M.exit_state(fsm, up_path[#up_path])
 end
 
-local function exec_trans_exit(fsm, tr)
-   local lca, up_path, down_path = tr_ipath(fsm, tr)
-   __exec_trans_exit(fsm, tr, lca, up_path)
-end
-
 -- Execute Part 2 of the transition: the effect
 local function exec_trans_effect(fsm, tr)
    -- run effect
@@ -997,11 +991,6 @@ local function __exec_trans_enter(fsm, tr, lca, down_path)
    while #down_path > 0 do
       enter_one_state(fsm, table.remove(down_path))
    end
-end
-
-local function exec_trans_enter(fsm, tr)
-   local lca, up_path, down_path = tr_ipath(fsm, tr)
-   __exec_trans_enter(fsm, tr, lca, down_path)
 end
 
 -- Do all in one:
@@ -1150,7 +1139,7 @@ end
 function M.node_find_enabled(fsm, start, events)
 
    -- find a path starting from node
-   function __find_path(nde, events)
+   local function __find_path(nde, events)
       local cur = { node=nde, nextl={} }
 
       -- path ends if no outgoing path. The static validation should
@@ -1188,7 +1177,7 @@ local function fsm_find_enabled(fsm, events)
    -- states is table of active states at a certain depth
    local function __find_enabled(state)
       fsm.dbg("CHECKING", "depth:", depth, "for transitions from " .. state._fqn)
-      path = M.node_find_enabled(fsm, state, events)
+      local path = M.node_find_enabled(fsm, state, events)
       if path then return path end
       local next = M.actchild_get(state)
       if not next then return end

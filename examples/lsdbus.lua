@@ -15,7 +15,7 @@ local bus
 
 -- configure gettime hook
 timeevent.set_gettime_hook(
-   function() return posix.clock_gettime() end
+   function() return posix.clock_gettime(posix.CLOCK_MONOTONIC) end
 )
 
 local fsm = rfsm.init(
