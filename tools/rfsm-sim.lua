@@ -1,9 +1,7 @@
 -- -*- lua -*-
-local rfsm = require("rfsm")
-local rfsmpp = require("rfsm.pp")
-local utils = require("utils")
-
-
+rfsm = require("rfsm")
+rfsmpp = require("rfsm.pp")
+utils = require("utils")
 
 if arg and #arg < 1 then
    print("usage: rfsm-sim <fsmfile>")

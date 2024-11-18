@@ -1305,4 +1305,9 @@ function M.run(fsm)
    return M.step(fsm, math.huge)
 end
 
+function M.get_actleaf_fqn(fsm)
+   local al = fsm._act_leaf
+   return al and al._fqn
+end
+
 return M

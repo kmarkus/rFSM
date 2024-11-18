@@ -5,27 +5,18 @@
 --
 -- SPDX-License-Identifier: BSD-3-Clause
 --
--- This module extends the core rFSM model with time events.
--- A time-event is specified using the <code>e_after(timespec)</code>
--- or <code>e_at(timespec)</code>. A timespec is floating point value
--- in seconds.  (Note: currently only relative (e_after) timeevents
--- are implemented).<br><br>
+-- This module extends the core rFSM model with time events.  A
+-- time-event is specified using the `e_after(timespec)` or
+-- `e_at(timespec)`. A timespec is floating point value in seconds.
+-- (Note: currently only relative (e_after) timeevents are
+-- implemented).
 --
 -- This implementation intentionally omits the os-dependent aspect of
 -- getting the current time. Hence, after loading this module an
--- appropriate <code>gettime</code> function must be installed by
--- using <code>set_gettime_hook(f)</code>, where <code>f</code> is a
--- function which returns two values: the absolute time in seconds and
--- nanoseconds (following the POSIX
--- <code>clock_nanosleep(2)</code>).<br><br>
---
--- The OROCOS RTT <code>rtt.getTime()</code> function returns the
--- expected values can thus can be used as a drop-in source of
--- time. Also other, lower resolution time sources can be easily used:
--- for example the Lua os.time() returns the number of seconds since
--- epoch (on most platforms!), and for second-resolution timeevents
--- can be used as follows <code>function gettime() return os.time(), 0
--- end </code><br><br>
+-- appropriate `gettime` function must be installed by using
+-- `set_gettime_hook(f)`, where `f`is a function which returns two
+-- values: the absolute time in seconds and nanoseconds (following the
+-- POSIX `clock_nanosleep(2)`).
 --
 -- The implementation consists of a preprocessing step that expands
 -- the specification to e_after(timespec) to the canonical form
@@ -37,21 +28,43 @@
 -- current active states during post_step_hook.
 
 
-local utils=require("utils")
-local assert = assert
-local type = type
-local tonumber = tonumber
-local math = math
-local string = string
+local utils = require("utils")
 local rfsm = require("rfsm")
-local time = require("time")
-local ts2str = time.ts2str
 
 local M = {}
 
+M.DEBUG = false
+
 local gettime = false
 
-M.debug=false
+local NSEC_PER_SEC = 1000000000
+
+local timeevent_mt = {}
+timeevent_mt.__index = timeevent_mt
+
+function timeevent_mt:__tostring()
+   return 'e_after(' .. self.id .. ')'
+end
+
+function M.e_after(x, id)
+   local o = { type='e_after' }
+
+   if type(x) == 'number' then
+      o.id = id or tostring(x)
+      o.gettimeout = function() return x end
+   elseif type(x) == 'function' then
+      o.id = id or string.match(tostring(o), "table:%s(.*)")
+      o.gettimeout = x
+   else
+      error("e_after: invalid arg 1: expected function, got ".. type(x))
+   end
+
+   return setmetatable(o, timeevent_mt)
+end
+
+function M.is_timeevent(x)
+   return getmetatable(x) == timeevent_mt
+end
 
 --- Setup the gettime function to be used by this module.
 -- @param f function which is expected to return two values sec and nsec.
@@ -65,35 +78,42 @@ end
 -- internally stored time. The second checks if the timeevent has
 -- become true and if yes raises the event 'name'.
 -- @param name name of event to raise
--- @param timespec time after or at timeevent shall trigger.
+-- @param id id to pass to gettimeout callbacl
+-- @param gettimeout gettimeout function (must return timeout in nsec)
 -- @param sendf function to call for sending events
-local function gen_rel_timeevent_mgr(name, timespec, sendf, fsm)
-   assert(type(gettime) == 'function',
-	  "rfsm_timeevent error. Failed to install handlers: no gettime function set.")
+-- @param fsm fsm for dbg functions
+local function gen_rel_timeevent_mgr(name, id, gettimeout, sendf, fsm)
+   assert(type(gettime) == 'function', "rfsm.timeevent: no gettime function set.")
 
-   local ts = { sec=math.floor(timespec), nsec=((timespec%1)*10^9) }
-   local tend = { sec=false, nsec=false }
-   local tcur = { sec=false, nsec=false }
-   local fired=false
+   local tentry = false
+   local fired = false
 
-   local reset = function ()
-		    tcur.sec, tcur.nsec = gettime()
-		    tend.sec, tend.nsec = time.add(tcur, ts)
-		    fired=false
-		    fsm.dbg("TIMEEVENT", "reset timevent " .. name ..
-			    " cur: " .. ts2str(tcur) .. ", end: " .. ts2str(tend))
-		 end
+   local function reset()
+      tentry = gettime()
+      fired = false
+      if M.DEBUG then
+	 fsm.dbg("TIMEEVENT", "reset timevent " .. name .. " tentry: " .. tostring(tentry))
+      end
+   end
 
-   local check = function ()
-		    if fired then return end
-		    tcur.sec, tcur.nsec = gettime()
-		    fsm.dbg("TIMEEVENT", "checking timevent " .. name ..
-			    " cur: " .. ts2str(tcur) .. ", end: " .. ts2str(tend))
-		    if time.cmp(tcur, tend) == 1 then
-		       sendf(name)
-		       fired=true
-		    end
-		 end
+   local function check()
+      if fired then return end
+
+      local tnow = gettime()
+      local timeout = gettimeout(id) * NSEC_PER_SEC
+      local tend = tentry + timeout
+
+      if M.DEBUG then
+	 fsm.dbg("TIMEEVENT", "checking timevent " .. name ..
+		 " tentry: " .. tostring(tentry) ..
+		 ", timeout: " .. tostring(timeout))
+      end
+
+      if tnow > tend then
+	 sendf(name)
+	 fired = true
+      end
+   end
 
    return reset, check
 end
@@ -103,22 +123,33 @@ end
 local function expand_timeevent(fsm)
    local function se(...) rfsm.send_events(fsm, ...) end
 
-   fsm.info("rfsm_timeevent: time-event extension loaded")
+   fsm.info("rfsm.timeevent: time-event extension loaded")
 
    rfsm.mapfsm(function (tr, p)
-		  if not tr.events then return end
-		  for i=1,#tr.events do
-		     local e = tr.events[i]
-		     local timespec = tonumber(string.match(e, "e_after%((.*)%)"))
-		     if timespec then
-			local eexp = e .. '@' .. tr.src._fqn
-			tr.events[i] = eexp
-			local reset, check = gen_rel_timeevent_mgr(eexp, timespec, se, fsm)
-			tr.src.entry=utils.advise('before', tr.src.entry, reset)
-			tr.src._check_timeevent = check
-		     end
-		  end
-	       end, fsm, rfsm.is_trans)
+	 if not tr.events then return end
+	 for i=1,#tr.events do
+	    local e = tr.events[i]
+
+	    -- handle old-school timevents
+	    if type(e) == 'string' then
+	       local timespec = tonumber(string.match(e, "e_after%((.*)%)"))
+
+	       if timespec then
+		  fsm.dbg("converting timeevent " .. e .. " to new style")
+		  e = M.e_after(timespec)
+		  tr.events[i] = e
+	       end
+	    end
+
+	    if M.is_timeevent(e) then
+	       local eexp = tostring(e) .. '@' .. tr.src._fqn
+	       tr.events[i] = eexp
+	       local reset, check = gen_rel_timeevent_mgr(eexp, e.id, e.gettimeout, se, fsm)
+	       tr.src.entry = utils.advise('before', tr.src.entry, reset)
+	       tr.src._check_timeevent = check
+	    end
+	 end
+   end, fsm, rfsm.is_trans)
 
    local function check_act_timeevents(fsm)
       local function check_timeevent(fsm, sta)

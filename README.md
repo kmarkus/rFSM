@@ -498,22 +498,50 @@ timeevents are supported. These can be specified on transitions using
 the `e_after(duration)` syntax, as show in the following example:
 
 ```Lua
-rfsm.trans{ src='A', tgt='B', events={ 'e_after(0.1)' } },
+timeevent = require("rfsm.timevent")
+rfsm.trans{ src='A', tgt='B', events={ timeevent.e_after(0.1) } },
 ```
 
 The timeevent will be raised 100ms after state `A` was entered.
 
+Alternatively, instead of a numeric timeout, a function to retrieve
+the timeout can be passed:
+
+``` Lua
+rfsm.trans{ src='A', tgt='B', events={ timeevent.e_after(function() return 3 end) } 
+```
+
+Optionally, an arbitrary `id` can be passed to the `e_after`
+function. This will be used as a unique id in the raised event name
+*and* also passed to the `gettimeout` function. This is useful for
+using a single gettimeout function to retrieve different timeouts from
+a table.
+
+``` Lua
+local timeouts = {
+	TIMEOUT1 = 3,
+	TIMEOUT2 = 10,
+}
+local function gettimeout(id) return timeouts[id] end
+...
+rfsm.trans{ src='A', tgt='B', events={ timeevent.e_after(gettimeout, 'TIMEOUT1') },
+rfsm.trans{ src='B', tgt='A', events={ timeevent.e_after(gettimeout, 'TIMEOUT2') },
+```
+
 The only requirement to use `rfsm.timeevent` is that a `gettime`
 function is configured using the `rfsm.timeevent.set_gettime_hook(f)`
-function. This function is expected to return the current time in two
-return values: seconds, nanoseconds.
+function. This function is expected to return the current time in
+nanoseconds.
 
-An example can be found in `examples/timeevent.lua`
+Examples can be found in `examples/timeevent.lua`
 
 **Warning:** these timeevents only work while the rfsm engine is
 running and can not magically wake up an idle fsm. Therefore this type
 of timeevents typically only makes sense for fsm that are "stepped" at
 a fixed frequency or that never go idle.
+
+> **Note**: the old `"e_after(1.5)"` string syntax is still supported,
+> but deprecated.
 
 
 ### `rfsm.emem`: event memory extension
@@ -752,6 +780,11 @@ Use these to manage step hooks. Setting `pre_step_hook` and
 
 `idle_hook(fsm)`: if defined, called *instead* of returning from
 step/run functions. Used only for debugging purposes.
+
+
+## API Changes
+
+- `timeevents`: the `gettime` hook must return the time in nanoseconds.
 
 
 ## Footnotes
