@@ -6,7 +6,7 @@
 -- SPDX-License-Identifier: BSD-3-Clause
 
 local rfsm = require("rfsm")
-local rfsm_marsh = require("rfsm_marsh")
+local rfsm_marsh = require("rfsm.marsh")
 local json = require("json")
 local utils = require("utils")
 local pcall = pcall
@@ -43,7 +43,7 @@ function M.encode(fsm)
    res.graph = rfsm_marsh.model2tab(fsm)
    if fsm._act_leaf then
       res.active_leaf=fsm._act_leaf._fqn
-      res.active_leaf_state=get_sta_mode(fsm._act_leaf)
+      res.active_leaf_state=rfsm.get_sta_mode(fsm._act_leaf)
    else
       res.active_leaf = false
       res.active_leaf_state = false

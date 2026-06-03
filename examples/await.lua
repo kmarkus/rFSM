@@ -26,7 +26,7 @@
 --    to me right now if that would be useful at all.
 --
 
-rfsmpp = require("rfsmpp")
+rfsmpp = require("rfsm.pp")
 rfsm = require("rfsm")
 
 x= rfsm.state {

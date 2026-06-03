@@ -83,7 +83,7 @@ for interp in $OPTION_INTERP; do
 
     # on ubuntu, libgv-lua provides libgv_lua.so
     export LUA_CPATH="$LUA_CPATH;/usr/lib/x86_64-linux-gnu/graphviz/lua/?.so"
-    export LUA_PATH="../?.lua;$LUA_PATH"
+    export LUA_PATH="../src/?.lua;../src/?/init.lua;$LUA_PATH"
 
     for t in $EXAMPLES; do
         if [ "$t" == "runscript.lua" ]; then

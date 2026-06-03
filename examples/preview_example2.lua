@@ -3,7 +3,7 @@
 -- called once.
 
 local rfsm = require("rfsm")
-local rfsm_timeevent = require("rfsm_timeevent")
+local rfsm_timeevent = require("rfsm.timeevent")
 local ac=require("ansicolors")
 local state, trans = rfsm.state, rfsm.trans
 

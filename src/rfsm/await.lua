@@ -30,6 +30,8 @@ local function expand_await(fsm)
    -- @returns a table of await events or false if event is not an
    -- an await
    local function parse_await(event)
+      -- events may be non-string objects (e.g. timeevents); ignore those
+      if type(event) ~= 'string' then return false end
       local awaitspec = string.match(event, "await%((.*)%)")
       if not awaitspec then return false end
       awaitspec = string.gsub(awaitspec, "['\"]", "") -- remove ["']
@@ -94,7 +96,7 @@ local function expand_await(fsm)
 			tr.src.exit = utils.advise('after', tr.src.exit, reset) -- reset on src state exit
 
 			if tr.guard then
-			   old_guard = tr.guard
+			   local old_guard = tr.guard
 			   tr.guard=function(...) return cond(...) and old_guard(...) end
 			else
 			   tr.guard = cond

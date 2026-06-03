@@ -2,8 +2,8 @@
 -- globals that are visible at the top level are visible at nested
 -- levels too.
 
-require "rfsm"
-require "rfsmpp"
+rfsm = require "rfsm"
+rfsmpp = require "rfsm.pp"
 
 --- This (global) function will be visible in all sub-fsm!
 function foo(a,b,c)

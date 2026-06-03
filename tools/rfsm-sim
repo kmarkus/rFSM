@@ -7,4 +7,7 @@ if [ "x$LUA" = "x" ]; then
     LUA=lua
 fi
 
+# make the in-tree modules loadable without installing
+export LUA_PATH="$SCRIPTPATH/../src/?.lua;$SCRIPTPATH/../src/?/init.lua;$LUA_PATH;;"
+
 env $LUA -i $SCRIPTPATH/rfsm-sim.lua $1

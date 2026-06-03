@@ -14,9 +14,8 @@
 -- This implementation intentionally omits the os-dependent aspect of
 -- getting the current time. Hence, after loading this module an
 -- appropriate `gettime` function must be installed by using
--- `set_gettime_hook(f)`, where `f`is a function which returns two
--- values: the absolute time in seconds and nanoseconds (following the
--- POSIX `clock_nanosleep(2)`).
+-- `set_gettime_hook(f)`, where `f` is a function which returns the
+-- current absolute time as a single value in nanoseconds.
 --
 -- The implementation consists of a preprocessing step that expands
 -- the specification to e_after(timespec) to the canonical form
@@ -67,7 +66,7 @@ function M.is_timeevent(x)
 end
 
 --- Setup the gettime function to be used by this module.
--- @param f function which is expected to return two values sec and nsec.
+-- @param f function which is expected to return the current time as a single value in nanoseconds.
 function M.set_gettime_hook(f)
    assert(type(f) == 'function', "set_gettime_hook: parameter not a function")
    gettime = f

@@ -13,7 +13,7 @@
 -- emem_reset function.
 
 local rfsm = require("rfsm")
-local rfsm_emem = require("rfsm_emem")
+local rfsm_emem = require("rfsm.emem")
 
 local ping_max = 5
 local pong_max = 40000

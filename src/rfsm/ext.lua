@@ -47,7 +47,7 @@ function M.gen_monitor_state(t)
    if t.montab==nil or type(t.montab) ~= 'table' then
       error("gen_monitor_state: missing or invalid 'montab' argument")
    end
-   local break_first = t.breakfirst
+   local break_first = t.break_first or t.breakfirst
 
    return rfsm.sista {
       entry = t.entry or nil,

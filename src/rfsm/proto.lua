@@ -9,7 +9,7 @@
 local socket = require("socket")
 local json = require("json")
 local rfsm = require("rfsm")
-local rfsm_marsh = require("rfsm_marsh")
+local rfsm_marsh = require("rfsm.marsh")
 local utils = require("utils")
 
 local os = os
@@ -180,18 +180,20 @@ local function gen_updater(conf)
 end
 
 local function __install(fsm, t)
-   host = t.host or def_host
-   port = t.port or def_port
-   read_timeout = t.read_timeout or def_read_timeout
-   allow_send = t.allow_send or false
+   local host = t.host or def_host
+   local port = t.port or def_port
+   local read_timeout = t.read_timeout or def_read_timeout
+   local allow_send = t.allow_send or false
 
    fsm.info("rfsm_proto: rfsm introspection protocol loaded ("
 	    ..host..":"..ts(port).."/"..ts(read_timeout)..")")
 
    local send_event = nil
    if allow_send then
-      print("received event "..ts(e))
-      send_event = function (e) rfsm.send_events(fsm, e) end
+      send_event = function (e)
+	 print("received event "..ts(e))
+	 rfsm.send_events(fsm, e)
+      end
    end
 
    local getmodel = function () return rfsm_marsh.model2tab(fsm) end

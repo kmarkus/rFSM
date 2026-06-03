@@ -44,13 +44,22 @@ extensibility of its host language.
 
 ## Install
 
-Just run `make install` to install for 5.1, 5.2, 5.3 and 5.4.
+Just run `make install` to install for Lua 5.1, 5.2, 5.3, 5.4 and 5.5.
 
-Alternatively, add the `rfsm` repo to your module path.
+Alternatively, add the `src/` directory of this repo to your Lua module
+path (e.g. `LUA_PATH="/path/to/rFSM/src/?.lua;/path/to/rFSM/src/?/init.lua;$LUA_PATH"`).
 
-The only dependency is the (pure Lua)
+The only *runtime* dependency is the (pure Lua)
 [`uutils`](https://github.com/kmarkus/uutils) module (which itself has
-no dependencies).
+no dependencies). The colorized pretty-printer ([`rfsm.pp`](#rfsmpp-configurable-and-colorized-debug-output))
+additionally uses `ansicolors`, and the test-suite uses
+[`luaunit`](https://github.com/bluebird75/luaunit).
+
+To run the test-suite:
+
+```sh
+make test          # or: cd tests && ./run.lua
+```
 
 ## Introduction
 
@@ -246,11 +255,16 @@ FSM behavior.
 **Configuring error, warning, informational and debug output.** The
 `err`, `warn`, `info` and `dbg` fields can be used to fine tune how
 these messages are output. The value of these fields can be either
-true or false or set to a function that accepts a variable list of
-arguments. The default is to write errors and warnings to stderr and
-info to stdout. Debug messages are turned off by default. Nicer and
+`true` or `false` or set to a function that accepts a variable list of
+arguments. The default is to write errors and warnings to *stderr* and
+info to *stdout*. Debug messages are turned off by default. Nicer and
 configurable pretty printing of debug output is provided by the
-`rfsmpp` module (described below).
+[`rfsm.pp`](#rfsmpp-configurable-and-colorized-debug-output) module
+(described below).
+
+> **Note:** the names `err`, `warn`, `info`, `dbg` and `getevents` are
+> reserved for these toplevel hooks — do not use them as state or
+> connector names.
 
 **The** `getevents` **hook.** The `getevents` hook is called by the
 rFSM core whenever it needs to check for new events. This function is
@@ -274,16 +288,24 @@ rfsm.transition {
       end
       return true
    end,
-   effect=function () do_this() end
+   effect=function (fsm, tr, 'effect', events) do_this() end
 }
 ```
 
 The above defines a transition between stateX and stateY which is
-triggered by the events `e1` *and* `e2`. The `guard` condition
-(optional) will prevent the transition from being executed if it
-returns false. The `effect` function (optional) will be executed
-during the transitioning of the function. If no events are specified,
-this is interpreted as **any** events will trigger the transition.
+triggered by the events `e1` *or* `e2` (i.e. event lists have **OR**
+semantics — *any* of the listed events enables the transition). To
+trigger only after *several* events have been received, possibly across
+different steps, use the [`rfsm.await`](#rfsmawait-trigger-transition-only-after-receiving-multiple-events)
+extension.
+
+The `guard` condition (optional) will prevent the transition from being
+executed if it returns `false`. The `effect` function (optional) is
+executed *while* the transition is taken (after exiting the source and
+before entering the target). It receives the toplevel `fsm`, the
+transition `tr`, the string `'effect'` and the table of `events` that
+enabled the transition. If no events are specified at all, the
+transition is enabled by **any** event.
 
 Three ways of specifying the `src` and `target` states are
 supported: *local*, *relative* or *absolute*. In the above example
@@ -498,7 +520,7 @@ timeevents are supported. These can be specified on transitions using
 the `e_after(duration)` syntax, as show in the following example:
 
 ```Lua
-timeevent = require("rfsm.timevent")
+local timeevent = require("rfsm.timeevent")
 rfsm.trans{ src='A', tgt='B', events={ timeevent.e_after(0.1) } },
 ```
 
@@ -530,10 +552,11 @@ rfsm.trans{ src='B', tgt='A', events={ timeevent.e_after(gettimeout, 'TIMEOUT2')
 
 The only requirement to use `rfsm.timeevent` is that a `gettime`
 function is configured using the `rfsm.timeevent.set_gettime_hook(f)`
-function. This function is expected to return the current time in
-nanoseconds.
+function. `f` is expected to return the current time as a **single
+value in nanoseconds**.
 
-Examples can be found in `examples/timeevent.lua`
+Examples can be found in
+[`examples/timeevent.lua`](examples/timeevent.lua).
 
 **Warning:** these timeevents only work while the rfsm engine is
 running and can not magically wake up an idle fsm. Therefore this type
@@ -630,15 +653,17 @@ timeevents), so that it picks up the transformed events.
 
 ### `rfsm-sim` tool: simple rfsm simulator
 
-small command line simulator for running a fsm interactively.
+small command line simulator for running a fsm interactively. It drops
+into an interactive Lua prompt; type `help()` to list the available
+commands (`step`, `se`, `run`, `pp`, …).
 
 ```sh
-$ tools/rfsm-sim all examples/ball_tracker_scope.lua
+$ tools/rfsm-sim examples/hello_world.lua
 ```
 
 ### Lua fsm to json conversion (`rfsm2json` command line tool)
 
-Based on `rfsm2json.lua` module and requires lua-json.
+Based on the `rfsm.rfsm2json` module and requires `lua-json`.
 
 ### `rfsm.rtt` Useful functions for using rFSM with OROCOS rtt
 
@@ -734,11 +759,15 @@ The [LuaCookbook](http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook) page 
 Functions to define rFSM:
 
 
-|  Function      | Short alias   | Description *       |
-|----------------|---------------|---------------------|
-| `state{}`      | `state{}`     | create a state      |
-| `connector{}`  | `conn{}`      | create a connector  |
-| `transition{}` | `trans{}`     | create a transition |
+|  Function      | Short aliases          | Description         |
+|----------------|------------------------|---------------------|
+| `state{}`      | `sista{}`, `csta{}`    | create a state      |
+| `connector{}`  | `conn{}`               | create a connector  |
+| `transition{}` | `trans{}`              | create a transition |
+
+(`sista` and `csta` are historical aliases for *simple* and *composite*
+state; both are identical to `state` — whether a state is composite or
+a leaf is derived from whether it contains substates.)
 
 
 ### Operational functions
@@ -785,6 +814,10 @@ step/run functions. Used only for debugging purposes.
 ## API Changes
 
 - `timeevents`: the `gettime` hook must return the time in nanoseconds.
+- transition `effect` functions now receive the triggering `events`
+  table as their fourth argument: `effect(fsm, tr, 'effect', events)`.
+- the Lua modules now live under `src/rfsm/`; the `require` names are
+  unchanged (`rfsm`, `rfsm.pp`, `rfsm.timeevent`, …).
 
 
 ## Footnotes

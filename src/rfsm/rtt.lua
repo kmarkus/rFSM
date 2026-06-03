@@ -143,9 +143,9 @@ function M.service_launch_rfsm(file, execstr_f, eehook, env)
    local s = {}
 
    s[#s+1] = "require 'rttlib'"
-   s[#s+1] = "require 'rfsm'"
-   s[#s+1] = "require 'rfsm_rtt'"
-   s[#s+1] = "require 'utils'"
+   s[#s+1] = "rfsm = require 'rfsm'"
+   s[#s+1] = "rfsm_rtt = require 'rfsm.rtt'"
+   s[#s+1] = "utils = require 'utils'"
 
    if env and type(env) == 'table' then
       for k,v in pairs(env) do s[#s+1] = k .. '=' .. '"' .. v .. '"' end
@@ -222,16 +222,16 @@ function M.component_launch_rfsm(argtab)
       error("Failed to create lua component (" .. argtab.luatype .. ")")
    end
 
-   comp=depl:getPeer(name)
+   local comp=depl:getPeer(name)
    comp:addPeer(depl)
-   exec_str = comp:provides():getOperation("exec_str")
-   exec_file = comp:provides():getOperation("exec_file")
+   local exec_str = comp:provides():getOperation("exec_str")
+   local exec_file = comp:provides():getOperation("exec_file")
 
    local s = {}
    s[#s+1] = "require 'rttlib'"
-   s[#s+1] = "require 'rfsm'"
-   s[#s+1] = "require 'rfsm_rtt'"
-   s[#s+1] = "require 'utils'"
+   s[#s+1] = "rfsm = require 'rfsm'"
+   s[#s+1] = "rfsm_rtt = require 'rfsm.rtt'"
+   s[#s+1] = "utils = require 'utils'"
 
    if argtab.env and type(argtab.env) == 'table' then
       for k,v in pairs(argtab.env) do s[#s+1] = k .. '=' .. '"' .. tostring(v) .. '"' end
@@ -284,7 +284,7 @@ function M.component_launch_rfsm(argtab)
    s={}
 
    if argtab.postfile then exec_file(argtab.postfile) end
-   if argtab.poststr then exec_file(argtab.poststr) end
+   if argtab.poststr then exec_str(argtab.poststr) end
 
    return comp
 end

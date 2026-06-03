@@ -73,10 +73,10 @@ local function setup_emem(fsm)
 		     local oldexit = s.exit
 		     s.exit = function (fsm, state, type)
 				 oldexit(fsm, state, type)
-				 emem_reset(state)
+				 M.emem_reset(state)
 			      end
 		  else
-		     s.exit = function (fsm, state, type) emem_reset(state) end
+		     s.exit = function (fsm, state, type) M.emem_reset(state) end
 		  end
 	       end, fsm, rfsm.is_state)
 end

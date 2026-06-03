@@ -1,8 +1,7 @@
 #!/usr/bin/env lua
 -- -*- lua -*-
 local rfsm = require("rfsm")
-local rfsmpp = require("rfsmpp")
-local rfsm2json = require("rfsm2json")
+local rfsm2json = require("rfsm.rfsm2json")
 local utils = require("utils")
 
 if arg and #arg < 1 then
@@ -11,9 +10,9 @@ if arg and #arg < 1 then
 end
 
 local function fsm2json(file)
-   outfile = string.gsub(file, "\.%w*$", "")
-   fsm_tpl = assert(rfsm.load(file), "failed to open fsm file " .. file)
-   fsm = rfsm.init(fsm_tpl)
+   local outfile = string.gsub(file, "\.%w*$", "")
+   local fsm_tpl = assert(rfsm.load(file), "failed to open fsm file " .. file)
+   local fsm = rfsm.init(fsm_tpl)
    if not fsm then
       print("error: state machine checking failed.")
       os.exit(1)

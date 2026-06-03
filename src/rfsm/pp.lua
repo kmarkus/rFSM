@@ -13,17 +13,14 @@ local rfsm = require("rfsm")
 
 local print, type, pairs, assert = print, type, pairs, assert
 local table = table
-local utils = utils
 local string = string
 local ac = ansicolors
-local rfsm = rfsm
 
 -- some shortcuts
 local is_meta = rfsm.is_meta
 local is_state = rfsm.is_state
 local is_leaf = rfsm.is_leaf
 local is_composite = rfsm.is_composite
-local sta_mode = rfsm.sta_mode
 local fsmobj_tochar = rfsm.fsmobj_tochar
 
 local M = {}
@@ -36,7 +33,7 @@ function M.fsm2str(fsm, ind)
    local indstr = '    '
    local res = {}
 
-   function __2colstr(s)
+   local function __2colstr(s)
       assert(s, "s not a state")
       if s._mode == 'active' then
 	 if is_leaf(s) then return ac.green .. ac.bright .. s._id .. ac.reset
@@ -45,7 +42,7 @@ function M.fsm2str(fsm, ind)
       else return ac.red .. s._id .. ac.reset end
    end
 
-   function __fsm_tostring(tab, res, ind)
+   local function __fsm_tostring(tab, res, ind)
       for name,state in pairs(tab) do
 	 if not is_meta(name) and is_state(state) then
 	    res[#res+1] = string.rep(indstr, ind) .. __2colstr(state) .. '[' .. fsmobj_tochar(state) .. ']'
@@ -83,8 +80,8 @@ function M.dbgcolorize(name, ...)
    if name then str = ac.cyan .. ac.bright .. name .. ":" .. ac.reset .. '\t' end
 
    -- convert nested tables to strings
-   ptab = utils.map(utils.tab2str, args)
-   col = ctab[ptab[1]]
+   local ptab = utils.map(utils.tab2str, args)
+   local col = ctab[ptab[1]]
 
    if col ~= nil then
       str = str.. col .. utils.rpad(ptab[1], pad) .. ac.reset .. table.concat(ptab, ' ', 2)

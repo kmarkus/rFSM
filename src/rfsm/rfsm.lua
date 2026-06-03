@@ -148,15 +148,6 @@ function M.fsmobj_tochar(obj)
    else return end
 end
 
--- check if src is connected to tgt by a transition
-local function is_connected(src, tgt)
-   assert(src._otrs, "ERR, is_connected: no ._otrs table found")
-   for _,t in pairs(src._otrs) do
-      if t.tgt._fqn == tgt._fqn then return true end
-   end
-   return false
-end
-
 --- Load fsm from file.
 -- The file must contain an rfsm simple or composite state that is returned.
 -- @param file name of file
@@ -683,6 +674,8 @@ function M.reset(fsm)
    fsm._intq = { 'e_init_fsm' }
    fsm._curq = {}
    fsm._act_leaf = false
+   fsm._mode = 'inactive'    -- so the next step/run re-enters via root.initial
+   M.mapfsm(function (s) s._mode = 'inactive' end, fsm, M.is_state)
    M.mapfsm(function (c) c._actchild = nil end, fsm, M.is_composite)
    M.mapfsm(function (s) s._doo_co = nil end, fsm, M.is_leaf)
 end
@@ -919,18 +912,6 @@ end
 --  3a. implicit entry of parents of tgt
 --  3b. explicit entry of tgt
 
--- optional runtime checks
-local function exec_trans_check(fsm, tr)
-   local res = true
-   if tr.tgt._mode ~= 'inactive' then
-      fsm.err("ERROR", "transition target " .. tr.tgt._fqn .. " in invalid state '" .. tr.tgt._mode .. "'")
-      -- tbd: raise event
-      res = false
-   end
-   return res
-end
-
-
 -- Execute Part 1 of the transition tr, which means exiting the src
 -- state (incl. active child states) and up to but excluding the LCA
 -- of src and tgt.
@@ -967,7 +948,7 @@ local function __exec_trans_exit(fsm, tr, lca, up_path)
 end
 
 -- Execute Part 2 of the transition: the effect
-local function exec_trans_effect(fsm, tr)
+local function exec_trans_effect(fsm, tr, events)
    -- run effect
    fsm.dbg("EFFECT", tostring(tr))
    if tr.effect then
@@ -996,10 +977,10 @@ end
 -- Do all in one:
 -- can't fail in any way
 --
-local function exec_trans(fsm, tr)
+local function exec_trans(fsm, tr, events)
    local lca, up_path, down_path = tr_ipath(fsm, tr)
    __exec_trans_exit(fsm, tr, lca, up_path)
-   exec_trans_effect(fsm, tr)
+   exec_trans_effect(fsm, tr, events)
    __exec_trans_enter(fsm, tr, lca, down_path)
 end
 
@@ -1051,7 +1032,7 @@ end
 ----------------------------------------
 -- execute a path (compound transition) starting with pnode
 -- returns true if path was executed sucessfully
-local function exec_path(fsm, path)
+local function exec_path(fsm, path, events)
 
    -- heads is list of path nodes
    local function __exec_path(head)
@@ -1069,12 +1050,12 @@ local function exec_path(fsm, path)
 	    -- todo: why not check for conflicts here? because they
 	    -- are currently not possible...
 	    seg = pn.nextl[1]
-	    exec_trans(fsm, seg.trans)
+	    exec_trans(fsm, seg.trans, events)
 	    next_head = seg.next
 	 elseif M.is_conn(pn.node) then -- step a connector
 	    if #pn.nextl > 1 then seg = conflict_resolve(fsm, pn)
 	    else seg = pn.nextl[1] end
-	    exec_trans(fsm, seg.trans)
+	    exec_trans(fsm, seg.trans, events)
 	    next_head = seg.next
 	 else
 	    fsm.err("ERR (exec_path)", "invalid type of head pnode: " .. pn.node._fqn)
@@ -1199,7 +1180,7 @@ local function transition(fsm, events)
       fsm.dbg("TRANSITION", "no enabled paths found")
       return false
    end
-   exec_path(fsm, path)
+   exec_path(fsm, path, events)
    return true
 end
 
@@ -1215,7 +1196,7 @@ local function enter_fsm(fsm, events)
 
    enter_one_state(fsm, fsm)
    fsm._actchild = nil -- unset because the previous line set this to fsm
-   exec_path(fsm, path)
+   exec_path(fsm, path, events)
    return true
 end
 

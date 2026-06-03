@@ -2,8 +2,8 @@
 -- This simple fsm demonstrates the use of sequential AND states.
 
 local rfsm = require("rfsm")
-local rfsm_ext = require("rfsm_ext")
-local rfsmpp = require("rfsmpp")
+local rfsm_ext = require("rfsm.ext")
+local rfsmpp = require("rfsm.pp")
 
 local state, conn, trans = rfsm.state, rfsm.conn, rfsm.trans
 

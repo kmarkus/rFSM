@@ -3,7 +3,7 @@
 --
 
 rfsm = require("rfsm")
-rfsm_ext = require("rfsm_ext")
+rfsm_ext = require("rfsm.ext")
 
 --- generate a function which ramdomly returns true n of m times
 -- @param n
