@@ -1,0 +1,25 @@
+#!/usr/bin/env lua
+-- -*- lua -*-
+--
+-- Render rFSM model files as PlantUML state diagrams.
+--
+-- Usage: rfsm2plantuml <file1.lua> [<file2.lua> ...]
+-- For each input, writes a <file>.puml next to it.
+
+local rfsm = require("rfsm")
+local plantuml = require("rfsm.plantuml")
+
+if not arg or #arg < 1 then
+   print("usage: rfsm2plantuml <file1> <file2> ...")
+   os.exit(1)
+end
+
+local function convert(file)
+   local outfile = string.gsub(file, "%.%w*$", "") .. ".puml"
+   local fsm = assert(rfsm.init(rfsm.load(file)), "failed to initialize " .. file)
+   plantuml.save(fsm, outfile, file)
+   print("wrote " .. outfile)
+end
+
+for i=1,#arg do convert(arg[i]) end
+os.exit(0)

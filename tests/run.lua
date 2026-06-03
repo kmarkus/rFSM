@@ -27,5 +27,6 @@ TestDoo        = require("test_doo")
 TestExtensions = require("test_extensions")
 TestTimeevent  = require("test_timeevent")
 TestMarsh      = require("test_marsh")
+TestPlantuml   = require("test_plantuml")
 
 os.exit(lu.LuaUnit.run())

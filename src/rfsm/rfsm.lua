@@ -160,27 +160,78 @@ function M.load(file)
    return fsm
 end
 
---- Add a post step hook.
--- This function will add a hook to be called each time the fsm is
--- advanced.
--- @param fsm fsm root to which the hook should be added
--- @param hook hook function to be called
--- @param where where to insert the new hook 'before' or 'after' the existing ones.
-function M.post_step_hook_add(fsm, hook, where)
-   where = where or 'after'
-   fsm.post_step_hook=utils.advise(where, fsm.post_step_hook, hook)
+--- Load fsm from a string.
+-- The chunk must return an rfsm simple or composite state.
+-- @param str string containing the rfsm model
+-- @param chunkname optional name used in error messages
+-- @return uninitalized fsm.
+function M.load_str(str, chunkname)
+   local loader = loadstring or load    -- loadstring: 5.1, load: 5.2+
+   local chunk, err = loader(str, chunkname)
+   if not chunk then
+      error("rfsm.load_str: failed to load chunk: " .. tostring(err))
+   end
+   local fsm = chunk()
+   if not M.is_state(fsm) then
+      error("rfsm.load_str: chunk did not return a valid rfsm")
+   end
+   return fsm
 end
 
---- Add a post step hook.
--- This function will add a hook to be called each time the fsm is
--- advanced.
+-- step hooks are kept in a list (fsm._<field>s) so that they can be
+-- added *and* removed again. fsm[field] is a runner that calls them in
+-- order, or nil when the list is empty (so the cheap `if fsm.x` guards
+-- in step() keep working).
+local function hook_runner(list)
+   return function (...) for _,h in ipairs(list) do h(...) end end
+end
+
+local function hook_add(fsm, field, hook, where)
+   where = where or 'after'
+   local lf = '_' .. field .. 's'
+   local list = fsm[lf] or {}
+   fsm[lf] = list
+   if where == 'before' then table.insert(list, 1, hook)
+   else list[#list+1] = hook end
+   fsm[field] = hook_runner(list)
+end
+
+local function hook_rm(fsm, field, hook)
+   local list = fsm['_' .. field .. 's']
+   if not list then return false end
+   for i,h in ipairs(list) do
+      if h == hook then
+	 table.remove(list, i)
+	 fsm[field] = (#list > 0) and hook_runner(list) or nil
+	 return true
+      end
+   end
+   return false
+end
+
+--- Add a post step hook to be called after each step of the fsm.
 -- @param fsm fsm root to which the hook should be added
 -- @param hook hook function to be called
 -- @param where where to insert the new hook 'before' or 'after' the existing ones.
-function M.pre_step_hook_add(fsm, hook, where)
-   where = where or 'after'
-   fsm.pre_step_hook=utils.advise(where, fsm.pre_step_hook, hook)
-end
+function M.post_step_hook_add(fsm, hook, where) hook_add(fsm, 'post_step_hook', hook, where) end
+
+--- Add a pre step hook to be called before each step of the fsm.
+-- @param fsm fsm root to which the hook should be added
+-- @param hook hook function to be called
+-- @param where where to insert the new hook 'before' or 'after' the existing ones.
+function M.pre_step_hook_add(fsm, hook, where) hook_add(fsm, 'pre_step_hook', hook, where) end
+
+--- Remove a previously added post step hook.
+-- @param fsm fsm root from which to remove the hook
+-- @param hook the exact hook function that was added
+-- @return true if it was found and removed, false otherwise
+function M.post_step_hook_rm(fsm, hook) return hook_rm(fsm, 'post_step_hook', hook) end
+
+--- Remove a previously added pre step hook.
+-- @param fsm fsm root from which to remove the hook
+-- @param hook the exact hook function that was added
+-- @return true if it was found and removed, false otherwise
+function M.pre_step_hook_rm(fsm, hook) return hook_rm(fsm, 'pre_step_hook', hook) end
 
 
 --- Apply func to all fsm elements for which pred is true
@@ -335,14 +386,33 @@ local function add_defconn(fsm)
    M.mapfsm(__add_trans_defconn, fsm, M.is_trans)
 end
 
---- Set event table t[event]=true of each event.
+--- Normalize the events field of all transitions.
+-- A bare string is treated as a single-element event list, so that
+-- `events='e_foo'` is accepted as a shorthand for `events={'e_foo'}`.
+-- @param fsm root fsm.
+local function normalize_events(fsm)
+   M.mapfsm(function (tr)
+	     if type(tr.events) == 'string' then tr.events = { tr.events } end
+	  end, fsm, M.is_trans)
+end
+
+--- Build the event lookup tables of each transition.
+-- Hashable events (strings, numbers, ...) go into tr._idx_events for
+-- O(1) matching; function events are collected in tr._pred_events and
+-- act as predicates that are called with each received event.
 -- @param fsm initialized root fsm.
 local function index_events(fsm)
    M.mapfsm(function (tr, p)
 	     if tr.events then
 		tr._idx_events={}
+		tr._pred_events=nil
 		for i,e in ipairs(tr.events) do
-		   tr._idx_events[e]=true
+		   if type(e) == 'function' then
+		      tr._pred_events = tr._pred_events or {}
+		      tr._pred_events[#tr._pred_events+1] = e
+		   else
+		      tr._idx_events[e]=true
+		   end
 		end
 	     end
 	  end, fsm, M.is_trans)
@@ -622,6 +692,7 @@ function M.init(fsm_templ)
    add_ids(fsm)
    add_fqns(fsm)
    add_defconn(fsm)
+   normalize_events(fsm)
 
    -- verify (early)
    local ret, errs = M.verify_early(fsm)
@@ -1075,14 +1146,23 @@ end
 -- check if transition is triggered by events and guard is true
 -- events is a table of entities which support '=='
 --
--- tbd: allow more complex events: '+', '*', or functions
+-- An event spec is either a plain value (matched by equality) or a
+-- predicate function that is called with each received event and
+-- returns true if it matches.
 -- important: no events is "null event"
 local function is_enabled(fsm, tr, events)
 
    local function is_triggered(tr, evq)
-      local idx_ev = tr._idx_events -- indexed events
+      local idx_ev = tr._idx_events    -- plain (hashable) events
+      local pred_ev = tr._pred_events  -- predicate (function) events
       for _,e in ipairs(evq) do
 	 if idx_ev[e] then return true end
+	 if pred_ev then
+	    for _,pred in ipairs(pred_ev) do
+	       local ok, ret = pcall(pred, e)
+	       if ok and ret then return true end
+	    end
+	 end
       end
       return false
    end
@@ -1289,6 +1369,22 @@ end
 function M.get_actleaf_fqn(fsm)
    local al = fsm._act_leaf
    return al and al._fqn
+end
+
+--- Return the current active configuration.
+-- This is the list of fully qualified names of all active states from
+-- the root down to (and including) the active leaf.
+-- @param fsm initialized rfsm state machine
+-- @return array of fqn strings (empty if the fsm is inactive)
+function M.get_active_conf(fsm)
+   local res = {}
+   if M.get_sta_mode(fsm) == 'inactive' then return res end
+   local s = fsm
+   while s do
+      res[#res+1] = s._fqn
+      s = M.actchild_get(s)
+   end
+   return res
 end
 
 return M

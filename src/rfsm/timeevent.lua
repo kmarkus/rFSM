@@ -42,11 +42,13 @@ local timeevent_mt = {}
 timeevent_mt.__index = timeevent_mt
 
 function timeevent_mt:__tostring()
-   return 'e_after(' .. self.id .. ')'
+   return self.type .. '(' .. self.id .. ')'
 end
 
-function M.e_after(x, id)
-   local o = { type='e_after' }
+-- shared constructor for relative (e_after) and absolute (e_at) events.
+-- kind is 'after' or 'at', which is also used as the type/name prefix.
+local function mk_timeevent(kind, x, id)
+   local o = { type='e_' .. kind, kind=kind }
 
    if type(x) == 'number' then
       o.id = id or tostring(x)
@@ -55,11 +57,24 @@ function M.e_after(x, id)
       o.id = id or string.match(tostring(o), "table:%s(.*)")
       o.gettimeout = x
    else
-      error("e_after: invalid arg 1: expected function, got ".. type(x))
+      error("e_" .. kind .. ": invalid arg 1: expected number or function, got " .. type(x))
    end
 
    return setmetatable(o, timeevent_mt)
 end
+
+--- Create a *relative* time event that fires `x` seconds after the
+-- source state was entered.
+-- @param x timeout in seconds, or a function returning it
+-- @param id optional id (passed to the timeout function, used in the event name)
+function M.e_after(x, id) return mk_timeevent('after', x, id) end
+
+--- Create an *absolute* time event that fires once the (wall-)clock
+-- reaches the absolute time `x` (in seconds, in the same epoch as the
+-- configured gettime hook).
+-- @param x absolute time in seconds, or a function returning it
+-- @param id optional id (passed to the time function, used in the event name)
+function M.e_at(x, id) return mk_timeevent('at', x, id) end
 
 function M.is_timeevent(x)
    return getmetatable(x) == timeevent_mt
@@ -77,11 +92,12 @@ end
 -- internally stored time. The second checks if the timeevent has
 -- become true and if yes raises the event 'name'.
 -- @param name name of event to raise
--- @param id id to pass to gettimeout callbacl
--- @param gettimeout gettimeout function (must return timeout in nsec)
+-- @param id id to pass to gettimeout callback
+-- @param gettimeout function returning the timeout/absolute time in seconds
+-- @param absolute if true, the timeout is an absolute time (e_at), else relative (e_after)
 -- @param sendf function to call for sending events
 -- @param fsm fsm for dbg functions
-local function gen_rel_timeevent_mgr(name, id, gettimeout, sendf, fsm)
+local function gen_timeevent_mgr(name, id, gettimeout, absolute, sendf, fsm)
    assert(type(gettime) == 'function', "rfsm.timeevent: no gettime function set.")
 
    local tentry = false
@@ -91,7 +107,7 @@ local function gen_rel_timeevent_mgr(name, id, gettimeout, sendf, fsm)
       tentry = gettime()
       fired = false
       if M.DEBUG then
-	 fsm.dbg("TIMEEVENT", "reset timevent " .. name .. " tentry: " .. tostring(tentry))
+	 fsm.dbg("TIMEEVENT", "reset timeevent " .. name .. " tentry: " .. tostring(tentry))
       end
    end
 
@@ -99,13 +115,14 @@ local function gen_rel_timeevent_mgr(name, id, gettimeout, sendf, fsm)
       if fired then return end
 
       local tnow = gettime()
-      local timeout = gettimeout(id) * NSEC_PER_SEC
-      local tend = tentry + timeout
+      local spec = gettimeout(id) * NSEC_PER_SEC
+      -- relative: fire 'spec' ns after entry; absolute: fire at time 'spec'
+      local tend = absolute and spec or (tentry + spec)
 
       if M.DEBUG then
-	 fsm.dbg("TIMEEVENT", "checking timevent " .. name ..
+	 fsm.dbg("TIMEEVENT", "checking timeevent " .. name ..
 		 " tentry: " .. tostring(tentry) ..
-		 ", timeout: " .. tostring(timeout))
+		 ", tend: " .. tostring(tend))
       end
 
       if tnow > tend then
@@ -143,7 +160,8 @@ local function expand_timeevent(fsm)
 	    if M.is_timeevent(e) then
 	       local eexp = tostring(e) .. '@' .. tr.src._fqn
 	       tr.events[i] = eexp
-	       local reset, check = gen_rel_timeevent_mgr(eexp, e.id, e.gettimeout, se, fsm)
+	       local reset, check = gen_timeevent_mgr(eexp, e.id, e.gettimeout,
+						      e.kind == 'at', se, fsm)
 	       tr.src.entry = utils.advise('before', tr.src.entry, reset)
 	       tr.src._check_timeevent = check
 	    end

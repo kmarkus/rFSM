@@ -29,6 +29,7 @@ extensibility of its host language.
     - [`rfsm.checkevents`: check for unknown events](#rfsmcheckevents-check-for-unknown-events)
     - [`rfsm-sim` tool: simple rfsm simulator](#rfsm-sim-tool-simple-rfsm-simulator)
     - [Lua fsm to json conversion (`rfsm2json` command line tool)](#lua-fsm-to-json-conversion-rfsm2json-command-line-tool)
+    - [`rfsm.plantuml`: PlantUML state diagram export](#rfsmplantuml-plantuml-state-diagram-export)
     - [`rfsm.rtt` Useful functions for using rFSM with OROCOS rtt](#rfsmrtt-useful-functions-for-using-rfsm-with-orocos-rtt)
 - [More examples, tips and tricks](#more-examples-tips-and-tricks)
     - [A more complete example](#a-more-complete-example)
@@ -307,6 +308,23 @@ transition `tr`, the string `'effect'` and the table of `events` that
 enabled the transition. If no events are specified at all, the
 transition is enabled by **any** event.
 
+As a shorthand, a single event may be given as a bare string instead of
+a one-element table:
+
+```Lua
+rfsm.trans{ src='a', tgt='b', events='e_go' }   -- same as events={'e_go'}
+```
+
+An event entry may also be a **predicate function**. It is called with
+each received event and enables the transition if it returns a truthy
+value. This is useful for *wildcard* matching:
+
+```Lua
+-- trigger on any event whose name starts with 'e_err'
+rfsm.trans{ src='a', tgt='error',
+            events={ function(e) return type(e)=='string' and e:match('^e_err') end } }
+```
+
 Three ways of specifying the `src` and `target` states are
 supported: *local*, *relative* or *absolute*. In the above example
 `stateX` and `stateY` are referenced locally and must therefore be
@@ -515,9 +533,10 @@ returned a function as a result!
 This module extends the rFSM engine with time events. Time events are
 automatically raised *after* the specified time after entering a state
 has elapsed. To enable time events, it suffices to load the
-`rfsm.timeevent` module. Currently only relative (opposed to absolute)
-timeevents are supported. These can be specified on transitions using
-the `e_after(duration)` syntax, as show in the following example:
+`rfsm.timeevent` module. Both **relative** (`e_after`) and **absolute**
+(`e_at`) timeevents are supported. These can be specified on transitions
+using the `e_after(duration)` / `e_at(abstime)` syntax, as shown in the
+following example:
 
 ```Lua
 local timeevent = require("rfsm.timeevent")
@@ -549,6 +568,11 @@ local function gettimeout(id) return timeouts[id] end
 rfsm.trans{ src='A', tgt='B', events={ timeevent.e_after(gettimeout, 'TIMEOUT1') },
 rfsm.trans{ src='B', tgt='A', events={ timeevent.e_after(gettimeout, 'TIMEOUT2') },
 ```
+
+`e_at(abstime)` works the same way but fires once the clock reaches the
+given **absolute** time (in seconds, in the same epoch as the configured
+`gettime` hook) rather than relative to state entry. Like `e_after`, it
+also accepts a function and an optional `id`.
 
 The only requirement to use `rfsm.timeevent` is that a `gettime`
 function is configured using the `rfsm.timeevent.set_gettime_hook(f)`
@@ -665,6 +689,27 @@ $ tools/rfsm-sim examples/hello_world.lua
 
 Based on the `rfsm.rfsm2json` module and requires `lua-json`.
 
+### `rfsm.plantuml`: PlantUML state diagram export
+
+This module renders an initialized fsm as a
+[PlantUML](https://plantuml.com) state diagram. It is pure Lua and has
+no external dependencies (unlike the old graphviz-based exporter).
+
+```Lua
+local plantuml = require("rfsm.plantuml")
+local fsm = rfsm.init(rfsm.load("mymodel.lua"))
+print(plantuml.encode(fsm, "my model"))   -- return diagram as a string
+plantuml.save(fsm, "mymodel.puml")         -- ... or write it to a file
+```
+
+The output can be rendered with the `plantuml` command line tool or any
+PlantUML server. A small command line wrapper is provided that writes a
+`.puml` next to each input model:
+
+```sh
+$ tools/rfsm2plantuml examples/composite_nested.lua
+```
+
 ### `rfsm.rtt` Useful functions for using rFSM with OROCOS rtt
 
 See the Orocos
@@ -773,12 +818,17 @@ a leaf is derived from whether it contains substates.)
 ### Operational functions
 
 
-|  Function                    |  Description                                         |
-|------------------------------|------------------------------------------------------|
-| `fsm rfsm.init(fsmmodel)`    | create an initialized rfsm instance from model       |
-| `idle rfsm.step(fsm, n)`     | attempt to transition FSM n times. Default: once     |
-| `rfsm.run(fsm)`              | run FSM until it goes idle                           |
-| `rfsm.send_events(fsm, ...)` | send one or more events to internal rfsm event queue |
+|  Function                       |  Description                                         |
+|---------------------------------|------------------------------------------------------|
+| `fsm rfsm.init(fsmmodel)`       | create an initialized rfsm instance from model       |
+| `fsm rfsm.load(file)`           | load an (uninitialized) model from a file            |
+| `fsm rfsm.load_str(str[,name])` | load an (uninitialized) model from a string          |
+| `idle rfsm.step(fsm, n)`        | attempt to transition FSM n times. Default: once     |
+| `rfsm.run(fsm)`                 | run FSM until it goes idle                           |
+| `rfsm.send_events(fsm, ...)`    | send one or more events to internal rfsm event queue |
+| `rfsm.reset(fsm)`               | reset to the inactive state (re-enters on next step) |
+| `fqn rfsm.get_actleaf_fqn(fsm)` | fqn of the active leaf state (or `nil`)              |
+| `tab rfsm.get_active_conf(fsm)` | list of active state fqns from root down to the leaf |
 
 
 ### Hooks
@@ -805,7 +855,8 @@ Use these to manage step hooks. Setting `pre_step_hook` and
 |----------------------------------------|-------------------------------------------------------------------|
 | `pre_step_hook_add(fsm, hook, where)`  | install function hook to be called _before_ each rfsm step of fsm |
 | `post_step_hook_add(fsm, hook, where)` | install function hook to be called _after_ each rfsm step of fsm  |
-|                                        |                                                                   |
+| `pre_step_hook_rm(fsm, hook)`          | remove a previously added pre step hook (returns true if removed) |
+| `post_step_hook_rm(fsm, hook)`         | remove a previously added post step hook (returns true if removed)|
 
 `idle_hook(fsm)`: if defined, called *instead* of returning from
 step/run functions. Used only for debugging purposes.
@@ -818,6 +869,15 @@ step/run functions. Used only for debugging purposes.
   table as their fourth argument: `effect(fsm, tr, 'effect', events)`.
 - the Lua modules now live under `src/rfsm/`; the `require` names are
   unchanged (`rfsm`, `rfsm.pp`, `rfsm.timeevent`, …).
+
+New, backwards-compatible additions:
+
+- `events` may be a bare string (`events='e_foo'`) or contain predicate
+  functions for wildcard matching.
+- `rfsm.timeevent.e_at(abstime)` for absolute time events.
+- `rfsm.load_str(str)`, `rfsm.get_active_conf(fsm)`,
+  `rfsm.pre_step_hook_rm` / `rfsm.post_step_hook_rm`.
+- `rfsm.plantuml` PlantUML state-diagram exporter.
 
 
 ## Footnotes

@@ -76,6 +76,21 @@ function TestTimeevent:test_timer_restarts_on_reentry()
    lu.assert_equals(C.fqn(fsm), "root.b")
 end
 
+function TestTimeevent:test_e_at_absolute()
+   local te = require("rfsm.timeevent")
+   local fsm = C.init(rfsm.csta{
+      a = rfsm.sista{},
+      b = rfsm.sista{},
+      rfsm.trans{ src='initial', tgt='a' },
+      rfsm.trans{ src='a', tgt='b', events={ te.e_at(100) } },  -- absolute t=100s
+   })
+   rfsm.run(fsm)
+   now = 50 * NSEC_PER_SEC; rfsm.run(fsm); rfsm.run(fsm)
+   lu.assert_equals(C.fqn(fsm), "root.a")  -- absolute time not reached
+   now = 101 * NSEC_PER_SEC; rfsm.run(fsm); rfsm.run(fsm)
+   lu.assert_equals(C.fqn(fsm), "root.b")  -- past the absolute time
+end
+
 function TestTimeevent:test_legacy_string_syntax()
    local fsm = C.init(rfsm.csta{
       a = rfsm.sista{},
