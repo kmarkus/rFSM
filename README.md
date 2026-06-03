@@ -64,8 +64,9 @@ make test          # or: cd tests && ./run.lua
 
 ## Introduction
 
-rFSM is minimal Statechart flavor designed for *Coordinating* of
-complex systems such as robots. It has the following features:
+**rFSM** is a minimal *Statechart* flavor designed for the
+*Coordination* of complex systems such as robots. It has the following
+features:
 
 -   Hierarchical (composite) states
 -   Completion events
@@ -74,7 +75,7 @@ complex systems such as robots. It has the following features:
 -   Plugin mechanism permits extending the core engine. Available
 	plugins include timeevents, event memory, sequential AND states
 	and more.
--   Real-time safe operation possible using lua-tlsf/rtp<sup>[1](#fnt1)</sup>
+-   Real-time safe operation possible using lua-tlsf/rtp <sup>[1]</sup>
 
 The following shows a simple hello\_world example
 
@@ -98,19 +99,19 @@ state machine. The `return` statement facilitates reading rfsm model
 files by tools or other state machines.
 
 The second and third line define two leaf states that are part of the
-toplevel composite state. `hello` defines an exit function and world
-an entry function which are called when the state is exited/entered,
-respectively.
+toplevel **composite state**. `hello` defines an `exit` function and
+`world` an `entry` function which are called when the state is
+exited/entered, respectively.
 
 The next three lines define transition between these states. The first
-is from the initial connector to the `hello` state. This transition
+is from the `initial` connector to the `hello` state. This transition
 will be taken the first time the composite state is entered. The
-initial connector, as an exception, need not be defined and will be
+`initial` connector, as an exception, need not be defined and will be
 created automatically when referenced from a transition.
 
 The next transition is from `hello` to `world` and is triggered by the
 `e_done` event. This event is raised internally when a state
-completes, which is either the case when the states 'doo' function
+completes, which is either the case when the state's `doo` function
 (see below) finishes or immediately, if there is no `doo`, as is the
 case here. The third transition is triggered by the `e_restart` event.
 
@@ -128,7 +129,7 @@ queue:  e_done@root.hello
 ```
 
 We execute `step()` to advance the state machine once. As this is the
-first step, the fsm is entered via the 'initial' connector to the
+first step, the fsm is entered via the `initial` connector to the
 `hello` state. After that the state `hello` is active and `done`
 (because no `doo` function is defined). Consequently, an `e_done`
 completion event has been generated and placed in the queue. So the
@@ -167,15 +168,15 @@ queue:  e_done@root.hello
 rFSM state machines are constructed using three model elements:
 **states**, **connectors** and **transitions**.
 
-(all functions are part of the rfsm module, thus need to be called in
+(all functions are part of the `rfsm` module, thus need to be called in
 Lua with the `rfsm` prefix, e.g. `rfsm.state{}`)
 
 ### States (`rfsm.state`)
 
 States are used to model discrete states of the system and can be
-either composite or leaf states. A composite state contains other
-states, while a leaf state does not. States can define `entry` and
-`exit` functions
+either **composite** or **leaf** states. A *composite* state contains
+other states, while a *leaf* state does not. States can define `entry`
+and `exit` functions
 
 ```Lua
 entry(fsm, state, 'entry')
@@ -203,7 +204,7 @@ active. To that end it can be used such that it is repeatedly called
 until either the function completes or an event triggers a transition
 to a different state.
 
-Implementationwise, this function is treated as a Lua coroutine. This
+Implementationwise, this function is treated as a Lua *coroutine*. This
 enables the following two use-cases:
 
 1. `doo` is a regular function: `doo` is executed once and a
@@ -219,7 +220,7 @@ enables the following two use-cases:
    control to the rfsm engine, that then checks for new events and
    potentially executes transitions.
 
-(Note: rfsm.yield is currently only an alias to `coroutine.yield`)
+(*Note:* `rfsm.yield` is currently only an alias to `coroutine.yield`)
 
 The following example illustrates the second use case:
 
@@ -241,7 +242,7 @@ to the rFSM core by calling `rfsm.yield()`.
 `rfsm.yield(idle_flag)` accepts a Boolean argument (called the "idle
 flag") that influences how `doo` is called by the rFSM core: if `true`
 it will cause the rFSM core to go idle, provided there are no other
-events. If `false` (the default<sup>[2](#fn2)</sup> if no
+events. If `false` (the default <sup>[2]</sup> if no
 arguments are given) and there are no other events, `doo` will be
 called in a tight loop. It depends on each application which
 `idle_flag` is appropriate. In general the idle\_flag should always be
@@ -362,10 +363,10 @@ intention is to constrain the states from which one can reach the
 `off` state: turning the device off is only permitted if it is not
 moving.
 
-At last absolute references begin with "root." Using absolute syntax
-is strongly discouraged for anything other than testing, as it breaks
-compositionality: if a state machine is used within a larger
-statemachine the absolute reference is broken.
+At last, *absolute* references begin with `root.`. Using absolute syntax
+is **strongly discouraged** for anything other than testing, as it breaks
+*compositionality*: if a state machine is used within a larger state
+machine the absolute reference is broken.
 
 Furthermore, transitions support so called **priority
 numbers**. Priority numbers serve to resolve conflicts within one
@@ -384,11 +385,11 @@ numbers and introduce these rather as an optimization.
 
 ### Connector (`rfsm.connector`)
 
-Connectors permit to define so called compound transitions by chaining
-multiple transition segments together. Connectors are similar to the
-UML junction element. Compound transitions are statically evaluated,
-meaning that the compound transition is only executed if each
-subtransition is enabled (events match and guards are true).
+Connectors permit to define so called **compound transitions** by
+chaining multiple transition segments together. Connectors are similar
+to the *UML junction* element. Compound transitions are *statically
+evaluated*, meaning that the compound transition is only executed if
+each subtransition is enabled (events match and guards are true).
 
 Also see the examples [`connector_simple.lua`](examples/connector_simple.lua) and
 [`connector_split.lua`](examples/connector_split.lua). The latter uses a
@@ -430,18 +431,18 @@ beards.
 
 ## Executing rFSM models
 
-Before running a statemachine must be initalized. This serves to
-validate the fsm model and transform the fsm to be suitable for
-execution. Initalization is done using the `rfsm.init(fsm)` function,
+Before running, a state machine must be **initialized**. This serves to
+*validate* the fsm model and *transform* the fsm to be suitable for
+execution. Initialization is done using the `rfsm.init(fsm)` function,
 that takes a (string) rfsm description as input and returns an
-initalized fsm. To load an rfsm from a file and initialize it, the
+initialized fsm. To load an rfsm from a file and initialize it, the
 `rfsm.load(filename)` function can be used:
 
 ```Lua
 fsm = rfsm.init(rfsm.load("fsm.lua"))
 ```
 
-If the return value from `rfsm.init` is not `false`, initalization
+If the return value from `rfsm.init` is not `false`, *initialization*
 succeeded and the returned fsm can be run.
 
 The function `rfsm.step(fsm, n)` will attempt to step the given fsm
@@ -622,8 +623,8 @@ This is basically a specialized version of the emem plugin. This one
 should be preferred if no counting is required, since it is
 computationally much less expensive.
 
-Behavior: When loaded, the plugin scans for events with the syntax
-await(event1, event2)". This statement is transformed as follows:
+**Behavior:** When loaded, the plugin scans for events with the syntax
+`await(event1, event2)`. This statement is transformed as follows:
 
 - a guard condition is generated and added to possibly existing guard
   conditions. It will only enable the transition if the both events
@@ -681,9 +682,9 @@ timeevents), so that it picks up the transformed events.
 
 ### `rfsm-sim` tool: simple rfsm simulator
 
-small command line simulator for running a fsm interactively. It drops
-into an interactive Lua prompt; type `help()` to list the available
-commands (`step`, `se`, `run`, `pp`, …).
+A small command line simulator for running a fsm *interactively*. It
+drops into an interactive Lua prompt; type `help()` to list the
+available commands (`step`, `se`, `run`, `pp`, …).
 
 ```sh
 $ tools/rfsm-sim examples/hello_world.lua
@@ -878,27 +879,35 @@ step/run functions. Used only for debugging purposes.
 - the Lua modules now live under `src/rfsm/`; the `require` names are
   unchanged (`rfsm`, `rfsm.pp`, `rfsm.timeevent`, …).
 
-New, backwards-compatible additions:
+**New, backwards-compatible additions:**
 
-- `events` may be a bare string (`events='e_foo'`) or contain predicate
-  functions for wildcard matching.
-- `rfsm.timeevent.e_at(abstime)` for absolute time events.
-- `rfsm.load_str(str)`, `rfsm.get_active_conf(fsm)`,
-  `rfsm.pre_step_hook_rm` / `rfsm.post_step_hook_rm`.
-- `rfsm.plantuml` PlantUML state-diagram exporter.
+- **String / predicate events**: `events` may be given as a bare string
+  (`events='e_foo'`) or contain *predicate functions* for *wildcard*
+  matching — see [Transitions](#transitions-rfsmtransition).
+- **Absolute time events**: `rfsm.timeevent.e_at(abstime)` fires once the
+  clock reaches `abstime` — see [`rfsm.timeevent`](#rfsmtimeevent).
+- **`rfsm.load_str(str)`**: build a model from a string instead of a file,
+  e.g. `rfsm.init(rfsm.load_str("return rfsm.state{}"))` — see
+  [Operational functions](#operational-functions).
+- **`rfsm.get_active_conf(fsm)`**: return the active state configuration
+  as a list of fqns — see [Operational functions](#operational-functions).
+- **`rfsm.pre_step_hook_rm` / `rfsm.post_step_hook_rm`**: remove a
+  previously installed step hook — see [Hooks](#hooks).
+- **`rfsm.plantuml`**: a pure-Lua *PlantUML* state-diagram exporter — see
+  [`rfsm.plantuml`](#rfsmplantuml-plantuml-state-diagram-export).
 
 
 ## Footnotes
 
-<a name="fn1">1</a>: See
-[this](https://lwn.net/images/conf/rtlws-2011/paper.05.html) Real-time
-Linux Workshop paper, [lua-tlsf](https://github.com/kmarkus/lua-tlsf)
-and the
-[minimal Lua real-time POSIX bindings](https://github.com/kmarkus/rtp)
+> [1] See
+> [this](https://lwn.net/images/conf/rtlws-2011/paper.05.html) Real-time
+> Linux Workshop paper, [lua-tlsf](https://github.com/kmarkus/lua-tlsf)
+> and the
+> [minimal Lua real-time POSIX bindings](https://github.com/kmarkus/rtp).
 
-<a name="fn2">2</a>: The reason for this choice of default is that it
-fails more obviously (100% CPU load) than the opposite (doo function
-not executed properly).
+> [2] The reason for this choice of default is that it fails more
+> obviously (100% CPU load) than the opposite (doo function not executed
+> properly).
 
 ## Acknowledgement
 
