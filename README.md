@@ -1,4 +1,4 @@
-![rFSM logo](/doc/rFSM_logo.jpg)
+![rFSM logo](doc/rFSM_logo.jpg)
 
 # rFSM Statecharts
 
@@ -390,8 +390,12 @@ UML junction element. Compound transitions are statically evaluated,
 meaning that the compound transition is only executed if each
 subtransition is enabled (events match and guards are true).
 
-Also see the examples `connector_simple.lua` and
-`connector_split.lua`.
+Also see the examples [`connector_simple.lua`](examples/connector_simple.lua) and
+[`connector_split.lua`](examples/connector_split.lua). The latter uses a
+connector (rendered as a *choice* diamond) to dispatch to different
+error states based on the received event:
+
+![connector_split diagram](doc/img/examples/connector_split.png)
 
 Connectors are useful for defining interfaces (entry and exit points)
 that hide internals of a composite state. The following example
@@ -717,6 +721,10 @@ See the Orocos
 for more details.
 
 ## More examples, tips and tricks
+
+The [`examples/`](examples) directory contains many small models. A
+gallery of rendered state diagrams is available in
+[`doc/img/examples/`](doc/img/examples/README.md).
 
 ### A more complete example
 

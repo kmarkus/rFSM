@@ -1,0 +1,10 @@
+@startuml
+title preview_example2
+state "approach_grasp_pos" as root_approach_grasp_pos
+state "drop_off" as root_drop_off
+state "grasping" as root_grasping
+[*] --> root_approach_grasp_pos
+root_approach_grasp_pos --> root_grasping : e_after(5)
+root_grasping --> root_drop_off : e_done
+root_drop_off --> root_approach_grasp_pos : e_after(5)
+@enduml

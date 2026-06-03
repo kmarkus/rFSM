@@ -1,0 +1,8 @@
+@startuml
+title simple_idle_doo
+state "off" as root_off
+state "on" as root_on
+root_off --> root_on : e_on
+root_on --> root_off : e_done
+[*] --> root_off
+@enduml

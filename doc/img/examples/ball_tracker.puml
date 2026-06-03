@@ -1,0 +1,18 @@
+@startuml
+title ball_tracker
+state "tracked" as root_tracked {
+  state "following" as root_tracked_following
+  state "hitting" as root_tracked_hitting
+  [*] --> root_tracked_following
+  root_tracked_following --> root_tracked_hitting : e_cmd_hit
+  root_tracked_hitting --> root_tracked_following : e_done
+}
+state "untracked" as root_untracked
+state "calibration" as root_calibration
+[*] --> root_untracked
+root_untracked --> root_calibration : e_cmd_cali
+root_calibration --> root_untracked : e_done
+root_untracked --> root_tracked : e_tracked
+root_tracked --> root_untracked : e_untracked
+root_tracked_following --> root_calibration : e_cmd_cali
+@enduml

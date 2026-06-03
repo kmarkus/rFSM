@@ -1,0 +1,92 @@
+@startuml
+title subgraphs
+state "outer_b" as root_outer_b {
+  state "middle_d" as root_outer_b_middle_d {
+    state "inner_h" as root_outer_b_middle_d_inner_h {
+      state "node_p" as root_outer_b_middle_d_inner_h_node_p
+      state "node_o" as root_outer_b_middle_d_inner_h_node_o
+      [*] --> root_outer_b_middle_d_inner_h_node_o
+      root_outer_b_middle_d_inner_h_node_o --> root_outer_b_middle_d_inner_h_node_p : tick
+      root_outer_b_middle_d_inner_h_node_p --> root_outer_b_middle_d_inner_h_node_o : tick
+    }
+    state "inner_g" as root_outer_b_middle_d_inner_g {
+      state "node_n" as root_outer_b_middle_d_inner_g_node_n
+      state "node_m" as root_outer_b_middle_d_inner_g_node_m
+      [*] --> root_outer_b_middle_d_inner_g_node_m
+      root_outer_b_middle_d_inner_g_node_m --> root_outer_b_middle_d_inner_g_node_n : tick
+      root_outer_b_middle_d_inner_g_node_n --> root_outer_b_middle_d_inner_g_node_m : tick
+    }
+    [*] --> root_outer_b_middle_d_inner_g
+    root_outer_b_middle_d_inner_g --> root_outer_b_middle_d_inner_h : tick
+    root_outer_b_middle_d_inner_h --> root_outer_b_middle_d_inner_g : tick
+  }
+  state "middle_c" as root_outer_b_middle_c {
+    state "inner_f" as root_outer_b_middle_c_inner_f {
+      state "node_l" as root_outer_b_middle_c_inner_f_node_l
+      state "node_k" as root_outer_b_middle_c_inner_f_node_k
+      [*] --> root_outer_b_middle_c_inner_f_node_k
+      root_outer_b_middle_c_inner_f_node_k --> root_outer_b_middle_c_inner_f_node_l : tick
+      root_outer_b_middle_c_inner_f_node_l --> root_outer_b_middle_c_inner_f_node_k : tick
+    }
+    state "inner_e" as root_outer_b_middle_c_inner_e {
+      state "node_j" as root_outer_b_middle_c_inner_e_node_j
+      state "node_i" as root_outer_b_middle_c_inner_e_node_i
+      [*] --> root_outer_b_middle_c_inner_e_node_i
+      root_outer_b_middle_c_inner_e_node_i --> root_outer_b_middle_c_inner_e_node_j : tick
+      root_outer_b_middle_c_inner_e_node_j --> root_outer_b_middle_c_inner_e_node_i : tick
+    }
+    [*] --> root_outer_b_middle_c_inner_e
+    root_outer_b_middle_c_inner_e --> root_outer_b_middle_c_inner_f : tick
+    root_outer_b_middle_c_inner_f --> root_outer_b_middle_c_inner_e : tick
+  }
+  [*] --> root_outer_b_middle_c
+  root_outer_b_middle_c --> root_outer_b_middle_d : tick
+  root_outer_b_middle_d --> root_outer_b_middle_c : tick
+}
+state "outer_a" as root_outer_a {
+  state "middle_b" as root_outer_a_middle_b {
+    state "inner_c" as root_outer_a_middle_b_inner_c {
+      state "node_f" as root_outer_a_middle_b_inner_c_node_f
+      state "node_e" as root_outer_a_middle_b_inner_c_node_e
+      [*] --> root_outer_a_middle_b_inner_c_node_e
+      root_outer_a_middle_b_inner_c_node_e --> root_outer_a_middle_b_inner_c_node_f : tick
+      root_outer_a_middle_b_inner_c_node_f --> root_outer_a_middle_b_inner_c_node_e : tick
+    }
+    state "inner_d" as root_outer_a_middle_b_inner_d {
+      state "node_h" as root_outer_a_middle_b_inner_d_node_h
+      state "node_g" as root_outer_a_middle_b_inner_d_node_g
+      [*] --> root_outer_a_middle_b_inner_d_node_g
+      root_outer_a_middle_b_inner_d_node_g --> root_outer_a_middle_b_inner_d_node_h : tick
+      root_outer_a_middle_b_inner_d_node_h --> root_outer_a_middle_b_inner_d_node_g : tick
+    }
+    [*] --> root_outer_a_middle_b_inner_c
+    root_outer_a_middle_b_inner_c --> root_outer_a_middle_b_inner_d : tick
+    root_outer_a_middle_b_inner_d --> root_outer_a_middle_b_inner_c : tick
+  }
+  state "middle_a" as root_outer_a_middle_a {
+    state "inner_a" as root_outer_a_middle_a_inner_a {
+      state "node_b" as root_outer_a_middle_a_inner_a_node_b
+      state "node_a" as root_outer_a_middle_a_inner_a_node_a
+      [*] --> root_outer_a_middle_a_inner_a_node_a
+      root_outer_a_middle_a_inner_a_node_a --> root_outer_a_middle_a_inner_a_node_b : tick
+      root_outer_a_middle_a_inner_a_node_b --> root_outer_a_middle_a_inner_a_node_a : tick
+    }
+    state "inner_b" as root_outer_a_middle_a_inner_b {
+      state "node_d" as root_outer_a_middle_a_inner_b_node_d
+      state "node_c" as root_outer_a_middle_a_inner_b_node_c
+      [*] --> root_outer_a_middle_a_inner_b_node_c
+      root_outer_a_middle_a_inner_b_node_c --> root_outer_a_middle_a_inner_b_node_d : tick
+      root_outer_a_middle_a_inner_b_node_d --> root_outer_a_middle_a_inner_b_node_c : tick
+    }
+    [*] --> root_outer_a_middle_a_inner_a
+    root_outer_a_middle_a_inner_a --> root_outer_a_middle_a_inner_b : tick
+    root_outer_a_middle_a_inner_b --> root_outer_a_middle_a_inner_a : tick
+  }
+  [*] --> root_outer_a_middle_a
+  root_outer_a_middle_a --> root_outer_a_middle_b : tick
+  root_outer_a_middle_b --> root_outer_a_middle_a : tick
+}
+[*] --> root_outer_a
+root_outer_a --> root_outer_b : tick
+root_outer_b --> root_outer_a : tick
+@enduml

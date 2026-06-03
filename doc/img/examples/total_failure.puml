@@ -1,0 +1,7 @@
+@startuml
+title total_failure
+state "b" as root_b
+state "a" as root_a
+[*] --> root_a
+root_a --> root_b
+@enduml

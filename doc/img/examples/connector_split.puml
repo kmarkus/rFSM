@@ -1,0 +1,17 @@
+@startuml
+title connector_split
+state "error" as root_error {
+  state "err_dispatch" as root_error_err_dispatch <<choice>>
+  state "hardware_err" as root_error_hardware_err
+  state "software_err" as root_error_software_err
+  [*] --> root_error_err_dispatch
+  root_error_err_dispatch --> root_error_hardware_err : e_hw_err
+  root_error_err_dispatch --> root_error_software_err : e_sw_err
+}
+state "operational" as root_operational
+state "calibration" as root_calibration
+[*] --> root_operational
+root_operational --> root_error_err_dispatch : e_error
+root_calibration --> root_error_err_dispatch : e_error
+root_error --> root_operational : e_error_reset
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+title ball_tracker_scope
+state "untracked" as root_untracked
+state "tracked" as root_tracked {
+  state "hitting" as root_tracked_hitting
+  state "following" as root_tracked_following
+  [*] --> root_tracked_following
+  root_tracked_following --> root_tracked_hitting : t6
+  root_tracked_hitting --> root_tracked_following : t7
+}
+state "calibration" as root_calibration
+[*] --> root_untracked
+root_untracked --> root_calibration : t1
+root_calibration --> root_untracked : t2
+root_untracked --> root_tracked : t3
+root_tracked --> root_untracked : t4
+root_tracked_following --> root_calibration : t5
+@enduml

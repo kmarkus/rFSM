@@ -1,0 +1,9 @@
+@startuml
+title connector_simple
+state "end" as root_end
+state "start" as root_start
+state "conn" as root_conn <<choice>>
+[*] --> root_start
+root_start --> root_conn : eventA
+root_conn --> root_end : eventB
+@enduml

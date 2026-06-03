@@ -1,0 +1,11 @@
+@startuml
+title emem_test
+state "pong" as root_pong
+state "final" as root_final
+state "ping" as root_ping
+[*] --> root_ping
+root_ping --> root_pong
+root_pong --> root_ping
+root_ping --> root_final
+root_final --> root_ping : e_restart
+@enduml

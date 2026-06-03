@@ -1,0 +1,8 @@
+@startuml
+title monitor_state
+state "monitoring" as root_monitoring
+root_monitoring --> root_monitoring : event_1
+root_monitoring --> root_monitoring : event_5
+root_monitoring --> root_monitoring : event_10
+[*] --> root_monitoring
+@enduml

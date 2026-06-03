@@ -1,0 +1,8 @@
+@startuml
+title simple
+state "on" as root_on
+state "off" as root_off
+root_off --> root_on : e_on
+root_on --> root_off : e_off
+[*] --> root_off
+@enduml

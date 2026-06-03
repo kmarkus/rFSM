@@ -1,0 +1,14 @@
+@startuml
+title composite_exitconn
+state "busy" as root_busy {
+  state "cexit" as root_busy_cexit <<choice>>
+  state "one" as root_busy_one
+  [*] --> root_busy_one
+  root_busy_one --> root_busy_cexit : e_done
+}
+state "idle" as root_idle
+state "recharging" as root_recharging
+[*] --> root_idle
+root_idle --> root_busy : e_start
+root_busy_cexit --> root_recharging
+@enduml

@@ -1,0 +1,14 @@
+@startuml
+title composite_nested
+state "safe" as root_safe
+state "operational" as root_operational {
+  state "approaching" as root_operational_approaching
+  state "in_contact" as root_operational_in_contact
+  [*] --> root_operational_approaching
+  root_operational_approaching --> root_operational_in_contact : e_contact_made
+  root_operational_in_contact --> root_operational_approaching : e_contact_lost
+}
+[*] --> root_safe
+root_safe --> root_operational : e_range_clear
+root_operational --> root_safe : e_close_object
+@enduml

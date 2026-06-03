@@ -22,6 +22,7 @@ local is_state = rfsm.is_state
 local is_composite = rfsm.is_composite
 local is_conn = rfsm.is_conn
 local is_trans = rfsm.is_trans
+local is_root = rfsm.is_root
 
 local M = {}
 
@@ -42,9 +43,13 @@ local function label(tr)
 end
 
 -- the PlantUML target of an arrow: an initial connector means "enter the
--- enclosing composite", so we point at its parent
+-- enclosing composite", so we point at its parent. The root has no
+-- enclosing block, so a transition back to the root initial uses [*].
 local function tgt_ref(node)
-   if is_initial(node) then return id(node._parent) end
+   if is_initial(node) then
+      if is_root(node._parent) then return "[*]" end
+      return id(node._parent)
+   end
    return id(node)
 end
 

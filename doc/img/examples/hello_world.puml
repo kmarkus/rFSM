@@ -1,0 +1,8 @@
+@startuml
+title hello_world
+state "world" as root_world
+state "hello" as root_hello
+[*] --> root_hello
+root_hello --> root_world : e_done
+root_world --> root_hello : e_restart
+@enduml

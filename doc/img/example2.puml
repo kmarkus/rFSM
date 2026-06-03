@@ -1,0 +1,16 @@
+@startuml
+state "error" as root_error
+state "fatal_error" as root_fatal_error
+state "on" as root_on {
+  state "moving" as root_on_moving
+  state "waiting" as root_on_waiting
+  [*] --> root_on_waiting
+  root_on_waiting --> root_on_moving : e_start
+  root_on_moving --> root_on_waiting : e_stop
+}
+[*] --> root_on
+root_on --> root_error : e_error
+root_error --> root_on : e_error_fixed
+root_error --> root_fatal_error : e_fatal_error
+root_fatal_error --> [*] : e_reset
+@enduml

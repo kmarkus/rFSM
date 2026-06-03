@@ -1,0 +1,14 @@
+@startuml
+title timeevent
+state "five" as root_five
+state "four" as root_four
+state "one" as root_one
+state "three" as root_three
+state "two" as root_two
+[*] --> root_one
+root_one --> root_two : e_after(0.1)
+root_two --> root_three : e_after(0.2)
+root_three --> root_four : e_after(0.3)
+root_four --> root_five : e_after(0.4)
+root_five --> root_one : e_after(1)
+@enduml

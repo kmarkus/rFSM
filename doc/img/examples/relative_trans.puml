@@ -1,0 +1,11 @@
+@startuml
+title relative_trans
+state "operational" as root_operational {
+  state "off" as root_operational_off
+  state "on" as root_operational_on
+  [*] --> root_operational_off
+}
+[*] --> root_operational
+root_operational_on --> root_operational_off : e_off
+root_operational_off --> root_operational_on : e_on
+@enduml

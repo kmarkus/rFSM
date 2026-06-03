@@ -1,0 +1,11 @@
+@startuml
+title simple_doo_idle
+state "on" as root_on
+state "busy" as root_busy
+state "off" as root_off
+[*] --> root_off
+root_off --> root_on : e_on
+root_on --> root_off : e_off
+root_off --> root_busy : e_busy
+root_busy --> root_off : e_done
+@enduml

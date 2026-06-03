@@ -1,0 +1,8 @@
+@startuml
+title connector_cycles
+state "conn2" as root_conn2 <<choice>>
+state "conn1" as root_conn1 <<choice>>
+[*] --> root_conn1
+root_conn1 --> root_conn2
+root_conn2 --> root_conn1
+@enduml
