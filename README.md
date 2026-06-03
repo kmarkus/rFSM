@@ -21,16 +21,16 @@ extensibility of its host language.
     - [Connector (`rfsm.connector`)](#connector-rfsmconnector)
 - [Executing rFSM models](#executing-rfsm-models)
 - [Common pitfalls](#common-pitfalls)
-- [Tools and helper modules](#tools-and-helper-modules)
+- [Extensions](#extensions)
     - [`rfsm.timeevent`](#rfsmtimeevent)
     - [`rfsm.emem`: event memory extension](#rfsmemem-event-memory-extension)
     - [`rfsm.await`: trigger transition only after receiving multiple events](#rfsmawait-trigger-transition-only-after-receiving-multiple-events)
     - [`rfsm.pp`: configurable and colorized debug output](#rfsmpp-configurable-and-colorized-debug-output)
     - [`rfsm.checkevents`: check for unknown events](#rfsmcheckevents-check-for-unknown-events)
+- [Tools](#tools)
     - [`rfsm-sim` tool: simple rfsm simulator](#rfsm-sim-tool-simple-rfsm-simulator)
-    - [Lua fsm to json conversion (`rfsm2json` command line tool)](#lua-fsm-to-json-conversion-rfsm2json-command-line-tool)
-    - [`rfsm.plantuml`: PlantUML state diagram export](#rfsmplantuml-plantuml-state-diagram-export)
-    - [`rfsm.rtt` Useful functions for using rFSM with OROCOS rtt](#rfsmrtt-useful-functions-for-using-rfsm-with-orocos-rtt)
+    - [`rfsm2json`: convert a model to JSON](#rfsm2json-convert-a-model-to-json)
+    - [`rfsm2plantuml`: PlantUML state diagram export](#rfsm2plantuml-plantuml-state-diagram-export)
 - [More examples, tips and tricks](#more-examples-tips-and-tricks)
     - [A more complete example](#a-more-complete-example)
     - [How to compose state machines](#how-to-compose-state-machines)
@@ -531,7 +531,12 @@ returned a function as a result!
 	in the queue! If you only want to transition based on guards,
 	raise a dummy event (e.g. "e\_any").
 
-## Tools and helper modules
+## Extensions
+
+Extensions are Lua modules that are `require`d alongside your model to
+add new *event syntax*, *transition conditions*, or *debug hooks* to
+the rFSM engine. They integrate via the `rfsm.preproc` plugin mechanism
+and have no effect unless explicitly loaded.
 
 ### `rfsm.timeevent`
 
@@ -680,6 +685,10 @@ To use, just require the module before creating your fsm. Important:
 load it *after* other plugins that transform events (such as
 timeevents), so that it picks up the transformed events.
 
+## Tools
+
+Command-line programs for working with rFSM models from the outside.
+
 ### `rfsm-sim` tool: simple rfsm simulator
 
 A small command line simulator for running a fsm *interactively*. It
@@ -690,15 +699,27 @@ available commands (`step`, `se`, `run`, `pp`, …).
 $ tools/rfsm-sim examples/hello_world.lua
 ```
 
-### Lua fsm to json conversion (`rfsm2json` command line tool)
+### `rfsm2json`: convert a model to JSON
 
-Based on the `rfsm.rfsm2json` module and requires `lua-json`.
+Converts an rFSM model to JSON format. Based on the `rfsm.rfsm2json`
+module; requires `lua-json`.
 
-### `rfsm.plantuml`: PlantUML state diagram export
+```sh
+$ tools/rfsm2json examples/hello_world.lua
+```
 
-This module renders an initialized fsm as a
-[PlantUML](https://plantuml.com) state diagram. It is pure Lua and has
-no external dependencies (unlike the old graphviz-based exporter).
+### `rfsm2plantuml`: PlantUML state diagram export
+
+Renders rFSM models as [PlantUML](https://plantuml.com) state diagrams.
+It writes a `.puml` file next to each input model:
+
+```sh
+$ tools/rfsm2plantuml examples/composite_nested.lua
+```
+
+The output can be rendered with the `plantuml` command line tool or any
+PlantUML server. The underlying `rfsm.plantuml` Lua module can also be
+used directly from code — it is pure Lua with no external dependencies:
 
 ```Lua
 local plantuml = require("rfsm.plantuml")
@@ -706,20 +727,6 @@ local fsm = rfsm.init(rfsm.load("mymodel.lua"))
 print(plantuml.encode(fsm, "my model"))   -- return diagram as a string
 plantuml.save(fsm, "mymodel.puml")         -- ... or write it to a file
 ```
-
-The output can be rendered with the `plantuml` command line tool or any
-PlantUML server. A small command line wrapper is provided that writes a
-`.puml` next to each input model:
-
-```sh
-$ tools/rfsm2plantuml examples/composite_nested.lua
-```
-
-### `rfsm.rtt` Useful functions for using rFSM with OROCOS rtt
-
-See the Orocos
-[LuaCookbook](http://www.orocos.org/wiki/orocos/toolchain/LuaCookbook)
-for more details.
 
 ## More examples, tips and tricks
 
