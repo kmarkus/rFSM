@@ -3,8 +3,9 @@ Some experimental tools
  * rfsm-sim: rFSM simulator 
      usage: rfsm-sim <file>, then type 'help()'.
 
- * rfsm2json: 
+ * rfsm2json:
      convert a rFSM (Lua) model to json format.
 
- * rfsm-viz: 
-     convert a rFSM (Lua) models to a graphical UML or tree representation.
+ * rfsm2plantuml:
+     render rFSM (Lua) models as PlantUML state diagrams (writes a
+     .puml next to each input model).
