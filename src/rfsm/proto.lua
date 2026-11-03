@@ -188,7 +188,9 @@ local function __install(fsm, t)
    fsm.info("rfsm_proto: rfsm introspection protocol loaded ("
 	    ..host..":"..ts(port).."/"..ts(read_timeout)..")")
 
-   local send_event = nil
+   local send_event = function (e)
+      fsm.warn("rfsm_proto: dropping event "..ts(e)..", allow_send is not set")
+   end
    if allow_send then
       send_event = function (e)
 	 print("received event "..ts(e))
