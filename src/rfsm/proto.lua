@@ -131,8 +131,9 @@ local function process(inf)
    local sock, subs = inf.socket, inf.subscribers
    local data, ip, port = sock:receivefrom() -- data is max 8k
    if data then
-      local msg = json.decode(data)
-      dispatch(msg, ip, port, inf)
+      -- udp input is untrusted: a bad packet must not kill the fsm
+      local ok, msg = pcall(json.decode, data)
+      if ok and type(msg) == 'table' then dispatch(msg, ip, port, inf) end
    -- else
    --    print("Timeout " .. ip)
    end

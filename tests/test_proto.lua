@@ -60,4 +60,16 @@ function TestProto:test_event_is_raised_with_allow_send()
    lu.assert_equals(C.fqn(fsm), "root.b")
 end
 
+function TestProto:test_bad_packets_are_ignored()
+   local fsm, client = setup{ allow_send=true }
+   for _, data in ipairs{ '{', 'not json', '5', 'null', '"x"', '[]', '{}' } do
+      assert(client:send(data))
+      rfsm.step(fsm)
+      rfsm.run(fsm)
+      lu.assert_equals(C.fqn(fsm), "root.a")
+   end
+   send_event(fsm, client)
+   lu.assert_equals(C.fqn(fsm), "root.b")
+end
+
 return TestProto
