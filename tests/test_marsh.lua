@@ -53,6 +53,7 @@ function TestMarsh:test_actinfo2tab()
 end
 
 function TestMarsh:test_rfsm2json_encode()
+   if not pcall(require, "json") then lu.skip("json not available") end
    local r2j = require("rfsm.rfsm2json")
    local fsm = sample()
    rfsm.run(fsm)
