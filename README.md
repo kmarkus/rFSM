@@ -2,6 +2,8 @@
 
 # rFSM Statecharts
 
+[![pipeline](https://gitlab.com/kmarkus/rFSM/badges/master/pipeline.svg)](https://gitlab.com/kmarkus/rFSM/-/pipelines)
+
 rFSM is a small and powerful Statechart implementation. It is mainly
 designed for *Coordination* of complex systems but is not limited to
 that. rFSM is written in pure Lua and is therefore highly portable and

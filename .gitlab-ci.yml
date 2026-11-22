@@ -1,0 +1,16 @@
+test:
+  # debian testing: the only debian release with lua5.5
+  image: debian:testing-slim
+  parallel:
+    matrix:
+      - LUA: ["lua5.1", "lua5.2", "lua5.3", "lua5.4", "lua5.5", "luajit"]
+  before_script:
+    - apt-get update -qq
+    # lua-socket, lua-json: optional, their tests skip without them
+    - apt-get install -y -qq --no-install-recommends $LUA lua-unit lua-socket lua-json git ca-certificates
+    - git clone -q --depth 1 https://gitlab.com/kmarkus/uutils.git /tmp/uutils
+    # lua-unit has no 5.2 copy: the 5.1 one is plain lua, used as last resort
+    - export LUA_PATH="/tmp/uutils/lua/?.lua;;/usr/share/lua/5.1/?.lua"
+    - $LUA -v
+  script:
+    - cd tests && $LUA run.lua
